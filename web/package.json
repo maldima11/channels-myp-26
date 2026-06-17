@@ -1,0 +1,13 @@
+{
+  "name": "nust-maize-yield-web",
+  "version": "1.0.0",
+  "description": "Web dashboard portal for Agritex officers",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx serve -l 8080"
+  },
+  "dependencies": {
+    "serve": "^14.2.1"
+  },
+  "private": true
+}
