@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NUST Maize Yield Web Portal</title>
+    <!-- Modern Premium Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- 1. LOGIN PORTAL GATE -->
+    <div id="login-gate">
+        <div class="login-card">
+            <div class="login-logo">Agritex Portal</div>
+            <div class="login-subtitle">NUST Maize Yield Forecasting System</div>
+            
+            <div class="input-group">
+                <label for="username">Officer Username</label>
+                <input type="text" id="username" class="input-field" placeholder="e.g. agritex_officer" value="agritex_officer">
+            </div>
+            
+            <div class="input-group">
+                <label for="password">System Password</label>
+                <input type="password" id="password" class="input-field" placeholder="••••••••" value="nust_maize_2026">
+            </div>
+            
+            <button class="login-btn" onclick="attemptLogin()">Authorize & Connect</button>
+            <div id="login-warning" class="login-warning">Invalid Username or Password. Please try again.</div>
+        </div>
+    </div>
+
+    <!-- 2. MAIN HEADER -->
+    <header>
+        <div class="logo-text">NUST Yield Portal</div>
+        <div class="header-metadata">
+            <div class="badge">Model Version: Flask API Connected (Option B)</div>
+            <div class="user-welcome">Welcome, <strong id="logged-user-name" class="user-highlight">Agritex Officer</strong></div>
+            <button class="logout-btn" onclick="triggerLogout()">Logout</button>
+        </div>
+    </header>
+
+    <!-- 3. MAIN WORKSPACE CONTAINER -->
+    <div class="main-container">
+        
+        <!-- CONTROLS PANEL -->
+        <div class="glass-panel">
+            <div class="panel-title">
+                <span class="bullet-accent">■</span> Biophysical Forecasting Inputs
+            </div>
+            
+            <div class="grid-inputs">
+                <!-- Location select -->
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label for="location-ward" class="slider-title">Umzingwane Location Ward</label>
+                    </div>
+                    <select id="location-ward" class="input-field" onchange="runForecast()">
+                        <option value="Ward 12">Ward 12 (Ntabazinduna)</option>
+                        <option value="Ward 15">Ward 15 (Esigodini Centroid)</option>
+                        <option value="Ward 18">Ward 18 (Umzingwane South)</option>
+                    </select>
+                </div>
+
+                <!-- Cultivar Input -->
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label for="cultivar-input" class="slider-title">Cultivar Selection</label>
+                    </div>
+                    <div class="variety-input-box">
+                        <input type="text" id="cultivar-input" class="input-field" value="SC719" onchange="validateCultivar()">
+                    </div>
+                </div>
+
+                <!-- Precipitation Slider -->
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span class="slider-title">Precipitation (Lag 30d)</span>
+                        <span id="val-precip" class="slider-value">0.65</span>
+                    </div>
+                    <input type="range" id="slide-precip" class="custom-slider" min="0" max="1" step="0.01" value="0.65" oninput="updateSlider('precip')">
+                </div>
+
+                <!-- Heat Stress Slider -->
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span class="slider-title">Heat Stress Index</span>
+                        <span id="val-heat" class="slider-value">0.32</span>
+                    </div>
+                    <input type="range" id="slide-heat" class="custom-slider" min="0" max="1" step="0.01" value="0.32" oninput="updateSlider('heat')">
+                </div>
+
+                <!-- Sand percentage -->
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span class="slider-title">Soil Texture: Sand</span>
+                        <span id="val-sand" class="slider-value">62%</span>
+                    </div>
+                    <input type="range" id="slide-sand" class="custom-slider" min="10" max="90" step="1" value="62" oninput="updateSlider('sand')">
+                </div>
+
+                <!-- Clay percentage -->
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span class="slider-title">Soil Texture: Clay</span>
+                        <span id="val-clay" class="slider-value">25%</span>
+                    </div>
+                    <input type="range" id="slide-clay" class="custom-slider" min="10" max="90" step="1" value="25" oninput="updateSlider('clay')">
+                </div>
+            </div>
+        </div>
+
+        <!-- FORECAST VISUALIZATIONS -->
+        <div class="results-container">
+            <!-- Yield Quantile Chart -->
+            <div class="glass-panel chart-card">
+                <div class="chart-header">Quantile Yield Forecast Range (kg/ha)</div>
+                <div class="canvas-container">
+                    <canvas id="yieldChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Biophysical Stress Meters -->
+            <div class="meters-grid">
+                <!-- Water stress gauge -->
+                <div class="circular-meter-card">
+                    <div class="gauge-container">
+                        <canvas id="waterGauge" width="80" height="80"></canvas>
+                        <div id="waterText" class="gauge-text">45%</div>
+                    </div>
+                    <div class="meter-info">
+                        <span class="meter-title">Water Deficit Index</span>
+                        <span class="meter-desc">Evapotranspiration matching stress</span>
+                    </div>
+                </div>
+
+                <!-- Heat stress gauge -->
+                <div class="circular-meter-card">
+                    <div class="gauge-container">
+                        <canvas id="heatGauge" width="80" height="80"></canvas>
+                        <div id="heatText" class="gauge-text">32%</div>
+                    </div>
+                    <div class="meter-info">
+                        <span class="meter-title">Heat Accumulation Stress</span>
+                        <span class="meter-desc">Metabolic decay index</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADVISORY REPORT & DOWNLOAD -->
+        <div class="advisory-panel">
+            <div class="advisory-header">
+                <span class="advisory-title">Farming Advisory and Agronomic Recommendation</span>
+                <button class="download-btn" onclick="downloadReport()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                    Download Report
+                </button>
+            </div>
+            <div id="advisory-text-box" class="advisory-text">Connecting to NUST yield prediction API...</div>
+        </div>
+
+    </div>
+
+    <!-- 4. WARNING MODAL FOR CULTIVAR INVALID INPUTS -->
+    <div id="warning-modal" class="warning-modal">
+        <div class="warning-card">
+            <div class="warning-icon">⚠</div>
+            <div class="warning-title" id="warning-title-text">Unsupported Maize Cultivar</div>
+            <div class="warning-text" id="warning-text-content">The cultivar you entered is not supported in the calibrated model.</div>
+            <button class="warning-btn" onclick="dismissWarning()">Confirm & Calibrate</button>
+        </div>
+    </div>
+
+    <!-- 5. SCRIPTS -->
+    <script src="app.js"></script>
+</body>
+</html>
