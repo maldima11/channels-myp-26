@@ -1,0 +1,518 @@
+:root {
+    --bg-primary: #0b0f19;
+    --bg-secondary: #131a2b;
+    --accent-glow: #6366f1;
+    --accent-green: #10b981;
+    --accent-amber: #f59e0b;
+    --accent-rose: #f43f5e;
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-primary);
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
+    background-attachment: fixed;
+    color: var(--text-main);
+    font-family: 'Outfit', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* ------------------ LOGIN PORTAL GATE ------------------ */
+#login-gate {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(11, 15, 25, 0.95);
+    backdrop-filter: blur(20px);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.login-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 48px;
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    backdrop-filter: blur(10px);
+    position: relative;
+}
+
+.login-logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #a5b4fc, #6366f1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+}
+
+.login-subtitle {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-bottom: 32px;
+}
+
+.input-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.input-group label {
+    display: block;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.input-field {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 15px;
+    transition: all 0.3s ease;
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: var(--accent-glow);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+select.input-field {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 18px center;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+select.input-field option {
+    background: var(--bg-secondary);
+    color: var(--text-main);
+}
+
+.login-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+}
+
+.login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
+}
+
+.login-warning {
+    color: var(--accent-rose);
+    font-size: 13px;
+    margin-top: 16px;
+    display: none;
+}
+
+/* ------------------ MAIN LAYOUT ------------------ */
+header {
+    padding: 24px 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
+    background: rgba(11, 15, 25, 0.5);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.logo-text {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.header-metadata {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.logout-btn {
+    background: rgba(244, 63, 94, 0.1);
+    border: 1px solid rgba(244, 63, 94, 0.3);
+    color: var(--accent-rose);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: 12px;
+}
+
+.logout-btn:hover {
+    background: var(--accent-rose);
+    color: white;
+}
+
+.badge {
+    background: rgba(99, 102, 241, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: #a5b4fc;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.user-welcome {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.user-highlight {
+    color: var(--text-main);
+}
+
+.main-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    padding: 40px 5%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ------------------ PANELS ------------------ */
+.glass-panel {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 30px;
+    backdrop-filter: blur(10px);
+}
+
+.panel-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.bullet-accent {
+    color: var(--accent-glow);
+}
+
+.grid-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 24px;
+}
+
+.slider-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.slider-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+}
+
+.slider-title {
+    color: var(--text-muted);
+}
+
+.slider-value {
+    font-weight: 600;
+    color: var(--accent-glow);
+}
+
+.custom-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    outline: none;
+}
+
+.custom-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent-glow);
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+    transition: all 0.2s ease;
+}
+
+.custom-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+/* ------------------ CULTIVAR INPUT & WARNING ------------------ */
+.variety-input-box {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.warning-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(11, 15, 25, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 10000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+.warning-modal.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.warning-card {
+    background: #1a1523;
+    border: 2px solid var(--accent-rose);
+    border-radius: 20px;
+    padding: 32px;
+    width: 90%;
+    max-width: 480px;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(244, 63, 94, 0.2);
+    transform: scale(0.9);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.warning-modal.active .warning-card {
+    transform: scale(1);
+}
+
+.warning-icon {
+    font-size: 48px;
+    color: var(--accent-rose);
+    margin-bottom: 16px;
+}
+
+.warning-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.warning-text {
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 24px;
+}
+
+.warning-btn {
+    background: var(--accent-rose);
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.warning-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(244, 63, 94, 0.4);
+}
+
+/* ------------------ CHARTS VIEW ------------------ */
+.results-container {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 30px;
+}
+
+.chart-card {
+    flex: 1;
+}
+
+.chart-header {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.canvas-container {
+    position: relative;
+    width: 100%;
+    height: 220px;
+}
+
+.meters-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.circular-meter-card {
+    background: rgba(255, 255, 255, 0.01);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.gauge-container {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+}
+
+.gauge-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.meter-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.meter-title {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.meter-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* ------------------ ADVISORY BOX & DOWNLOAD ------------------ */
+.advisory-panel {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(16, 185, 129, 0.05));
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 30px;
+}
+
+.advisory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.advisory-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #a5b4fc;
+}
+
+.download-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    color: var(--text-main);
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.download-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--accent-glow);
+}
+
+.advisory-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #cbd5e1;
+    white-space: pre-wrap;
+}
+
+/* ------------------ RESPONSIVENESS ------------------ */
+@media (max-width: 900px) {
+    .results-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .meters-grid {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .circular-meter-card {
+        flex: 1;
+        min-width: 250px;
+    }
+}
