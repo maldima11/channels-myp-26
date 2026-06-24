@@ -31,6 +31,25 @@ function goBack() {
     window.location.href = "../index.html";
 }
 
+// Hash function with standard SHA-256 and FNV-1a fallback for offline / insecure file protocol
+function sha256(message) {
+    if (window.crypto && crypto.subtle) {
+        const msgBuffer = new TextEncoder().encode(message);
+        return crypto.subtle.digest('SHA-256', msgBuffer).then(hashBuffer => {
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        });
+    } else {
+        let hash = 0;
+        for (let i = 0; i < message.length; i++) {
+            const char = message.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32bit integer
+        }
+        return Promise.resolve("fnv_" + Math.abs(hash).toString(16).padStart(8, '0'));
+    }
+}
+
 // Helper to render users list
 function drawUsersTable(users) {
     const tbody = document.getElementById("user-table-body");
@@ -54,7 +73,13 @@ function drawUsersTable(users) {
         tr.appendChild(tdUser);
 
         const tdPass = document.createElement("td");
-        tdPass.innerText = user.password;
+        tdPass.style.fontFamily = "monospace";
+        tdPass.style.fontSize = "12px";
+        tdPass.innerText = "Hashing...";
+        sha256(user.password).then(hash => {
+            tdPass.innerText = hash.substring(0, 16) + "...";
+            tdPass.title = hash;
+        });
         tr.appendChild(tdPass);
 
         const tdRole = document.createElement("td");
