@@ -27,6 +27,96 @@ body {
     font-family: 'Outfit', sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* ------------------ LIGHT THEME OVERRIDES ------------------ */
+body.light-theme {
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --glass-bg: rgba(0, 0, 0, 0.02);
+    --glass-border: rgba(0, 0, 0, 0.08);
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    background-image: none;
+}
+
+body.light-theme header {
+    background: rgba(255, 255, 255, 0.8);
+    border-bottom-color: #cbd5e1;
+}
+
+body.light-theme .glass-panel {
+    background: #ffffff;
+    border-color: #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+body.light-theme input, body.light-theme select {
+    color: #0f172a;
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+body.light-theme input:focus, body.light-theme select:focus {
+    border-color: var(--accent-glow);
+}
+
+body.light-theme .custom-slider {
+    background: #cbd5e1;
+}
+
+body.light-theme .theme-btn, body.light-theme .admin-btn {
+    border-color: #cbd5e1;
+    color: #334155;
+    background: #f1f5f9;
+}
+
+body.light-theme .theme-btn:hover, body.light-theme .admin-btn:hover {
+    background: #cbd5e1;
+}
+
+body.light-theme .advisory-panel {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(16, 185, 129, 0.05));
+    border-color: #e2e8f0;
+}
+
+body.light-theme .advisory-text {
+    color: #334155;
+}
+
+body.light-theme #login-gate {
+    background: rgba(248, 250, 252, 0.95);
+}
+
+body.light-theme .login-card {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+}
+
+/* ------------------ BUTTON COMPONENTS ------------------ */
+.theme-btn, .admin-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    color: var(--text-main);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.theme-btn:hover, .admin-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--accent-glow);
+}
+
+.admin-btn {
+    border-color: var(--accent-glow);
+    color: #6366f1;
+    margin-left: 12px;
 }
 
 /* ------------------ LOGIN PORTAL GATE ------------------ */
@@ -41,7 +131,9 @@ body {
     z-index: 9999;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
+    overflow-y: auto;
+    padding: 40px 16px;
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -56,6 +148,7 @@ body {
     text-align: center;
     backdrop-filter: blur(10px);
     position: relative;
+    margin: auto;
 }
 
 .login-logo {
@@ -66,6 +159,24 @@ body {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 8px;
+}
+
+.welcome-portal-btn {
+    transition: all 0.2s ease-in-out;
+}
+.welcome-portal-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(99, 102, 241, 0.6) !important;
+}
+
+.back-link {
+    transition: all 0.2s ease;
+}
+.back-link:hover {
+    color: var(--text-main) !important;
+    text-decoration: underline;
 }
 
 .login-subtitle {
@@ -514,5 +625,125 @@ header {
     .circular-meter-card {
         flex: 1;
         min-width: 250px;
+    }
+}
+
+@media (max-width: 768px) {
+    header {
+        padding: 14px 16px;
+    }
+    
+    .logo-text {
+        font-size: 18px;
+    }
+    
+    .badge {
+        display: none !important;
+    }
+    
+    .user-welcome {
+        display: none !important;
+    }
+    
+    .header-metadata {
+        gap: 8px;
+    }
+    
+    .theme-btn, .admin-btn, .logout-btn {
+        font-size: 11px;
+        padding: 6px 10px;
+        margin-left: 0;
+    }
+    
+    .main-container {
+        padding: 20px 16px;
+        gap: 20px;
+    }
+    
+    .glass-panel {
+        padding: 20px;
+    }
+    
+    .panel-title {
+        font-size: 17px;
+        margin-bottom: 16px;
+    }
+    
+    .grid-inputs {
+        gap: 16px;
+    }
+}
+
+@media (max-width: 600px) {
+    .advisory-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .download-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    header {
+        flex-wrap: wrap;
+        justify-content: center;
+        padding: 10px 8px;
+        gap: 10px;
+    }
+    
+    .logo-text {
+        font-size: 15px;
+        width: 100%;
+        text-align: center;
+    }
+    
+    .header-metadata {
+        width: 100%;
+        justify-content: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    
+    .theme-btn, .admin-btn, .logout-btn {
+        font-size: 11px;
+        padding: 6px 8px;
+        margin-left: 0;
+    }
+
+    .main-container {
+        padding: 16px 12px;
+    }
+    
+    .glass-panel {
+        padding: 16px;
+        border-radius: 16px;
+    }
+    
+    .panel-title {
+        font-size: 15px;
+    }
+    
+    .meters-grid {
+        flex-direction: column;
+    }
+    
+    .circular-meter-card {
+        min-width: 100%;
+        padding: 16px;
+    }
+    
+    .login-card {
+        padding: 24px 16px;
+        width: 100%;
+        max-width: 100%;
+        margin: auto 0;
+    }
+    
+    .login-logo {
+        font-size: 24px;
     }
 }

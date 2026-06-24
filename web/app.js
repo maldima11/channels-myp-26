@@ -1,17 +1,73 @@
 const API_URL = "http://127.0.0.1:5000/api/predict";
+const USERS_API_URL = "http://127.0.0.1:5000/api/users";
 const USER_KEY = 'nust_authorized_users';
 const defaultUsers = [
     { username: 'agritex_officer', password: 'nust_maize_2026', name: 'Primary Officer', role: 'Agritex Officer' }
 ];
 
-// Helper to pull accounts from shared LocalStorage
-function getAuthorizedUsers() {
-    const users = localStorage.getItem(USER_KEY);
-    if (!users) {
-        localStorage.setItem(USER_KEY, JSON.stringify(defaultUsers));
-        return defaultUsers;
-    }
-    return JSON.parse(users);
+let cachedUsers = [];
+let selectedRole = ''; // Tracks chosen portal path: 'Farmer' or 'Agritex Officer'
+
+// Pull credentials from Central Flask API, falling back to LocalStorage
+function syncUsersFromBackend(callback) {
+    fetch(USERS_API_URL)
+        .then(res => {
+            if (!res.ok) throw new Error("API error");
+            return res.json();
+        })
+        .then(data => {
+            if (data.status === "success" && data.users) {
+                cachedUsers = data.users;
+                localStorage.setItem(USER_KEY, JSON.stringify(cachedUsers));
+            } else {
+                throw new Error("Invalid format");
+            }
+            if (callback) callback();
+        })
+        .catch(err => {
+            console.warn("Backend User DB offline. Falling back to local registry storage:", err.message);
+            const local = localStorage.getItem(USER_KEY);
+            if (!local) {
+                localStorage.setItem(USER_KEY, JSON.stringify(defaultUsers));
+                cachedUsers = defaultUsers;
+            } else {
+                try {
+                    cachedUsers = JSON.parse(local) || defaultUsers;
+                } catch(e) {
+                    cachedUsers = defaultUsers;
+                }
+            }
+            if (callback) callback();
+        });
+}
+
+// Welcome screen toggle controllers
+function showLoginForm(role) {
+    selectedRole = role;
+    
+    // Clear warnings & inputs
+    document.getElementById("login-warning").style.display = "none";
+    document.getElementById("username").value = "";
+    document.getElementById("password").value = "";
+
+    // Set role specific layout labels
+    document.getElementById("login-portal-title").innerText = role === 'Farmer' ? "🌾 Farmer Login" : "👔 Officer Login";
+    document.getElementById("login-portal-subtitle").innerText = role === 'Farmer' 
+        ? "Access advisory forecasts & calendars" 
+        : "Calibrate models and manage credentials";
+    
+    document.getElementById("username-label").innerText = role === 'Farmer' ? "Farmer Username" : "Officer Username";
+    document.getElementById("username").placeholder = role === 'Farmer' ? "e.g. farmer_jane" : "e.g. agritex_officer";
+
+    // Hide welcome panel, show login panel
+    document.getElementById("welcome-screen").style.display = "none";
+    document.getElementById("login-form-screen").style.display = "block";
+}
+
+function showWelcomeScreen() {
+    document.getElementById("login-form-screen").style.display = "none";
+    document.getElementById("welcome-screen").style.display = "block";
+    document.getElementById("login-warning").style.display = "none";
 }
 
 // 1. SYSTEM SECURITY ACCESS (WITH ADMIN PORTAL INTEGRATION)
@@ -19,30 +75,74 @@ function attemptLogin() {
     const user = document.getElementById("username").value.trim().toLowerCase();
     const pass = document.getElementById("password").value.trim();
     
-    const users = getAuthorizedUsers();
-    const matchedUser = users.find(u => u.username === user && u.password === pass);
+    // Sync cache first, then validate
+    syncUsersFromBackend(() => {
+        const matchedUser = cachedUsers.find(u => u.username === user && u.password === pass);
 
-    if (matchedUser) {
-        document.getElementById("logged-user-name").innerText = `${matchedUser.name} (${matchedUser.role})`;
-        const gate = document.getElementById("login-gate");
-        gate.style.opacity = "0";
-        setTimeout(() => {
-            gate.style.display = "none";
-            runForecast(); // Render gauges and chart upon entry
-        }, 500);
-    } else {
-        document.getElementById("login-warning").style.display = "block";
-    }
+        if (matchedUser) {
+            // Role enforcement: check if user matches the selected portal role
+            if (matchedUser.role !== selectedRole) {
+                document.getElementById("login-warning").innerText = `Access denied. Account is registered as a '${matchedUser.role}'.`;
+                document.getElementById("login-warning").style.display = "block";
+                return;
+            }
+
+            document.getElementById("logged-user-name").innerText = `${matchedUser.name} (${matchedUser.role})`;
+            
+            // Gated navigation: only show Admin button if logged-in user is an Agritex Officer
+            const adminBtn = document.getElementById("admin-redirect-btn");
+            if (matchedUser.role === 'Agritex Officer') {
+                adminBtn.style.display = "inline-block";
+            } else {
+                adminBtn.style.display = "none";
+            }
+
+            const gate = document.getElementById("login-gate");
+            gate.style.opacity = "0";
+            setTimeout(() => {
+                gate.style.display = "none";
+                runForecast(); // Render gauges and chart upon entry
+            }, 500);
+        } else {
+            document.getElementById("login-warning").innerText = "Invalid Username or Password. Please try again.";
+            document.getElementById("login-warning").style.display = "block";
+        }
+    });
 }
 
 // Logout controller
 function triggerLogout() {
     const gate = document.getElementById("login-gate");
     document.getElementById("password").value = ""; // Clear password field
+    document.getElementById("admin-redirect-btn").style.display = "none"; // Hide admin button on logout
+    
+    // Reset view to Welcome Selector Screen
+    showWelcomeScreen();
+    
     gate.style.display = "flex";
     setTimeout(() => {
         gate.style.opacity = "1";
     }, 50);
+}
+
+// Admin Navigation Router
+function goToAdmin() {
+    window.location.href = "./admin/index.html";
+}
+
+// Theme Switcher Controller (Dark vs. Light Theme)
+function toggleTheme() {
+    const isLight = document.body.classList.toggle('light-theme');
+    localStorage.setItem('nust_portal_theme', isLight ? 'light' : 'dark');
+    
+    // Redraw stress gauges and canvas chart to apply theme colors
+    if (document.getElementById("login-gate").style.display === "none") {
+        runForecast();
+    } else {
+        // Redraw initial empty gauges if not logged in
+        drawGauge("waterGauge", 35, "#10b981");
+        drawGauge("heatGauge", 32, "#f43f5e");
+    }
 }
 
 // 2. CULTIVAR GUARD CONFIGURATION
@@ -68,6 +168,31 @@ function showCultivarWarning(name) {
 function dismissWarning() {
     document.getElementById("warning-modal").classList.remove("active");
     runForecast();
+}
+
+// Ward default biophysical environmental mappings (simulating GIS database pull)
+const WARD_DEFAULTS = {
+    "Ward 12": { precip: 0.40, heat: 0.38, sand: 70, clay: 18 },
+    "Ward 15": { precip: 0.65, heat: 0.28, sand: 62, clay: 25 },
+    "Ward 18": { precip: 0.30, heat: 0.45, sand: 80, clay: 12 }
+};
+
+function applyWardDefaults() {
+    const ward = document.getElementById("location-ward").value;
+    const defaults = WARD_DEFAULTS[ward];
+    if (defaults) {
+        // Update slider inputs
+        document.getElementById("slide-precip").value = defaults.precip;
+        document.getElementById("slide-heat").value = defaults.heat;
+        document.getElementById("slide-sand").value = defaults.sand;
+        document.getElementById("slide-clay").value = defaults.clay;
+
+        // Update textual slider displays
+        document.getElementById("val-precip").innerText = defaults.precip;
+        document.getElementById("val-heat").innerText = defaults.heat;
+        document.getElementById("val-sand").innerText = `${defaults.sand}%`;
+        document.getElementById("val-clay").innerText = `${defaults.clay}%`;
+    }
 }
 
 // Sliders UI binder
@@ -208,10 +333,11 @@ function drawGauge(canvasId, percentage, color) {
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, 80, 80);
     
-    // Draw track
+    // Draw track - high contrast color depending on light/dark mode
+    const isLight = document.body.classList.contains('light-theme');
     ctx.beginPath();
     ctx.arc(40, 40, 32, 0, 2 * Math.PI);
-    ctx.strokeStyle = "rgba(255,255,255,0.05)";
+    ctx.strokeStyle = isLight ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.05)";
     ctx.lineWidth = 6;
     ctx.stroke();
 
@@ -234,37 +360,42 @@ function drawYieldChart(low, med, high) {
 
     ctx.clearRect(0, 0, w, h);
 
-    // Draw references lines
+    const isLight = document.body.classList.contains('light-theme');
+    
+    // Dynamic dimensions for responsiveness
+    const leftMargin = w < 400 ? 36 : 60;
+    const barWidth = w < 360 ? 32 : (w < 480 ? 44 : 60);
     const maxVal = 1800;
+
+    // Draw references lines
     const gridLines = [400, 800, 1200, 1600];
-    ctx.strokeStyle = "rgba(255,255,255,0.03)";
+    ctx.strokeStyle = isLight ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.03)";
     ctx.lineWidth = 1;
-    ctx.fillStyle = "#94a3b8";
+    ctx.fillStyle = isLight ? "#475569" : "#94a3b8";
     ctx.font = "11px sans-serif";
 
     gridLines.forEach(line => {
         let y = h - (line / maxVal) * (h - 40) - 20;
         ctx.beginPath();
-        ctx.moveTo(60, y);
+        ctx.moveTo(leftMargin, y);
         ctx.lineTo(w - 20, y);
         ctx.stroke();
-        ctx.fillText(line, 20, y + 4);
+        ctx.fillText(line, leftMargin - 26, y + 4);
     });
 
-    const barWidth = 60;
-    const gap = (w - 80 - (barWidth * 3)) / 4;
+    const gap = (w - leftMargin - 20 - (barWidth * 3)) / 4;
     const labels = ["Low (q10)", "Median (q50)", "High (q90)"];
     const values = [low, med, high];
     const colors = ["#f43f5e", "#6366f1", "#10b981"];
 
     values.forEach((val, idx) => {
-        let x = 60 + gap + idx * (barWidth + gap);
+        let x = leftMargin + gap + idx * (barWidth + gap);
         let barH = (val / maxVal) * (h - 40);
         let y = h - barH - 20;
 
         let grad = ctx.createLinearGradient(x, y, x, h - 20);
         grad.addColorStop(0, colors[idx]);
-        grad.addColorStop(1, "rgba(99, 102, 241, 0.05)");
+        grad.addColorStop(1, isLight ? "rgba(99, 102, 241, 0.01)" : "rgba(99, 102, 241, 0.05)");
 
         ctx.fillStyle = grad;
         ctx.beginPath();
@@ -275,15 +406,15 @@ function drawYieldChart(low, med, high) {
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        // Top labels (value)
-        ctx.fillStyle = "#fff";
-        ctx.font = "bold 13px sans-serif";
+        // Top labels (value) - high contrast color depending on theme
+        ctx.fillStyle = isLight ? "#0f172a" : "#fff";
+        ctx.font = w < 360 ? "bold 10px sans-serif" : "bold 13px sans-serif";
         ctx.textAlign = "center";
         ctx.fillText(val, x + barWidth / 2, y - 8);
 
         // Bottom label
-        ctx.fillStyle = "#94a3b8";
-        ctx.font = "12px sans-serif";
+        ctx.fillStyle = isLight ? "#475569" : "#94a3b8";
+        ctx.font = w < 360 ? "9px sans-serif" : "12px sans-serif";
         ctx.fillText(labels[idx], x + barWidth / 2, h - 4);
     });
 }
@@ -485,6 +616,25 @@ function downloadReport() {
             <div>${data.advisory.replace(/\n/g, '<br>')}</div>
         </div>
 
+        <!-- Biophysical & Quantile Indicators Glossary -->
+        <div style="margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 24px;">
+            <h4 style="margin-top: 0; margin-bottom: 12px; color: #1e1b4b; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Indicator Glossary & Interpretations</h4>
+            <div style="font-size: 12px; line-height: 1.6; color: #475569; display: grid; gap: 12px;">
+                <div>
+                    <strong style="color: #0f172a;">Quantile Yield Forecast Range (kg/ha):</strong>
+                    This provides a probabilistic range for yield outcomes. The **Lower Bound (q10)** represents a pessimistic worst-case yield scenario under severe climate stress (there is a 90% probability final yields will exceed this). The **Expected Median Yield (q50)** represents the most likely yield outcome under normal conditions. The **Upper Bound (q90)** represents the best-case yield potential under optimal rainfall and moisture management.
+                </div>
+                <div>
+                    <strong style="color: #0f172a;">Water Deficit Index (WDI):</strong>
+                    Quantifies physiological water stress calculated from precipitation deficits and crop evapotranspiration coefficients. Higher deficit percentages mean severe moisture scarcity, which restricts vegetative development.
+                </div>
+                <div>
+                    <strong style="color: #0f172a;">Heat Accumulation Stress:</strong>
+                    Represents crop thermal stress calculated from cumulative temperatures exceeding the baseline growth threshold (10°C) during critical crop cycles. Higher stress levels signify increased risk of metabolic decay and reduced grain filling.
+                </div>
+            </div>
+        </div>
+
         <div class="footer">
             <p>Generated via NUST MPhil Thesis Hybrid Model Fusion Pipeline (Option B) | Scale: kg/ha</p>
             <p>Security Signature: Authorized Agritex Officer System Log Verification</p>
@@ -504,6 +654,18 @@ function downloadReport() {
 
 // Setup inputs key handlers and window resize callbacks
 window.onload = function() {
+    // Sync portal theme from storage
+    const savedTheme = localStorage.getItem('nust_portal_theme');
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-theme');
+    }
+
+    // Load defaults for the initial ward selection
+    applyWardDefaults();
+
+    // Pull central database credentials on load
+    syncUsersFromBackend();
+
     drawGauge("waterGauge", 35, "#10b981");
     drawGauge("heatGauge", 32, "#f43f5e");
     

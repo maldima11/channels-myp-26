@@ -14,18 +14,42 @@
 
     <!-- 1. LOGIN PORTAL GATE -->
     <div id="login-gate">
-        <div class="login-card">
-            <div class="login-logo">Agritex Portal</div>
-            <div class="login-subtitle">NUST Maize Yield Forecasting System</div>
+        <!-- WELCOME LANDING CARD -->
+        <div class="login-card" id="welcome-screen">
+            <div class="login-logo">NUST Yield Portal</div>
+            <div class="login-subtitle" style="margin-bottom: 24px;">Umzingwane District Yield Forecasting System</div>
+            
+            <p style="font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 24px; line-height: 1.6;">
+                Select your access portal to query biophysical crop forecasts, view stress indices, or manage agronomic recommendations.
+            </p>
+            
+            <div style="display: grid; gap: 16px; width: 100%;">
+                <button class="welcome-portal-btn" onclick="showLoginForm('Farmer')" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05)); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; padding: 16px; border-radius: 12px; font-weight: 600; cursor: pointer; text-align: left; transition: all 0.2s;">
+                    <div style="font-size: 15px; margin-bottom: 4px; font-weight: 700;">🌾 Farmer Portal</div>
+                    <div style="font-size: 11px; color: var(--text-muted); font-weight: 400;">Access regional predictions, moisture deficits, and crop calendars.</div>
+                </button>
+                
+                <button class="welcome-portal-btn" onclick="showLoginForm('Agritex Officer')" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.05)); border: 1px solid rgba(99, 102, 241, 0.3); color: #a5b4fc; padding: 16px; border-radius: 12px; font-weight: 600; cursor: pointer; text-align: left; transition: all 0.2s;">
+                    <div style="font-size: 15px; margin-bottom: 4px; font-weight: 700;">👔 Agritex Officer Console</div>
+                    <div style="font-size: 11px; color: var(--text-muted); font-weight: 400;">Calibrate biophysical models, download reports, and register accounts.</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- LOGIN FORM CARD (starts hidden) -->
+        <div class="login-card" id="login-form-screen" style="display: none;">
+            <div class="back-link" onclick="showWelcomeScreen()" style="font-size: 12px; color: var(--text-muted); cursor: pointer; margin-bottom: 20px; display: inline-block; font-weight: 600; transition: color 0.2s;">← Back to Portal Select</div>
+            <div class="login-logo" id="login-portal-title">Portal Login</div>
+            <div class="login-subtitle" id="login-portal-subtitle">Enter credentials to connect to system</div>
             
             <div class="input-group">
-                <label for="username">Officer Username</label>
-                <input type="text" id="username" class="input-field" placeholder="e.g. agritex_officer" value="agritex_officer">
+                <label for="username" id="username-label">Username</label>
+                <input type="text" id="username" class="input-field" placeholder="e.g. agritex_officer" value="">
             </div>
             
             <div class="input-group">
                 <label for="password">System Password</label>
-                <input type="password" id="password" class="input-field" placeholder="••••••••" value="nust_maize_2026">
+                <input type="password" id="password" class="input-field" placeholder="••••••••" value="">
             </div>
             
             <button class="login-btn" onclick="attemptLogin()">Authorize & Connect</button>
@@ -38,6 +62,8 @@
         <div class="logo-text">NUST Yield Portal</div>
         <div class="header-metadata">
             <div class="badge">Model Version: Flask API Connected (Option B)</div>
+            <button class="theme-btn" onclick="toggleTheme()" title="Toggle Interface Mode">🌓 Theme Mode</button>
+            <button id="admin-redirect-btn" class="admin-btn" onclick="goToAdmin()" style="display:none;">Go to Admin Panel</button>
             <div class="user-welcome">Welcome, <strong id="logged-user-name" class="user-highlight">Agritex Officer</strong></div>
             <button class="logout-btn" onclick="triggerLogout()">Logout</button>
         </div>
@@ -58,7 +84,7 @@
                     <div class="slider-header">
                         <label for="location-ward" class="slider-title">Umzingwane Location Ward</label>
                     </div>
-                    <select id="location-ward" class="input-field" onchange="runForecast()">
+                    <select id="location-ward" class="input-field" onchange="applyWardDefaults(); runForecast()">
                         <option value="Ward 12">Ward 12 (Ntabazinduna)</option>
                         <option value="Ward 15">Ward 15 (Esigodini Centroid)</option>
                         <option value="Ward 18">Ward 18 (Umzingwane South)</option>
