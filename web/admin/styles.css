@@ -191,6 +191,78 @@ body.light-theme .back-btn {
 @media (max-width: 992px) {
     .dashboard-grid {
         grid-template-columns: 1fr;
+        gap: 24px;
+    }
+}
+
+@media (max-width: 768px) {
+    header {
+        padding: 14px 16px;
+    }
+    
+    .logo-text {
+        font-size: 18px;
+    }
+    
+    .badge {
+        display: none !important;
+    }
+    
+    .header-metadata {
+        gap: 8px;
+    }
+    
+    .theme-btn, .back-btn {
+        font-size: 11px;
+        padding: 6px 10px;
+    }
+    
+    .main-container {
+        padding: 20px 16px;
+        gap: 20px;
+    }
+    
+    .glass-panel {
+        padding: 20px;
+    }
+    
+    .panel-title {
+        font-size: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .metric-card {
+        padding: 16px;
+    }
+    
+    .metric-value {
+        font-size: 28px;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-container {
+        padding: 16px 12px;
+    }
+    
+    .glass-panel {
+        padding: 16px;
+        border-radius: 16px;
+    }
+    
+    .table-container {
+        margin: 0 -16px;
+        padding: 0 16px;
+    }
+    
+    .user-table th, .user-table td {
+        padding: 12px 8px;
+        font-size: 13px;
+    }
+    
+    .delete-btn {
+        padding: 4px 8px;
+        font-size: 11px;
     }
 }
 
