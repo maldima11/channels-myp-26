@@ -6,6 +6,9 @@ const defaultUsers = [
     { username: 'agritex_officer', password: 'nust_maize_2026', name: 'Primary Officer', role: 'Agritex Officer' }
 ];
 
+let editMode = false;
+let editUsername = '';
+
 // 1. INITIALIZE LOCAL STORAGE CREDENTIALS & THEME ON LOAD
 function initUsers() {
     // Sync theme
@@ -50,11 +53,23 @@ function drawUsersTable(users) {
         tdUser.innerText = user.username;
         tr.appendChild(tdUser);
 
+        const tdPass = document.createElement("td");
+        tdPass.innerText = user.password;
+        tr.appendChild(tdPass);
+
         const tdRole = document.createElement("td");
         tdRole.innerText = user.role;
         tr.appendChild(tdRole);
 
         const tdActions = document.createElement("td");
+        
+        // Edit button
+        const editBtn = document.createElement("button");
+        editBtn.className = "edit-btn";
+        editBtn.innerText = "Edit";
+        editBtn.onclick = () => startEdit(user);
+        tdActions.appendChild(editBtn);
+
         const deleteBtn = document.createElement("button");
         deleteBtn.className = "delete-btn";
         deleteBtn.innerText = "Delete";
@@ -136,6 +151,11 @@ function createUser() {
         return;
     }
 
+    if (editMode) {
+        updateUser(username, password, name, role);
+        return;
+    }
+
     // Try posting to Flask API
     fetch(USERS_API_URL, {
         method: "POST",
@@ -189,6 +209,102 @@ function createUser() {
         successMsg.style.display = "block";
         renderUsers();
     });
+}
+
+// 5b. UPDATE USER ACCOUNT ADJUSTMENTS
+function updateUser(username, password, name, role) {
+    const errorMsg = document.getElementById("form-error");
+    const successMsg = document.getElementById("form-success");
+
+    fetch(`${USERS_API_URL}/${username}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password, name, role })
+    })
+    .then(res => {
+        return res.json().then(data => {
+            if (!res.ok) throw new Error(data.message || "Failed to update user");
+            return data;
+        });
+    })
+    .then(data => {
+        cancelEdit();
+        successMsg.innerText = "User adjusted successfully!";
+        successMsg.style.display = "block";
+        renderUsers();
+    })
+    .catch(err => {
+        console.warn("Backend update request failed. Falling back to local update:", err.message);
+        
+        // Local fallback
+        const local = localStorage.getItem(STORAGE_KEY);
+        let users = [];
+        try {
+            users = JSON.parse(local) || [];
+        } catch(e) {
+            users = [];
+        }
+
+        let userFound = false;
+        for (let u of users) {
+            if (u.username === username) {
+                u.password = password;
+                u.name = name;
+                u.role = role;
+                userFound = true;
+                break;
+            }
+        }
+
+        if (!userFound) {
+            errorMsg.innerText = `User '${username}' not found.`;
+            errorMsg.style.display = "block";
+            return;
+        }
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+        cancelEdit();
+        successMsg.innerText = "User adjusted locally (Backend offline)!";
+        successMsg.style.display = "block";
+        renderUsers();
+    });
+}
+
+// 5c. EDIT CONTROL TRIGGERS
+function startEdit(user) {
+    document.getElementById("reg-username").value = user.username;
+    document.getElementById("reg-username").disabled = true;
+    document.getElementById("reg-password").value = user.password;
+    document.getElementById("reg-name").value = user.name;
+    document.getElementById("reg-role").value = user.role;
+
+    editMode = true;
+    editUsername = user.username;
+
+    document.getElementById("form-title-action").innerText = "Edit Authorized Account";
+    document.getElementById("reg-primary-btn").innerText = "Save Adjustments";
+    document.getElementById("reg-cancel-btn").style.display = "inline-block";
+
+    document.getElementById("form-error").style.display = "none";
+    document.getElementById("form-success").style.display = "none";
+}
+
+function cancelEdit() {
+    document.getElementById("reg-username").value = "";
+    document.getElementById("reg-username").disabled = false;
+    document.getElementById("reg-password").value = "";
+    document.getElementById("reg-name").value = "";
+    document.getElementById("reg-role").value = "Agritex Officer";
+
+    editMode = false;
+    editUsername = "";
+
+    document.getElementById("form-title-action").innerText = "Add Authorized Account";
+    document.getElementById("reg-primary-btn").innerText = "Register User";
+    document.getElementById("reg-cancel-btn").style.display = "none";
+
+    document.getElementById("form-error").style.display = "none";
+    document.getElementById("form-success").style.display = "none";
 }
 
 // 6. DELETE USER ACCOUNT

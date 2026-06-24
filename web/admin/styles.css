@@ -241,6 +241,31 @@ body.light-theme .back-btn {
 }
 
 @media (max-width: 480px) {
+    header {
+        flex-wrap: wrap;
+        justify-content: center;
+        padding: 10px 8px;
+        gap: 10px;
+    }
+    
+    .logo-text {
+        font-size: 15px;
+        width: 100%;
+        text-align: center;
+    }
+    
+    .header-metadata {
+        width: 100%;
+        justify-content: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    
+    .theme-btn, .back-btn {
+        font-size: 11px;
+        padding: 6px 8px;
+    }
+
     .main-container {
         padding: 16px 12px;
     }
@@ -260,9 +285,10 @@ body.light-theme .back-btn {
         font-size: 13px;
     }
     
-    .delete-btn {
+    .delete-btn, .edit-btn {
         padding: 4px 8px;
         font-size: 11px;
+        margin-right: 4px;
     }
 }
 
@@ -434,4 +460,26 @@ select.input-field option {
 .delete-btn:hover {
     background: var(--accent-rose);
     color: white;
+}
+
+.edit-btn {
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: #a5b4fc;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-right: 8px;
+}
+
+.edit-btn:hover {
+    background: var(--accent-glow);
+    color: white;
+}
+
+body.light-theme .edit-btn {
+    color: var(--accent-glow);
 }
