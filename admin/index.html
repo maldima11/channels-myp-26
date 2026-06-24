@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NUST Yield Portal - Admin Center</title>
+    <!-- Modern Premium Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- MAIN HEADER -->
+    <header>
+        <div class="logo-text">NUST Admin Panel</div>
+        <div class="header-metadata">
+            <div class="badge">Role Management Console</div>
+            <div class="user-welcome">System: <strong class="user-highlight">Authorized Admin</strong></div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <div class="main-container">
+        
+        <!-- ROW 1: METRICS HIGHLIGHTS -->
+        <div class="metrics-grid">
+            <div class="metric-card glass-panel">
+                <span class="metric-label">Total Registered</span>
+                <span id="stat-total" class="metric-value">0</span>
+            </div>
+            <div class="metric-card glass-panel">
+                <span class="metric-label">Agritex Officers</span>
+                <span id="stat-officers" class="metric-value">0</span>
+            </div>
+            <div class="metric-card glass-panel">
+                <span class="metric-label">Registered Farmers</span>
+                <span id="stat-farmers" class="metric-value">0</span>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- COLUMN 1: ADD USER FORM -->
+            <div class="glass-panel form-card">
+                <div class="panel-title">
+                    <span class="bullet-accent">■</span> Add Authorized Account
+                </div>
+                
+                <div class="form-group">
+                    <label for="reg-username">Username</label>
+                    <input type="text" id="reg-username" class="input-field" placeholder="e.g. jdoe">
+                </div>
+
+                <div class="form-group">
+                    <label for="reg-password">Password</label>
+                    <input type="password" id="reg-password" class="input-field" placeholder="••••••••">
+                </div>
+
+                <div class="form-group">
+                    <label for="reg-name">Full Name</label>
+                    <input type="text" id="reg-name" class="input-field" placeholder="e.g. John Doe">
+                </div>
+
+                <div class="form-group">
+                    <label for="reg-role">System Role</label>
+                    <select id="reg-role" class="input-field">
+                        <option value="Agritex Officer">Agritex Officer</option>
+                        <option value="Farmer">Farmer</option>
+                    </select>
+                </div>
+
+                <button class="action-btn" onclick="createUser()">Register User</button>
+                <div id="form-error" class="status-msg error-msg">Please fill all fields.</div>
+                <div id="form-success" class="status-msg success-msg">User registered successfully!</div>
+            </div>
+
+            <!-- COLUMN 2: ACTIVE USERS DIRECTORY -->
+            <div class="glass-panel directory-card">
+                <div class="panel-title">
+                    <span class="bullet-accent">■</span> Credentials Directory
+                </div>
+                
+                <div class="table-container">
+                    <table class="user-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Username</th>
+                                <th>Role</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-table-body">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="app.js"></script>
+</body>
+</html>
