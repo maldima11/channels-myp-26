@@ -761,9 +761,9 @@ function toggleUsageGuide() {
     const btn = document.getElementById("usage-toggle-btn");
     if (panel.style.display === "none") {
         panel.style.display = "flex";
-        btn.innerHTML = "<span class='widget-icon'>✕</span>";
+        btn.innerHTML = "<span class='widget-icon'>✕</span><span class='widget-text'>Close Guide</span>";
     } else {
         panel.style.display = "none";
-        btn.innerHTML = "<span class='widget-icon'>📖</span>";
+        btn.innerHTML = "<span class='widget-icon'>📖</span><span class='widget-text'>Usage Guide</span>";
     }
 }

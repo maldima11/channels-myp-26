@@ -31,7 +31,7 @@ Represents the thermal crop stress calculated from ambient air and land surface 
 *   **Forecasting Sliders**: Inputs to adjust Precipitation and Heat Stress values in real-time.
 *   **HTML5 Canvas Renderers**: Draws the 3-column yield quantile bar charts and the circular biophysical stress gauges dynamically.
 *   **HTML Report Downloader**: Compiles current parameters, yield envelopes, and agronomic advice into a styled, printable HTML report file.
-*   **Usage Guige Widget**: A floating action button in the bottom-right corner that toggles a step-by-step tutorial panel detailing system usage.
+*   **Usage Guide Widget**: A floating action button in the bottom-right corner that toggles a step-by-step tutorial panel detailing system usage.
 *   **Logout Button**: Clears the active `sessionStorage` and locks the screen under the login gate.
 
 ### Non-Functional Components

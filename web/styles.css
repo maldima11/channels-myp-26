@@ -782,9 +782,9 @@ header {
 }
 
 .usage-toggle-btn {
-    width: 56px;
+    padding: 0 20px;
     height: 56px;
-    border-radius: 50%;
+    border-radius: 28px;
     background: linear-gradient(135deg, #4f46e5, #6366f1);
     border: none;
     color: white;
@@ -793,11 +793,15 @@ header {
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    font-family: inherit;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .usage-toggle-btn:hover {
-    transform: scale(1.1) rotate(5deg);
+    transform: scale(1.05) translateY(-2px);
     box-shadow: 0 12px 30px rgba(99, 102, 241, 0.6);
 }
 
