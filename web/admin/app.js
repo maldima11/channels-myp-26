@@ -65,14 +65,17 @@ function drawUsersTable(users) {
         const tr = document.createElement("tr");
 
         const tdName = document.createElement("td");
+        tdName.setAttribute("data-label", "Name");
         tdName.innerText = user.name;
         tr.appendChild(tdName);
 
         const tdUser = document.createElement("td");
+        tdUser.setAttribute("data-label", "Username");
         tdUser.innerText = user.username;
         tr.appendChild(tdUser);
 
         const tdPass = document.createElement("td");
+        tdPass.setAttribute("data-label", "Password");
         tdPass.style.fontFamily = "monospace";
         tdPass.style.fontSize = "12px";
         tdPass.innerText = "Hashing...";
@@ -83,10 +86,12 @@ function drawUsersTable(users) {
         tr.appendChild(tdPass);
 
         const tdRole = document.createElement("td");
+        tdRole.setAttribute("data-label", "Role");
         tdRole.innerText = user.role;
         tr.appendChild(tdRole);
 
         const tdActions = document.createElement("td");
+        tdActions.setAttribute("data-label", "Actions");
         
         // Edit button
         const editBtn = document.createElement("button");
