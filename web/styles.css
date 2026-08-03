@@ -95,6 +95,31 @@ body.light-theme .login-card {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
 }
 
+/* ------------------ GLOBAL FOOTER & CARD COPYRIGHTS ------------------ */
+.global-footer {
+    text-align: center;
+    padding: 30px 16px;
+    font-size: 13px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--glass-border);
+    margin-top: 40px;
+    background: rgba(11, 15, 25, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.card-footer-copyright {
+    margin-top: 32px;
+    font-size: 11px;
+    color: var(--text-muted);
+    opacity: 0.8;
+}
+
+body.light-theme .global-footer {
+    border-top-color: #cbd5e1;
+    background: rgba(0, 0, 0, 0.01);
+    color: #64748b;
+}
+
 /* ------------------ BUTTON COMPONENTS ------------------ */
 .theme-btn, .admin-btn {
     background: rgba(255, 255, 255, 0.05);
@@ -612,7 +637,17 @@ header {
 }
 
 /* ------------------ RESPONSIVENESS ------------------ */
+@media (max-width: 1080px) {
+    .badge {
+        display: none !important;
+    }
+}
+
 @media (max-width: 900px) {
+    .user-welcome {
+        display: none !important;
+    }
+    
     .results-container {
         grid-template-columns: 1fr;
     }
@@ -630,28 +665,20 @@ header {
 
 @media (max-width: 768px) {
     header {
-        padding: 14px 16px;
+        padding: 14px 20px;
     }
     
     .logo-text {
         font-size: 18px;
     }
     
-    .badge {
-        display: none !important;
-    }
-    
-    .user-welcome {
-        display: none !important;
-    }
-    
     .header-metadata {
-        gap: 8px;
+        gap: 10px;
     }
     
     .theme-btn, .admin-btn, .logout-btn {
-        font-size: 11px;
-        padding: 6px 10px;
+        font-size: 12px;
+        padding: 6px 12px;
         margin-left: 0;
     }
     
@@ -675,6 +702,24 @@ header {
 }
 
 @media (max-width: 600px) {
+    header {
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 16px;
+    }
+    
+    .logo-text {
+        text-align: center;
+    }
+    
+    .header-metadata {
+        width: 100%;
+        justify-content: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
     .advisory-header {
         flex-direction: column;
         align-items: flex-start;
@@ -688,32 +733,6 @@ header {
 }
 
 @media (max-width: 480px) {
-    header {
-        flex-wrap: wrap;
-        justify-content: center;
-        padding: 10px 8px;
-        gap: 10px;
-    }
-    
-    .logo-text {
-        font-size: 15px;
-        width: 100%;
-        text-align: center;
-    }
-    
-    .header-metadata {
-        width: 100%;
-        justify-content: center;
-        gap: 6px;
-        flex-wrap: wrap;
-    }
-    
-    .theme-btn, .admin-btn, .logout-btn {
-        font-size: 11px;
-        padding: 6px 8px;
-        margin-left: 0;
-    }
-
     .main-container {
         padding: 16px 12px;
     }
