@@ -57,6 +57,25 @@
             <div id="login-warning" class="login-warning">Invalid Username or Password. Please try again.</div>
             <p class="card-footer-copyright">&copy; 2026 NUST. All rights reserved.</p>
         </div>
+
+        <!-- COLLAPSIBLE USAGE GUIDE (On Login Screen) -->
+        <div class="login-card login-usage-guide" id="login-usage-guide" style="max-width: 450px; margin-top: 20px; padding: 24px; text-align: left;">
+            <div class="usage-guide-header" onclick="toggleLoginUsageGuide()" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                <span style="font-weight: 700; font-size: 15px; color: var(--text-main); font-family: 'Space Grotesk', sans-serif;">📖 Portal Usage Guide</span>
+                <span id="login-usage-toggle-icon" style="font-size: 14px; color: var(--text-muted); transition: transform 0.2s;">▼</span>
+            </div>
+            <div id="login-usage-content" style="display: none; margin-top: 16px; border-top: 1px solid var(--glass-border); padding-top: 16px;">
+                <ol style="margin-left: 20px; font-size: 12px; color: var(--text-muted); line-height: 1.6; display: flex; flex-direction: column; gap: 8px;">
+                    <li><strong>Access Paths</strong>: Choose <em>Farmer Portal</em> or <em>Officer Console</em> on the select screen.</li>
+                    <li><strong>Ward Selection</strong>: Select location ward from the dropdown to automatically load biophysical defaults.</li>
+                    <li><strong>Cultivar Selection</strong>: Select a maize cultivar to match model calibration.</li>
+                    <li><strong>Biophysical Scenarios</strong>: Manually adjust Precipitation, Heat, Sand, and Clay sliders to simulate specific local soil/weather stressors.</li>
+                    <li><strong>Meters & Gauges</strong>: Monitor <em>Water Deficit</em> and <em>Heat Stress</em> gauges in real-time.</li>
+                    <li><strong>Yield Forecast Chart</strong>: View Low (q10), Median (q50), and High (q90) yield predictions.</li>
+                    <li><strong>Agronomic Advisory</strong>: Read specific agricultural advice and click <em>Download Report</em> to export a full HTML/PDF formatted summary.</li>
+                </ol>
+            </div>
+        </div>
     </div>
 
     <!-- 2. MAIN HEADER -->
@@ -225,31 +244,6 @@
             <button class="warning-btn" onclick="dismissWarning()">Confirm & Calibrate</button>
         </div>
     </div>
-
-    <!-- 6. FLOATING PORTAL USAGE GUIDE WIDGET -->
-    <div id="usage-widget" class="usage-widget">
-        <button id="usage-toggle-btn" class="usage-toggle-btn" onclick="toggleUsageGuide()" title="Toggle Portal Usage Guide">
-            <span class="widget-icon">📖</span>
-        </button>
-        <div id="usage-panel" class="usage-panel glass-panel" style="display: none;">
-            <div class="usage-panel-header">
-                <h3>Portal Usage Guide</h3>
-                <button class="usage-close-btn" onclick="toggleUsageGuide()">×</button>
-            </div>
-            <div class="usage-panel-body">
-                <ol>
-                    <li><strong>Access Paths</strong>: Choose <em>Farmer Portal</em> or <em>Officer Console</em> at start.</li>
-                    <li><strong>Ward Selection</strong>: Select location ward from the dropdown to automatically load biophysical defaults.</li>
-                    <li><strong>Cultivar Selection</strong>: Select a maize cultivar to match model calibration.</li>
-                    <li><strong>Biophysical Scenarios</strong>: Manually adjust Precipitation, Heat, Sand, and Clay sliders to simulate specific local soil/weather stressors.</li>
-                    <li><strong>Meters & Gauges</strong>: Monitor <em>Water Deficit</em> and <em>Heat Stress</em> gauges in real-time.</li>
-                    <li><strong>Yield Forecast Chart</strong>: View Low (q10), Median (q50), and High (q90) yield predictions.</li>
-                    <li><strong>Agronomic Advisory</strong>: Read specific agricultural advice and click <em>Download Report</em> to export a full HTML/PDF formatted summary.</li>
-                </ol>
-            </div>
-        </div>
-    </div>
-
     <!-- 5. SCRIPTS -->
     <script src="app.js"></script>
 </body>
