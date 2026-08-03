@@ -258,6 +258,65 @@ body.light-theme .back-btn {
     .metric-value {
         font-size: 28px;
     }
+
+    /* Table Mobilization - Card-based Stacked View */
+    .user-table, .user-table thead, .user-table tbody, .user-table th, .user-table td, .user-table tr {
+        display: block;
+    }
+    
+    .user-table thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+    
+    .user-table tr {
+        border: 1px solid var(--glass-border);
+        border-radius: 12px;
+        margin-bottom: 16px;
+        background: rgba(255, 255, 255, 0.02);
+        padding: 8px;
+    }
+    
+    body.light-theme .user-table tr {
+        border-color: #cbd5e1;
+        background: #f8fafc;
+    }
+    
+    .user-table td {
+        border: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        position: relative;
+        padding-left: 45% !important;
+        text-align: right;
+        font-size: 14px;
+        padding-top: 12px !important;
+        padding-bottom: 12px !important;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        min-height: 48px;
+    }
+    
+    body.light-theme .user-table td {
+        border-bottom-color: #e2e8f0;
+    }
+    
+    .user-table td:last-child {
+        border-bottom: 0;
+    }
+    
+    .user-table td::before {
+        position: absolute;
+        left: 16px;
+        width: 40%;
+        padding-right: 10px;
+        white-space: nowrap;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-muted);
+        content: attr(data-label);
+    }
 }
 
 @media (max-width: 600px) {
