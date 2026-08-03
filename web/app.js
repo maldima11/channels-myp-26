@@ -752,15 +752,15 @@ window.onresize = function() {
     }
 };
 
-// Toggle Portal Usage Guide on Login Screen
-function toggleLoginUsageGuide() {
-    const content = document.getElementById("login-usage-content");
-    const icon = document.getElementById("login-usage-toggle-icon");
-    if (content.style.display === "none") {
-        content.style.display = "block";
-        icon.innerText = "▲";
+// Toggle Portal Usage Guide
+function toggleUsageGuide() {
+    const panel = document.getElementById("usage-panel");
+    const btn = document.getElementById("usage-toggle-btn");
+    if (panel.style.display === "none") {
+        panel.style.display = "flex";
+        btn.innerHTML = "<span class='widget-icon'>✕</span>";
     } else {
-        content.style.display = "none";
-        icon.innerText = "▼";
+        panel.style.display = "none";
+        btn.innerHTML = "<span class='widget-icon'>📖</span>";
     }
 }
