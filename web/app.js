@@ -585,6 +585,15 @@ function downloadReport() {
             border-top: 1px solid #e2e8f0;
             padding-top: 20px;
         }
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .report-card { padding: 24px 16px; border-radius: 12px; }
+            .header { flex-direction: column; align-items: flex-start; gap: 12px; }
+            .meta-grid { grid-template-columns: 1fr; gap: 12px; }
+            .yield-box { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .envelope-container { flex-direction: column; gap: 12px; }
+            .envelope-card { width: 100%; }
+        }
         @media print {
             body { padding: 0; background: none; }
             .report-card { border: none; box-shadow: none; padding: 0; }
@@ -743,15 +752,15 @@ window.onresize = function() {
     }
 };
 
-// Toggle Portal Usage Guide
-function toggleUsageGuide() {
-    const panel = document.getElementById("usage-panel");
-    const btn = document.getElementById("usage-toggle-btn");
-    if (panel.style.display === "none") {
-        panel.style.display = "flex";
-        btn.innerHTML = "<span class='widget-icon'>✕</span>";
+// Toggle Portal Usage Guide on Login Screen
+function toggleLoginUsageGuide() {
+    const content = document.getElementById("login-usage-content");
+    const icon = document.getElementById("login-usage-toggle-icon");
+    if (content.style.display === "none") {
+        content.style.display = "block";
+        icon.innerText = "▲";
     } else {
-        panel.style.display = "none";
-        btn.innerHTML = "<span class='widget-icon'>📖</span>";
+        content.style.display = "none";
+        icon.innerText = "▼";
     }
 }
