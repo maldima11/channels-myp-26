@@ -767,3 +767,16 @@ function toggleUsageGuide() {
         btn.innerHTML = "<span class='widget-icon'>📖</span><span class='widget-text'>Usage Guide</span>";
     }
 }
+
+// Toggle Login Password Visibility
+function toggleLoginPasswordVisibility() {
+    const passInput = document.getElementById("password");
+    const toggleBtn = document.getElementById("password-toggle-btn");
+    if (passInput.type === "password") {
+        passInput.type = "text";
+        toggleBtn.innerText = "🔒";
+    } else {
+        passInput.type = "password";
+        toggleBtn.innerText = "👁️";
+    }
+}

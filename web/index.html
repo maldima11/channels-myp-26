@@ -50,7 +50,10 @@
             
             <div class="input-group">
                 <label for="password">System Password</label>
-                <input type="password" id="password" class="input-field" placeholder="••••••••" value="">
+                <div class="password-input-wrapper" style="position: relative; width: 100%;">
+                    <input type="password" id="password" class="input-field" placeholder="••••••••" value="" style="padding-right: 50px;">
+                    <button type="button" id="password-toggle-btn" onclick="toggleLoginPasswordVisibility()" style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; padding: 4px;">👁️</button>
+                </div>
             </div>
             
             <button class="login-btn" onclick="attemptLogin()">Authorize & Connect</button>
