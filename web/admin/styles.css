@@ -75,6 +75,24 @@ body.light-theme .theme-btn:hover, body.light-theme .back-btn:hover {
     background: #cbd5e1;
 }
 
+/* ------------------ GLOBAL FOOTER ------------------ */
+.global-footer {
+    text-align: center;
+    padding: 30px 16px;
+    font-size: 13px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--glass-border);
+    margin-top: 40px;
+    background: rgba(11, 15, 25, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+body.light-theme .global-footer {
+    border-top-color: #cbd5e1;
+    background: rgba(0, 0, 0, 0.01);
+    color: #64748b;
+}
+
 /* ------------------ HEADER ------------------ */
 header {
     padding: 24px 5%;
@@ -188,6 +206,12 @@ body.light-theme .back-btn {
     gap: 40px;
 }
 
+@media (max-width: 1080px) {
+    .badge {
+        display: none !important;
+    }
+}
+
 @media (max-width: 992px) {
     .dashboard-grid {
         grid-template-columns: 1fr;
@@ -197,24 +221,20 @@ body.light-theme .back-btn {
 
 @media (max-width: 768px) {
     header {
-        padding: 14px 16px;
+        padding: 14px 20px;
     }
     
     .logo-text {
         font-size: 18px;
     }
     
-    .badge {
-        display: none !important;
-    }
-    
     .header-metadata {
-        gap: 8px;
+        gap: 10px;
     }
     
     .theme-btn, .back-btn {
-        font-size: 11px;
-        padding: 6px 10px;
+        font-size: 12px;
+        padding: 6px 12px;
     }
     
     .main-container {
@@ -240,32 +260,27 @@ body.light-theme .back-btn {
     }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 600px) {
     header {
-        flex-wrap: wrap;
-        justify-content: center;
-        padding: 10px 8px;
-        gap: 10px;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 16px;
     }
     
     .logo-text {
-        font-size: 15px;
-        width: 100%;
         text-align: center;
     }
     
     .header-metadata {
         width: 100%;
         justify-content: center;
-        gap: 6px;
+        gap: 8px;
         flex-wrap: wrap;
     }
-    
-    .theme-btn, .back-btn {
-        font-size: 11px;
-        padding: 6px 8px;
-    }
+}
 
+@media (max-width: 480px) {
     .main-container {
         padding: 16px 12px;
     }
