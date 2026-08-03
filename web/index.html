@@ -85,20 +85,40 @@
                         <label for="location-ward" class="slider-title">Umzingwane Location Ward</label>
                     </div>
                     <select id="location-ward" class="input-field" onchange="applyWardDefaults(); runForecast()">
-                        <option value="Ward 12">Ward 12 (Ntabazinduna)</option>
+                        <option value="Ward 1">Ward 1</option>
+                        <option value="Ward 2">Ward 2</option>
+                        <option value="Ward 3">Ward 3</option>
+                        <option value="Ward 4">Ward 4</option>
+                        <option value="Ward 5">Ward 5</option>
+                        <option value="Ward 6">Ward 6</option>
+                        <option value="Ward 7">Ward 7</option>
+                        <option value="Ward 8">Ward 8</option>
+                        <option value="Ward 9">Ward 9</option>
+                        <option value="Ward 10">Ward 10</option>
+                        <option value="Ward 11">Ward 11</option>
+                        <option value="Ward 12" selected>Ward 12 (Ntabazinduna)</option>
+                        <option value="Ward 13">Ward 13</option>
+                        <option value="Ward 14">Ward 14</option>
                         <option value="Ward 15">Ward 15 (Esigodini Centroid)</option>
+                        <option value="Ward 16">Ward 16</option>
+                        <option value="Ward 17">Ward 17</option>
                         <option value="Ward 18">Ward 18 (Umzingwane South)</option>
+                        <option value="Ward 19">Ward 19</option>
+                        <option value="Ward 20">Ward 20</option>
                     </select>
                 </div>
 
-                <!-- Cultivar Input -->
+                <!-- Cultivar Selection -->
                 <div class="slider-group">
                     <div class="slider-header">
                         <label for="cultivar-input" class="slider-title">Cultivar Selection</label>
                     </div>
-                    <div class="variety-input-box">
-                        <input type="text" id="cultivar-input" class="input-field" value="SC719" onchange="validateCultivar()">
-                    </div>
+                    <select id="cultivar-input" class="input-field" onchange="validateCultivar()">
+                        <option value="SC301">SC301 (Ultra-Early)</option>
+                        <option value="SC436">SC436 (Early)</option>
+                        <option value="SC529">SC529 (Medium)</option>
+                        <option value="SC719" selected>SC719 (Late)</option>
+                    </select>
                 </div>
 
                 <!-- Precipitation Slider -->
@@ -198,6 +218,30 @@
             <div class="warning-title" id="warning-title-text">Unsupported Maize Cultivar</div>
             <div class="warning-text" id="warning-text-content">The cultivar you entered is not supported in the calibrated model.</div>
             <button class="warning-btn" onclick="dismissWarning()">Confirm & Calibrate</button>
+        </div>
+    </div>
+
+    <!-- 6. FLOATING PORTAL USAGE GUIDE WIDGET -->
+    <div id="usage-widget" class="usage-widget">
+        <button id="usage-toggle-btn" class="usage-toggle-btn" onclick="toggleUsageGuide()" title="Toggle Portal Usage Guide">
+            <span class="widget-icon">📖</span>
+        </button>
+        <div id="usage-panel" class="usage-panel glass-panel" style="display: none;">
+            <div class="usage-panel-header">
+                <h3>Portal Usage Guide</h3>
+                <button class="usage-close-btn" onclick="toggleUsageGuide()">×</button>
+            </div>
+            <div class="usage-panel-body">
+                <ol>
+                    <li><strong>Access Paths</strong>: Choose <em>Farmer Portal</em> or <em>Officer Console</em> at start.</li>
+                    <li><strong>Ward Selection</strong>: Select location ward from the dropdown to automatically load biophysical defaults.</li>
+                    <li><strong>Cultivar Selection</strong>: Select a maize cultivar to match model calibration.</li>
+                    <li><strong>Biophysical Scenarios</strong>: Manually adjust Precipitation, Heat, Sand, and Clay sliders to simulate specific local soil/weather stressors.</li>
+                    <li><strong>Meters & Gauges</strong>: Monitor <em>Water Deficit</em> and <em>Heat Stress</em> gauges in real-time.</li>
+                    <li><strong>Yield Forecast Chart</strong>: View Low (q10), Median (q50), and High (q90) yield predictions.</li>
+                    <li><strong>Agronomic Advisory</strong>: Read specific agricultural advice and click <em>Download Report</em> to export a full HTML/PDF formatted summary.</li>
+                </ol>
+            </div>
         </div>
     </div>
 
