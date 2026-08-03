@@ -26,15 +26,16 @@ Represents the thermal crop stress calculated from ambient air and land surface 
 
 ### Functional Components
 *   **Credentials Authenticator**: Verifies inputs against the authorization database stored in the shared `localStorage` array. Hitting `Enter` in input boxes submits choices.
-*   **Location Ward Selector**: Maps specific clay, sand, and soil attributes according to the selected Umzingwane Ward centroid.
-*   **Cultivar ID Guard**: Validates crop variety inputs, allowing only calibrated crop codes (`SC301`, `SC436`, `SC529`, and `SC719`). Inputs outside this list trigger a warning modal.
+*   **Location Ward Selector**: Dropdown selection listing all 20 administrative wards of the Umzingwane District. Maps clay, sand, and soil attributes based on the selected ward defaults.
+*   **Cultivar ID Guard**: Selection dropdown for the four supported cultivars (`SC301`, `SC436`, `SC529`, and `SC719`). Prevents spelling mistakes and ensures model alignment.
 *   **Forecasting Sliders**: Inputs to adjust Precipitation and Heat Stress values in real-time.
 *   **HTML5 Canvas Renderers**: Draws the 3-column yield quantile bar charts and the circular biophysical stress gauges dynamically.
 *   **HTML Report Downloader**: Compiles current parameters, yield envelopes, and agronomic advice into a styled, printable HTML report file.
-*   **Logout Button**: Clears the active session and locks the screen under the login gate.
+*   **Usage Guige Widget**: A floating action button in the bottom-right corner that toggles a step-by-step tutorial panel detailing system usage.
+*   **Logout Button**: Clears the active `sessionStorage` and locks the screen under the login gate.
 
 ### Non-Functional Components
-*   **Fluid Responsiveness**: Adapts dynamically across Desktop ($>1024\text{px}$), Tablet ($768\text{px}\text{--}1024\text{px}$), and Mobile ($<768\text{px}$) viewports.
+*   **Fluid Responsiveness**: Adapts dynamically across Desktop ($>1024\text{px}$), Tablet ($768\text{px}\text{--}1024\text{px}$), and Mobile ($<768\text{px}$) viewports. Fixed canvas layout resizing race conditions by synchronously redrawing widgets from local cached forecast data on window resize.
 *   **Offline Calculation Fallback**: Automatically computes predictions browser-side using local mathematical models if the central Flask API is offline.
 *   **Zero-State Security**: Re-hides credentials fields upon logout.
 
