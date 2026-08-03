@@ -87,6 +87,9 @@ function attemptLogin() {
                 return;
             }
 
+            // Save active session
+            sessionStorage.setItem('nust_active_user', JSON.stringify(matchedUser));
+
             document.getElementById("logged-user-name").innerText = `${matchedUser.name} (${matchedUser.role})`;
             
             // Gated navigation: only show Admin button if logged-in user is an Agritex Officer
@@ -112,6 +115,9 @@ function attemptLogin() {
 
 // Logout controller
 function triggerLogout() {
+    // Clear active session
+    sessionStorage.removeItem('nust_active_user');
+
     const gate = document.getElementById("login-gate");
     document.getElementById("password").value = ""; // Clear password field
     document.getElementById("admin-redirect-btn").style.display = "none"; // Hide admin button on logout
@@ -172,9 +178,26 @@ function dismissWarning() {
 
 // Ward default biophysical environmental mappings (simulating GIS database pull)
 const WARD_DEFAULTS = {
+    "Ward 1":  { precip: 0.50, heat: 0.35, sand: 65, clay: 20 },
+    "Ward 2":  { precip: 0.45, heat: 0.30, sand: 58, clay: 22 },
+    "Ward 3":  { precip: 0.55, heat: 0.32, sand: 60, clay: 24 },
+    "Ward 4":  { precip: 0.60, heat: 0.28, sand: 50, clay: 30 },
+    "Ward 5":  { precip: 0.40, heat: 0.42, sand: 72, clay: 15 },
+    "Ward 6":  { precip: 0.35, heat: 0.45, sand: 78, clay: 12 },
+    "Ward 7":  { precip: 0.48, heat: 0.33, sand: 63, clay: 21 },
+    "Ward 8":  { precip: 0.52, heat: 0.31, sand: 61, clay: 23 },
+    "Ward 9":  { precip: 0.58, heat: 0.29, sand: 55, clay: 26 },
+    "Ward 10": { precip: 0.62, heat: 0.26, sand: 48, clay: 32 },
+    "Ward 11": { precip: 0.38, heat: 0.40, sand: 75, clay: 14 },
     "Ward 12": { precip: 0.40, heat: 0.38, sand: 70, clay: 18 },
+    "Ward 13": { precip: 0.42, heat: 0.36, sand: 68, clay: 19 },
+    "Ward 14": { precip: 0.46, heat: 0.34, sand: 64, clay: 22 },
     "Ward 15": { precip: 0.65, heat: 0.28, sand: 62, clay: 25 },
-    "Ward 18": { precip: 0.30, heat: 0.45, sand: 80, clay: 12 }
+    "Ward 16": { precip: 0.50, heat: 0.30, sand: 59, clay: 24 },
+    "Ward 17": { precip: 0.32, heat: 0.44, sand: 82, clay: 10 },
+    "Ward 18": { precip: 0.30, heat: 0.45, sand: 80, clay: 12 },
+    "Ward 19": { precip: 0.44, heat: 0.38, sand: 69, clay: 17 },
+    "Ward 20": { precip: 0.48, heat: 0.35, sand: 66, clay: 20 }
 };
 
 function applyWardDefaults() {
@@ -302,13 +325,22 @@ function computeLocalForecast(ward, variety, precip, heat, sand, clay) {
         heat,
         sand,
         clay,
-        advisory
+        advisory,
+        engine: "Offline Biophysical Emulator (API disconnected)"
     };
 }
 
 // 5. UPDATE GRAPHICS AND METERS
 function updateDashboardUI(forecast) {
     cachedForecast = forecast;
+
+    // Dynamic model version indicator update
+    if (forecast.engine) {
+        const badge = document.querySelector("header .badge");
+        if (badge) {
+            badge.innerText = `Model Version: ${forecast.engine}`;
+        }
+    }
 
     // Water Deficit Meter (1 - precip)
     const waterDeficit = Math.round((1.0 - forecast.precip) * 100);
@@ -676,10 +708,50 @@ window.onload = function() {
     document.getElementById("password").addEventListener("keypress", function(e) {
         if (e.key === "Enter") attemptLogin();
     });
+
+    // Check for active session to prevent logouts on navigation back from admin
+    const activeUserJson = sessionStorage.getItem('nust_active_user');
+    if (activeUserJson) {
+        try {
+            const matchedUser = JSON.parse(activeUserJson);
+            if (matchedUser && matchedUser.name && matchedUser.role) {
+                selectedRole = matchedUser.role; // restore selected role context
+                document.getElementById("logged-user-name").innerText = `${matchedUser.name} (${matchedUser.role})`;
+                const adminBtn = document.getElementById("admin-redirect-btn");
+                if (matchedUser.role === 'Agritex Officer') {
+                    adminBtn.style.display = "inline-block";
+                } else {
+                    adminBtn.style.display = "none";
+                }
+                const gate = document.getElementById("login-gate");
+                gate.style.display = "none";
+                gate.style.opacity = "0";
+                setTimeout(() => {
+                    runForecast();
+                }, 100);
+            }
+        } catch (e) {
+            console.error("Failed to restore session", e);
+        }
+    }
 };
 
 window.onresize = function() {
-    if (document.getElementById("login-gate").style.display === "none") {
-        runForecast();
+    if (document.getElementById("login-gate").style.display === "none" && cachedForecast) {
+        // Redraw synchronously using cached data to avoid network fetch race conditions on resize
+        updateDashboardUI(cachedForecast);
     }
 };
+
+// Toggle Portal Usage Guide
+function toggleUsageGuide() {
+    const panel = document.getElementById("usage-panel");
+    const btn = document.getElementById("usage-toggle-btn");
+    if (panel.style.display === "none") {
+        panel.style.display = "flex";
+        btn.innerHTML = "<span class='widget-icon'>✕</span>";
+    } else {
+        panel.style.display = "none";
+        btn.innerHTML = "<span class='widget-icon'>📖</span>";
+    }
+}
