@@ -25,9 +25,9 @@ Represents the thermal crop stress calculated from ambient air and land surface 
 ## 2. System Architecture Guide
 
 ### Functional Components
-*   **Credentials Authenticator**: Verifies inputs against the authorization database stored in the shared `localStorage` array. Hitting `Enter` in input boxes submits choices.
+*   **Credentials Authenticator & Session Manager**:  Verifies inputs against the central user database. Persists active sessions in browser `localStorage` to prevent user logouts when navigating back from the Admin Panel. Hitting `Enter` in input boxes submits choices.
 *   **Location Ward Selector**: Dropdown selection listing all 20 administrative wards of the Umzingwane District. Maps clay, sand, and soil attributes based on the selected ward defaults.
-*   **Cultivar ID Guard**: Selection dropdown for the four supported cultivars (`SC301`, `SC436`, `SC529`, and `SC719`). Prevents spelling mistakes and ensures model alignment.
+*   **Cultivar ID Dropdown**: Selection dropdown for the four supported cultivars (`SC301`, `SC436`, `SC529`, and `SC719`). Prevents spelling mistakes and ensures model alignment.
 *   **Forecasting Sliders**: Inputs to adjust Precipitation and Heat Stress values in real-time.
 *   **HTML5 Canvas Renderers**: Draws the 3-column yield quantile bar charts and the circular biophysical stress gauges dynamically.
 *   **HTML Report Downloader**: Compiles current parameters, yield envelopes, and agronomic advice into a styled, printable HTML report file.
@@ -35,7 +35,8 @@ Represents the thermal crop stress calculated from ambient air and land surface 
 *   **Logout Button**: Clears the active `sessionStorage` and locks the screen under the login gate.
 
 ### Non-Functional Components
-*   **Fluid Responsiveness**: Adapts dynamically across Desktop ($>1024\text{px}$), Tablet ($768\text{px}\text{--}1024\text{px}$), and Mobile ($<768\text{px}$) viewports. Fixed canvas layout resizing race conditions by synchronously redrawing widgets from local cached forecast data on window resize.
+*   **Fluid Responsiveness & Collapsible Header**: Adapts dynamically across Desktop, Tablet, and Mobile viewports. Uses intermediate CSS breakpoints (`1080px`, `900px`, `768px`, and `600px`), to progressively hide metadata and stack header menus vertically, preventing horizontal layout overflow. Fixes canvas layout resizing race conditions by redrawing widgets synchronously from local cached forecast data.
+*   **Academic Copyright Footers**:  Integrates legal copyright notices (`© 2026 NUST`) across all entry gates (Welcome Screen, Login Card) and global page layouts (Dashboard, Admin Console).
 *   **Offline Calculation Fallback**: Automatically computes predictions browser-side using local mathematical models if the central Flask API is offline.
 *   **Zero-State Security**: Re-hides credentials fields upon logout.
 
