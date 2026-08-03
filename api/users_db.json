@@ -1,0 +1,14 @@
+[
+    {
+        "username": "agritex_officer",
+        "password": "nust_maize_2026",
+        "name": "Primary Officer",
+        "role": "Agritex Officer"
+    },
+    {
+        "username": "johen_doe",
+        "password": "12345",
+        "name": "Johen Doe",
+        "role": "Farmer"
+    }
+]
