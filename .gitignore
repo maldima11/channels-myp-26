@@ -1,0 +1,6 @@
+
+mobile/ios/Pods/
+mobile/ios/build/
+api/__pycache__/
+**/__pycache__/
+*.pyc
