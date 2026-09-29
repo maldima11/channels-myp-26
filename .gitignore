@@ -4,3 +4,6 @@ mobile/ios/build/
 api/__pycache__/
 **/__pycache__/
 *.pyc
+
+# Ignore generated mobile build artifacts
+mobile/
