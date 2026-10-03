@@ -1,0 +1,13 @@
+# Exclude heavy folders from Vercel deployment bundle
+mobile/
+**/android/
+**/ios/
+**/node_modules/
+**/.git/
+**/.github/
+**/.gradle/
+**/.cxx/
+*.apk
+*.aab
+*.keystore
+api/__pycache__/
