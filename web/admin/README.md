@@ -29,24 +29,32 @@ This module provides the central administration console and **SMS Advisory Broad
 
 ---
 
-## SMS Gateway Configuration
+## 🔮 FUTURE INTEGRATION: Live Cellular SMS Gateway Providers
 
-The system connects to the Flask API backend (`/api/sms/broadcast`), which can be configured for live telco delivery:
+The broadcast console currently operates in a **High-Fidelity Sandbox Simulator Mode**, verifying recipient counts, rendering live smartphone mockups, and writing dispatch audit logs (`sms_logs.json`) without incurring cellular telco billing charges.
 
-1. **Africa's Talking Gateway (Zimbabwe & Southern Africa)**:
-   ```bash
-   export AFRICASTALKING_USERNAME="your_username"
-   export AFRICASTALKING_API_KEY="your_api_key"
-   export AFRICASTALKING_SENDER_ID="AGRITEX"
-   ```
-2. **Twilio SMS Gateway**:
-   ```bash
-   export TWILIO_ACCOUNT_SID="your_account_sid"
-   export TWILIO_AUTH_TOKEN="your_auth_token"
-   export TWILIO_FROM_NUMBER="+1234567890"
-   ```
-3. **Sandbox Simulator Mode**:
-   If no gateway credentials are configured, the console operates in **Mock Simulator Mode**, logging all personalized dispatches to `api/sms_logs.json` for risk-free testing and demonstrations.
+To connect this system to real cellular telecommunications carriers for production delivery across Zimbabwe (Econet, NetOne, Telecel) or internationally, configure the following environment variables:
+
+### 1. Africa's Talking (Recommended for Zimbabwe: Econet, NetOne, Telecel)
+* **Registration**: [africastalking.com](https://africastalking.com)
+* **Environment Variables**:
+  ```bash
+  export AFRICASTALKING_USERNAME="your_username"
+  export AFRICASTALKING_API_KEY="your_api_key"
+  export AFRICASTALKING_SENDER_ID="AGRITEX"  # Optional registered alphanumeric sender ID
+  ```
+
+### 2. Twilio (Global Telco Carrier)
+* **Registration**: [twilio.com](https://twilio.com)
+* **Environment Variables**:
+  ```bash
+  export TWILIO_ACCOUNT_SID="your_account_sid"
+  export TWILIO_AUTH_TOKEN="your_auth_token"
+  export TWILIO_FROM_NUMBER="+1234567890"
+  ```
+
+### 3. Vercel Cloud Deployment Setup
+In your **Vercel Project Dashboard**, navigate to **Settings** &rarr; **Environment Variables** and add the keys above. The backend will automatically activate live SMS delivery without requiring any code modifications.
 
 ---
 

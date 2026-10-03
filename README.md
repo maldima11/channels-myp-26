@@ -48,30 +48,45 @@ python app.py
 ```
 *API runs at `http://127.0.0.1:5000`.*
 
-### SMS Gateway Configuration (Environment Variables)
+---
 
-To enable live cellular SMS delivery to farmers via telecommunications networks, set the following environment variables before launching `app.py`:
+## 🔮 FUTURE INTEGRATION: Live Cellular SMS Gateway Providers
 
-#### Option A: Africa's Talking (Recommended for Zimbabwe / Southern Africa)
-```bash
-export AFRICASTALKING_USERNAME="your_username"
-export AFRICASTALKING_API_KEY="your_api_key"
-export AFRICASTALKING_SENDER_ID="AGRITEX"  # Optional custom alphanumeric sender ID
-```
+The platform currently operates in a **High-Fidelity Sandbox & Simulation Mode**. In this mode:
+- SMS dispatches are parsed, formatted with personalized tags (`{name}`, `{ward}`, `{date}`), rendered on the interactive smartphone simulation mockup, and recorded in the audit logs (`sms_logs.json`) without incurring cellular carrier billing charges.
 
-#### Option B: Twilio
-```bash
-export TWILIO_ACCOUNT_SID="your_account_sid"
-export TWILIO_AUTH_TOKEN="your_auth_token"
-export TWILIO_FROM_NUMBER="+1234567890"
-```
+To connect the system to real telecommunications towers (e.g. **Econet Wireless**, **NetOne**, and **Telecel Zimbabwe**) so farmers receive physical text messages on their mobile handsets, configure the following environment variables in production (e.g., in **Vercel Dashboard > Project Settings > Environment Variables**):
 
-*(If no gateway credentials are set, the system automatically runs in **High-Fidelity Sandbox Simulator Mode**, personalizing and logging all sent SMS messages to `api/sms_logs.json` for risk-free testing).*
+### 1. Africa's Talking (Recommended for Zimbabwe & Southern Africa)
+* **Website**: [africastalking.com](https://africastalking.com)
+* **Direct Network Coverage**: Econet (+263 77 / +263 78), NetOne (+263 71), Telecel (+263 73)
+* **Environment Variables**:
+  ```bash
+  AFRICASTALKING_USERNAME="your_africastalking_username"
+  AFRICASTALKING_API_KEY="your_live_api_key"
+  AFRICASTALKING_SENDER_ID="AGRITEX"  # Optional registered alphanumeric sender ID
+  ```
+
+### 2. Twilio (Global Carrier Gateway)
+* **Website**: [twilio.com](https://twilio.com)
+* **Environment Variables**:
+  ```bash
+  TWILIO_ACCOUNT_SID="your_twilio_account_sid"
+  TWILIO_AUTH_TOKEN="your_twilio_auth_token"
+  TWILIO_FROM_NUMBER="+1234567890"  # Your Twilio-purchased SMS enabled number
+  ```
+
+### 3. Direct SMPP / Telecom Operator Integration (Optional Enterprise Roadmap)
+* For large-scale national rollouts, a direct SMPP v3.4 connection can be established with Econet Wireless or NetOne VAS gateways via a high-throughput queue daemon.
+
+> **Zero Code Change Activation**: The backend automatically detects when live credentials are set and dynamically switches from `NUST Agritex SMS Simulator (Sandbox Mode)` to `Africa's Talking Live Gateway` or `Twilio Live SMS Gateway`.
+
+---
 
 ### Key API Endpoints
 * **`POST /api/predict`**: Computes quantile yield forecasts based on ward, variety, precipitation, and heat stress.
 * **`GET /api/users`** / **`POST /api/users`** / **`PUT /api/users/<username>`** / **`DELETE /api/users/<username>`**: Manages user directory (Name, Username, Role, Phone, Ward).
-* **`POST /api/sms/broadcast`**: Dispatches targeted SMS broadcasts to farmers filtered by Ward or All Wards with dynamic placeholder merging (`{name}`, `{ward}`, `{date}`).
+* **`POST /api/sms/broadcast`**: Dispatches targeted SMS broadcasts to farmers filtered by Ward or Manual Numbers with dynamic placeholder merging (`{name}`, `{ward}`, `{date}`).
 * **`POST /api/sms/send`**: Dispatches a single SMS advisory to a specific phone number.
 * **`GET /api/sms/logs`**: Retrieves the audit history of sent SMS broadcasts.
 * **`DELETE /api/sms/logs`**: Clears SMS dispatch history.
