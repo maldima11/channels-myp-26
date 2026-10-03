@@ -1,6 +1,34 @@
+# Node & dependencies
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-mobile/ios/Pods/
-mobile/ios/build/
+# Android build outputs & temporary caches
+**/android/build/
+**/android/.gradle/
+**/android/app/build/
+**/android/app/.cxx/
+**/android/app/.externalNativeBuild/
+**/android/.idea/
+*.apk
+*.aab
+*.keystore
+
+# iOS build outputs
+**/ios/Pods/
+**/ios/build/
+**/ios/DerivedData/
+
+# Python
 api/__pycache__/
 **/__pycache__/
 *.pyc
+*.pyo
+
+# System & IDE junk
+.DS_Store
+**/.DS_Store
+.idea/
+.vscode/

@@ -12,7 +12,8 @@ import {
   SafeAreaView,
   StatusBar,
   Dimensions,
-  Platform
+  Platform,
+  Share
 } from 'react-native';
 
 // Dynamic host loopback depending on simulator platform (iOS vs Android)
@@ -270,18 +271,78 @@ export default function App() {
   const waterDeficitPct = Math.round((1 - precip) * 100);
   const heatStressPct = Math.round(heat * 100);
 
+  // Download & Share Report Handler
+  const handleDownloadReport = async () => {
+    if (!forecast) return;
+
+    const reportContent = `=================================================
+MAIZE YIELD ADVISORY REPORT (PDF SUMMARY)
+NUST MPhil Biophysical Forecasting System
+Umzingwane District, Matabeleland South
+=================================================
+
+LOCATION & CULTIVAR METADATA:
+• Location Centroid: ${ward}
+• Maize Cultivar: ${variety}
+• Soil Composition: Sand ${sand}% | Clay ${clay}%
+• Precipitation Index (Scaled): ${precip}
+
+EXPECTED MEDIAN YIELD (q50):
+▶ ${forecast.med} kg/ha (Standard meteorological alignment)
+
+QUANTILE YIELD FORECAST RANGE (kg/ha):
+• Lower Bound (q10 - Adverse):  ${forecast.low} kg/ha
+• Median Yield (q50 - Expected): ${forecast.med} kg/ha
+• Upper Bound (q90 - Optimal):  ${forecast.high} kg/ha
+
+BIOPHYSICAL STRESS GAUGES:
+• Water Deficit Index: ${waterDeficitPct}% (${waterDeficitPct > 60 ? 'Severe' : waterDeficitPct > 30 ? 'Moderate' : 'Low'})
+• Heat Accumulation Stress: ${heatStressPct}% (${heatStressPct > 60 ? 'Severe' : heatStressPct > 30 ? 'Moderate' : 'Low'})
+
+AGRONOMIC RECOMMENDATION:
+${forecast.advisory}
+
+=================================================
+Generated via NUST MPhil Thesis Hybrid Model Fusion Pipeline (Option B)
+Security Signature: Authorized Agritex Officer System Log Verification
+=================================================`;
+
+    try {
+      if (Platform.OS === 'android' || Platform.OS === 'ios') {
+        const result = await Share.share({
+          title: `NUST_Maize_Yield_Advisory_Report_${ward.replace(/\s+/g, '_')}_${variety}.pdf`,
+          message: reportContent,
+        });
+
+        if (result.action === Share.sharedAction) {
+          Alert.alert("Report Exported", "The prediction report has been successfully shared or saved as PDF.");
+        }
+      } else {
+        Alert.alert("Report Summary", reportContent);
+      }
+    } catch (error) {
+      Alert.alert("Export Error", "Could not export report: " + error.message);
+    }
+  };
+
   if (!isLoggedIn) {
     return (
       <SafeAreaView style={[styles.authContainer, isLightTheme && styles.authContainerLight]}>
-        <StatusBar barStyle={isLightTheme ? "dark-content" : "light-content"} />
+        <StatusBar 
+          backgroundColor={isLightTheme ? "#f8fafc" : "#0b0f19"} 
+          barStyle={isLightTheme ? "dark-content" : "light-content"} 
+          translucent={false}
+        />
         
-        {/* Floating Theme Switcher */}
-        <TouchableOpacity 
-          style={[styles.themeBtn, styles.loginThemeBtn, isLightTheme && styles.themeBtnLight]} 
-          onPress={toggleTheme}
-        >
-          <Text style={[styles.themeBtnText, isLightTheme && styles.themeBtnTextLight]}>🌓 Theme</Text>
-        </TouchableOpacity>
+        {/* Top Bar for Theme Switcher */}
+        <View style={[styles.authTopHeader, isLightTheme && styles.authTopHeaderLight]}>
+          <TouchableOpacity 
+            style={[styles.themeBtn, isLightTheme && styles.themeBtnLight]} 
+            onPress={toggleTheme}
+          >
+            <Text style={[styles.themeBtnText, isLightTheme && styles.themeBtnTextLight]}>🌓 Theme</Text>
+          </TouchableOpacity>
+        </View>
 
         <ScrollView contentContainerStyle={styles.authScrollContent} keyboardShouldPersistTaps="handled">
           
@@ -455,7 +516,11 @@ export default function App() {
   // -------------------------------------------------------------
   return (
     <SafeAreaView style={[styles.container, isLightTheme && styles.containerLight]}>
-      <StatusBar barStyle={isLightTheme ? "dark-content" : "light-content"} />
+      <StatusBar 
+        backgroundColor={isLightTheme ? "#ffffff" : "#0b0f19"} 
+        barStyle={isLightTheme ? "dark-content" : "light-content"} 
+        translucent={false}
+      />
       
       {/* HEADER */}
       <View style={[styles.header, isLightTheme && styles.headerLight]}>
@@ -481,15 +546,16 @@ export default function App() {
         <View style={[styles.card, isLightTheme && styles.cardLight]}>
           <Text style={[styles.cardTitle, isLightTheme && styles.cardTitleLight]}>Biophysical Forecasting Inputs</Text>
           
-          {/* LOCATION WARD SELECTOR (SPELLED OUT) */}
+          {/* LOCATION WARD SELECTOR */}
           <Text style={[styles.label, isLightTheme && styles.labelLight]}>Location (Umzingwane District)</Text>
           <TouchableOpacity 
             style={[styles.dropdownSelectorBtn, isLightTheme && styles.dropdownSelectorBtnLight]} 
             onPress={() => setShowWardModal(true)}
           >
-            <Text style={[styles.dropdownSelectorText, isLightTheme && styles.dropdownSelectorTextLight]} numberOfLines={1}>
-              {ward} ▾
+            <Text style={[styles.dropdownSelectorText, isLightTheme && styles.dropdownSelectorTextLight, { flex: 1 }]} numberOfLines={1}>
+              {ward}
             </Text>
+            <Text style={[styles.dropdownArrowText, isLightTheme && styles.dropdownArrowTextLight]}>▾</Text>
           </TouchableOpacity>
 
           {/* CULTIVAR SELECTOR */}
@@ -498,9 +564,10 @@ export default function App() {
             style={[styles.dropdownSelectorBtn, isLightTheme && styles.dropdownSelectorBtnLight, { marginBottom: 16 }]} 
             onPress={() => setShowCultivarModal(true)}
           >
-            <Text style={[styles.dropdownSelectorText, isLightTheme && styles.dropdownSelectorTextLight]}>
-              {variety} ▾
+            <Text style={[styles.dropdownSelectorText, isLightTheme && styles.dropdownSelectorTextLight, { flex: 1 }]}>
+              {variety}
             </Text>
+            <Text style={[styles.dropdownArrowText, isLightTheme && styles.dropdownArrowTextLight]}>▾</Text>
           </TouchableOpacity>
 
           {/* PRECIPITATION STEPPER */}
@@ -748,6 +815,16 @@ export default function App() {
               )}
             </View>
 
+            {/* DOWNLOAD & SHARE REPORT BUTTON */}
+            <TouchableOpacity 
+              style={styles.downloadReportBtn} 
+              onPress={handleDownloadReport}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.downloadReportBtnIcon}>📥</Text>
+              <Text style={styles.downloadReportBtnText}>Download & Share Report</Text>
+            </TouchableOpacity>
+
             {/* SECURITY & PIPELINE FOOTER */}
             <View style={styles.reportFooter}>
               <Text style={styles.reportFooterText}>
@@ -869,6 +946,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0b0f19',
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) : 0,
   },
   containerLight: {
     backgroundColor: '#f8fafc',
@@ -945,21 +1023,28 @@ const styles = StyleSheet.create({
   authContainer: {
     flex: 1,
     backgroundColor: '#0b0f19',
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) : 0,
   },
   authContainerLight: {
     backgroundColor: '#f8fafc',
   },
+  authTopHeader: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  authTopHeaderLight: {
+    backgroundColor: '#f8fafc',
+  },
   authScrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 50,
+    paddingTop: 10,
     paddingBottom: 40,
     alignItems: 'center',
-  },
-  loginThemeBtn: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
-    zIndex: 10,
+    justifyContent: 'center',
+    flexGrow: 1,
   },
   authCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.03)',
@@ -1231,7 +1316,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderColor: 'rgba(255, 255, 255, 0.1)',
     borderWidth: 1,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 16,
   },
   dropdownSelectorBtnLight: {
@@ -1245,6 +1332,15 @@ const styles = StyleSheet.create({
   },
   dropdownSelectorTextLight: {
     color: '#0f172a',
+  },
+  dropdownArrowText: {
+    color: '#94a3b8',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  dropdownArrowTextLight: {
+    color: '#64748b',
   },
   controlRow: {
     flexDirection: 'row',
@@ -1629,6 +1725,30 @@ const styles = StyleSheet.create({
   },
 
   // Report Footer
+  downloadReportBtn: {
+    backgroundColor: '#10b981',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    marginVertical: 4,
+    shadowColor: '#10b981',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  downloadReportBtnIcon: {
+    fontSize: 18,
+  },
+  downloadReportBtnText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
   reportFooter: {
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.08)',

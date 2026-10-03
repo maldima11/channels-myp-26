@@ -451,9 +451,11 @@ function drawYieldChart(low, med, high) {
     });
 }
 
-// 6. ADVISORY REPORT EXPORTER (GRAPHICAL HTML PRINT FORMAT)
+// 6. ADVISORY REPORT EXPORTER (PRESENTABLE PDF PRINT FORMAT)
 function downloadReport() {
     const data = cachedForecast;
+    if (!data) return;
+
     const reportContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -461,9 +463,7 @@ function downloadReport() {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NUST Maize Yield Advisory Report - ${data.ward} - ${data.variety}</title>
     <style>
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
         body {
             font-family: 'Helvetica Neue', Arial, sans-serif;
             background-color: #f1f5f9;
@@ -588,15 +588,6 @@ function downloadReport() {
             border-top: 1px solid #e2e8f0;
             padding-top: 20px;
         }
-        @media (max-width: 600px) {
-            body { padding: 10px; }
-            .report-card { padding: 24px 16px; border-radius: 12px; }
-            .header { flex-direction: column; align-items: flex-start; gap: 12px; }
-            .meta-grid { grid-template-columns: 1fr; gap: 12px; }
-            .yield-box { flex-direction: column; align-items: flex-start; gap: 8px; }
-            .envelope-container { flex-direction: column; gap: 12px; }
-            .envelope-card { width: 100%; }
-        }
         @media print {
             body { padding: 0; background: none; }
             .report-card { border: none; box-shadow: none; padding: 0; }
@@ -657,26 +648,7 @@ function downloadReport() {
 
         <div class="advisory-box">
             <h3 style="margin-top: 0; color: #0f172a; margin-bottom: 12px;">Agronomic Recommendation</h3>
-            <div>${data.advisory.replace(/\n/g, '<br>')}</div>
-        </div>
-
-        <!-- Biophysical & Quantile Indicators Glossary -->
-        <div style="margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 24px;">
-            <h4 style="margin-top: 0; margin-bottom: 12px; color: #1e1b4b; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Indicator Glossary & Interpretations</h4>
-            <div style="font-size: 12px; line-height: 1.6; color: #475569; display: grid; gap: 12px;">
-                <div>
-                    <strong style="color: #0f172a;">Quantile Yield Forecast Range (kg/ha):</strong>
-                    This provides a probabilistic range for yield outcomes. The **Lower Bound (q10)** represents a pessimistic worst-case yield scenario under severe climate stress (there is a 90% probability final yields will exceed this). The **Expected Median Yield (q50)** represents the most likely yield outcome under normal conditions. The **Upper Bound (q90)** represents the best-case yield potential under optimal rainfall and moisture management.
-                </div>
-                <div>
-                    <strong style="color: #0f172a;">Water Deficit Index (WDI):</strong>
-                    Quantifies physiological water stress calculated from precipitation deficits and crop evapotranspiration coefficients. Higher deficit percentages mean severe moisture scarcity, which restricts vegetative development.
-                </div>
-                <div>
-                    <strong style="color: #0f172a;">Heat Accumulation Stress:</strong>
-                    Represents crop thermal stress calculated from cumulative temperatures exceeding the baseline growth threshold (10°C) during critical crop cycles. Higher stress levels signify increased risk of metabolic decay and reduced grain filling.
-                </div>
-            </div>
+            <div>${data.advisory ? data.advisory.replace(/\n/g, '<br>') : 'Standard Season Advisory'}</div>
         </div>
 
         <div class="footer">
@@ -684,16 +656,23 @@ function downloadReport() {
             <p>Security Signature: Authorized Agritex Officer System Log Verification</p>
         </div>
     </div>
+    <script>
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 300);
+        };
+    </script>
 </body>
 </html>`;
 
-    const blob = new Blob([reportContent], { type: "text/html;charset=utf-8" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `NUST_Yield_Report_${data.ward.replace(' ', '_')}_${data.variety}.html`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const printWin = window.open('', '_blank');
+    if (printWin) {
+        printWin.document.write(reportContent);
+        printWin.document.close();
+    } else {
+        alert("Please allow popups to export the PDF report.");
+    }
 }
 
 // Setup inputs key handlers and window resize callbacks
