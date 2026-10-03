@@ -437,29 +437,104 @@ function updateSmsPreview() {
     }
 }
 
+let currentRecipientMode = 'ward'; // 'ward' or 'manual'
+
+function setRecipientMode(mode) {
+    currentRecipientMode = mode;
+    const wardBtn = document.getElementById("mode-ward-btn");
+    const manualBtn = document.getElementById("mode-manual-btn");
+    const wardGroup = document.getElementById("recipient-ward-group");
+    const manualGroup = document.getElementById("recipient-manual-group");
+
+    if (mode === 'ward') {
+        if (wardBtn) wardBtn.classList.add('active');
+        if (manualBtn) manualBtn.classList.remove('active');
+        if (wardGroup) wardGroup.style.display = 'block';
+        if (manualGroup) manualGroup.style.display = 'none';
+    } else {
+        if (manualBtn) manualBtn.classList.add('active');
+        if (wardBtn) wardBtn.classList.remove('active');
+        if (wardGroup) wardGroup.style.display = 'none';
+        if (manualGroup) manualGroup.style.display = 'block';
+    }
+    updateRecipientCount();
+}
+
 function updateRecipientCount() {
     const wardSelect = document.getElementById("sms-target-ward");
     const countBadge = document.getElementById("sms-count-badge");
-    if (!wardSelect || !countBadge) return;
+    const manualInput = document.getElementById("sms-manual-numbers");
+    const manualCountBadge = document.getElementById("sms-manual-count-badge");
 
-    const targetWard = wardSelect.value;
-    const local = localStorage.getItem(STORAGE_KEY);
-    const users = local ? JSON.parse(local) : cachedUsersList;
+    if (currentRecipientMode === 'ward') {
+        if (!wardSelect || !countBadge) return;
+        const targetWard = wardSelect.value;
+        const local = localStorage.getItem(STORAGE_KEY);
+        const users = local ? JSON.parse(local) : cachedUsersList;
 
-    const matchingFarmers = users.filter(u => {
-        if (u.role !== 'Farmer') return false;
-        if (targetWard === 'All Wards') return true;
-        return u.ward === targetWard || u.ward === 'All Wards' || (u.ward && u.ward.includes(targetWard));
-    });
+        const matchingFarmers = users.filter(u => {
+            if (u.role !== 'Farmer') return false;
+            if (targetWard === 'All Wards') return true;
+            return u.ward === targetWard || u.ward === 'All Wards' || (u.ward && u.ward.includes(targetWard));
+        });
 
-    countBadge.innerText = matchingFarmers.length;
+        countBadge.innerText = matchingFarmers.length;
+    } else {
+        if (!manualInput || !manualCountBadge) return;
+        const text = manualInput.value.trim();
+        if (!text) {
+            manualCountBadge.innerText = "0";
+        } else {
+            const nums = text.split(/[\s,;\n]+/).filter(n => n.trim().length > 0);
+            manualCountBadge.innerText = nums.length;
+        }
+    }
     updateSmsPreview();
+}
+
+function updateSmsPreview() {
+    const textarea = document.getElementById("sms-message-text");
+    const charCountEl = document.getElementById("sms-char-count");
+    const segmentCountEl = document.getElementById("sms-segment-count");
+    const phoneBubble = document.getElementById("phone-sms-preview");
+    const phoneTime = document.getElementById("phone-sms-time");
+
+    if (!textarea) return;
+
+    const rawText = textarea.value;
+    const length = rawText.length;
+    const segments = Math.max(1, Math.ceil(length / 160));
+
+    if (charCountEl) charCountEl.innerText = length;
+    if (segmentCountEl) segmentCountEl.innerText = segments;
+
+    // Simulate replacement for phone preview
+    let ward = "Ward 12";
+    if (currentRecipientMode === 'ward') {
+        ward = document.getElementById("sms-target-ward") ? document.getElementById("sms-target-ward").value : "Ward 12";
+    } else {
+        ward = "Direct Mobile";
+    }
+    const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    
+    let previewText = rawText
+        .replace(/{name}/g, currentRecipientMode === 'manual' ? "Farmer" : "John Moyo")
+        .replace(/{ward}/g, ward)
+        .replace(/{date}/g, dateStr);
+
+    if (phoneBubble) {
+        phoneBubble.innerText = previewText || "Type your advisory message above to see a live recipient simulation...";
+    }
+    if (phoneTime) {
+        const now = new Date();
+        phoneTime.innerText = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')} • SMS (${segments} seg)`;
+    }
 }
 
 function fetchLiveModelAdvisory() {
     const wardSelect = document.getElementById("sms-target-ward");
     const textarea = document.getElementById("sms-message-text");
-    const selectedWard = wardSelect ? wardSelect.value : "Ward 12";
+    const selectedWard = (currentRecipientMode === 'ward' && wardSelect) ? wardSelect.value : "Ward 12";
     
     const cleanWard = selectedWard.split(" (")[0] || "Ward 12";
 
@@ -498,13 +573,13 @@ function fetchLiveModelAdvisory() {
 
 function sendSmsBroadcast() {
     const wardSelect = document.getElementById("sms-target-ward");
+    const manualInput = document.getElementById("sms-manual-numbers");
     const templateSelect = document.getElementById("sms-template-select");
     const textarea = document.getElementById("sms-message-text");
     const sendBtn = document.getElementById("sms-broadcast-btn");
     const statusMsg = document.getElementById("sms-status-msg");
 
-    const targetWard = wardSelect.value;
-    const category = templateSelect.options[templateSelect.selectedIndex].text;
+    const category = templateSelect ? templateSelect.options[templateSelect.selectedIndex].text : "General Advisory";
     const message = textarea.value.trim();
 
     if (!message) {
@@ -514,6 +589,27 @@ function sendSmsBroadcast() {
         return;
     }
 
+    let payload = {
+        category: category,
+        message: message,
+        sender: "District Agritex Admin"
+    };
+
+    if (currentRecipientMode === 'manual') {
+        const manualText = manualInput ? manualInput.value.trim() : "";
+        if (!manualText) {
+            statusMsg.className = "status-msg error-msg";
+            statusMsg.innerText = "Please enter at least one manual phone number (e.g. +263771234567).";
+            statusMsg.style.display = "block";
+            return;
+        }
+        payload.manual_numbers = manualText;
+        payload.ward = "Direct / Manual";
+    } else {
+        payload.ward = wardSelect ? wardSelect.value : "All Wards";
+        payload.role = "Farmer";
+    }
+
     sendBtn.disabled = true;
     sendBtn.innerText = "⏳ Dispatching SMS Broadcast...";
     statusMsg.style.display = "none";
@@ -521,13 +617,7 @@ function sendSmsBroadcast() {
     fetch(SMS_BROADCAST_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            ward: targetWard,
-            role: "Farmer",
-            category: category,
-            message: message,
-            sender: "District Agritex Admin"
-        })
+        body: JSON.stringify(payload)
     })
     .then(res => res.json())
     .then(data => {
@@ -552,12 +642,19 @@ function sendSmsBroadcast() {
         sendBtn.innerText = "📡 Dispatch SMS Broadcast";
 
         // Local simulation fallback
-        const local = localStorage.getItem(STORAGE_KEY);
-        const users = local ? JSON.parse(local) : cachedUsersList;
-        const matchingFarmers = users.filter(u => u.role === 'Farmer' && (targetWard === 'All Wards' || u.ward === targetWard || u.ward === 'All Wards'));
+        let recipientCount = 1;
+        if (currentRecipientMode === 'manual') {
+            const manualText = manualInput ? manualInput.value.trim() : "";
+            recipientCount = manualText.split(/[\s,;\n]+/).filter(n => n.length > 0).length || 1;
+        } else {
+            const targetWard = wardSelect ? wardSelect.value : "All Wards";
+            const local = localStorage.getItem(STORAGE_KEY);
+            const users = local ? JSON.parse(local) : cachedUsersList;
+            recipientCount = users.filter(u => u.role === 'Farmer' && (targetWard === 'All Wards' || u.ward === targetWard || u.ward === 'All Wards')).length;
+        }
 
         statusMsg.className = "status-msg success-msg";
-        statusMsg.innerHTML = `✅ <strong>Offline Simulation:</strong> Dispatched advisory to ${matchingFarmers.length} registered farmer(s). <br><small>Gateway: Local Mock Simulator</small>`;
+        statusMsg.innerHTML = `✅ <strong>Offline Simulation:</strong> Dispatched advisory to ${recipientCount} recipient(s). <br><small>Gateway: Local Mock Simulator</small>`;
         statusMsg.style.display = "block";
     });
 }

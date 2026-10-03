@@ -182,7 +182,21 @@
                         <span class="bullet-accent">■</span> Broadcast Advisory to Farmers
                     </div>
 
+                    <!-- RECIPIENT MODE SELECTOR -->
                     <div class="form-group">
+                        <label>Recipient Selection Mode</label>
+                        <div class="mode-toggle-group">
+                            <button type="button" id="mode-ward-btn" class="sub-tab-btn active" onclick="setRecipientMode('ward')">
+                                🏢 By Ward (Registered)
+                            </button>
+                            <button type="button" id="mode-manual-btn" class="sub-tab-btn" onclick="setRecipientMode('manual')">
+                                ✍️ Enter Number(s) Manually
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- WARD RECIPIENT GROUP -->
+                    <div class="form-group" id="recipient-ward-group">
                         <label for="sms-target-ward">Target Recipient Ward</label>
                         <select id="sms-target-ward" class="input-field" onchange="updateRecipientCount()">
                             <option value="All Wards">All Wards (Broadcast to All Farmers)</option>
@@ -208,7 +222,16 @@
                             <option value="Ward 20 (Mulungwane)">Ward 20 (Mulungwane)</option>
                         </select>
                         <div id="sms-recipient-counter" class="sub-label-badge">
-                            Targeting: <strong id="sms-count-badge">0</strong> Farmers
+                            Targeting: <strong id="sms-count-badge">0</strong> Registered Farmers
+                        </div>
+                    </div>
+
+                    <!-- MANUAL PHONE RECIPIENT GROUP -->
+                    <div class="form-group" id="recipient-manual-group" style="display: none;">
+                        <label for="sms-manual-numbers">Direct Mobile Phone Number(s)</label>
+                        <textarea id="sms-manual-numbers" class="input-field" rows="2" placeholder="e.g. +263771234567, +263772345678, 0773456789" oninput="updateRecipientCount()"></textarea>
+                        <div class="sub-label-badge">
+                            Targeting: <strong id="sms-manual-count-badge">0</strong> Manual Number(s) &bull; <span style="font-weight: 400; opacity: 0.85;">Separate with commas or spaces</span>
                         </div>
                     </div>
 

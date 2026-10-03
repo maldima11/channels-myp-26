@@ -292,6 +292,7 @@ def broadcast_sms():
 
     try:
         req_data = request.get_json() or {}
+        manual_numbers = req_data.get("manual_numbers", None)
         target_ward = req_data.get("ward", "All Wards")
         target_role = req_data.get("role", "Farmer")
         category = req_data.get("category", "General Advisory")
@@ -301,26 +302,45 @@ def broadcast_sms():
         if not template_text:
             return make_cors_response({"status": "error", "message": "SMS message text cannot be empty"}, 400)
 
-        users = load_users()
         recipients = []
 
-        # Filter recipients matching criteria
-        for u in users:
-            role_match = (target_role == "All Roles" or u.get("role") == target_role)
-            ward_match = (
-                target_ward == "All Wards" or 
-                u.get("ward") == "All Wards" or 
-                u.get("ward") == target_ward or
-                target_ward in u.get("ward", "")
-            )
-            
-            if role_match and ward_match:
-                recipients.append(u)
+        if manual_numbers:
+            # Parse manual numbers string or list
+            if isinstance(manual_numbers, str):
+                import re
+                raw_nums = re.split(r'[\s,;\n]+', manual_numbers.strip())
+            else:
+                raw_nums = manual_numbers
+
+            for idx, num in enumerate(raw_nums):
+                clean_num = num.strip()
+                if clean_num:
+                    recipients.append({
+                        "username": f"manual_{idx+1}",
+                        "name": f"Farmer ({clean_num})",
+                        "phone": clean_num,
+                        "ward": target_ward if target_ward != "All Wards" else "Direct / Manual"
+                    })
+        else:
+            users = load_users()
+            # Filter recipients matching criteria
+            for u in users:
+                role_match = (target_role == "All Roles" or u.get("role") == target_role)
+                ward_match = (
+                    target_ward == "All Wards" or 
+                    u.get("ward") == "All Wards" or 
+                    u.get("ward") == target_ward or
+                    target_ward in u.get("ward", "")
+                )
+                
+                if role_match and ward_match:
+                    recipients.append(u)
 
         if not recipients:
+            msg = "No valid manual phone numbers provided." if manual_numbers else f"No {target_role}s found matching ward filter '{target_ward}'."
             return make_cors_response({
                 "status": "warning",
-                "message": f"No {target_role}s found matching ward filter '{target_ward}'.",
+                "message": msg,
                 "sent_count": 0
             })
 
@@ -354,8 +374,8 @@ def broadcast_sms():
             "id": f"sms_{int(datetime.datetime.now().timestamp())}",
             "timestamp": timestamp,
             "category": category,
-            "target_ward": target_ward,
-            "target_role": target_role,
+            "target_ward": "Manual Phone Numbers" if manual_numbers else target_ward,
+            "target_role": "Direct Manual" if manual_numbers else target_role,
             "sender": sender_officer,
             "recipient_count": len(dispatched_list),
             "message_sample": dispatched_list[0]["message"] if dispatched_list else template_text,
