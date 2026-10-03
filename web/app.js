@@ -1,5 +1,8 @@
-const API_URL = "http://127.0.0.1:5000/api/predict";
-const USERS_API_URL = "http://127.0.0.1:5000/api/users";
+const BASE_API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://127.0.0.1:5000'
+    : '';
+const API_URL = `${BASE_API_URL}/api/predict`;
+const USERS_API_URL = `${BASE_API_URL}/api/users`;
 const USER_KEY = 'nust_authorized_users';
 const defaultUsers = [
     { username: 'agritex_officer', password: 'nust_maize_2026', name: 'Primary Officer', role: 'Agritex Officer' }

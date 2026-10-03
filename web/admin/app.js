@@ -1,9 +1,12 @@
 const STORAGE_KEY = 'nust_authorized_users';
 const THEME_KEY = 'nust_portal_theme';
-const USERS_API_URL = "http://127.0.0.1:5000/api/users";
-const SMS_BROADCAST_API_URL = "http://127.0.0.1:5000/api/sms/broadcast";
-const SMS_LOGS_API_URL = "http://127.0.0.1:5000/api/sms/logs";
-const PREDICT_API_URL = "http://127.0.0.1:5000/api/predict";
+const BASE_API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://127.0.0.1:5000'
+    : '';
+const USERS_API_URL = `${BASE_API_URL}/api/users`;
+const SMS_BROADCAST_API_URL = `${BASE_API_URL}/api/sms/broadcast`;
+const SMS_LOGS_API_URL = `${BASE_API_URL}/api/sms/logs`;
+const PREDICT_API_URL = `${BASE_API_URL}/api/predict`;
 
 const defaultUsers = [
     { username: 'agritex_officer', password: 'nust_maize_2026', name: 'Primary Officer', role: 'Agritex Officer', phone: '+263771234567', ward: 'All Wards' },
