@@ -557,3 +557,243 @@ select.input-field option {
 body.light-theme .edit-btn {
     color: var(--accent-glow);
 }
+
+/* ------------------ NAVIGATION TABS ------------------ */
+.nav-tabs {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 12px;
+}
+
+.nav-tab {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-muted);
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.nav-tab:hover {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--text-main);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+.nav-tab.active {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(99, 102, 241, 0.1));
+    color: #a5b4fc;
+    border-color: var(--accent-glow);
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
+}
+
+body.light-theme .nav-tab.active {
+    background: #eef2ff;
+    color: #4338ca;
+    border-color: #6366f1;
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ------------------ PANEL HEADER ROW & SEARCH ------------------ */
+.panel-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 12px;
+}
+
+.search-input {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-main);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    width: 220px;
+    transition: all 0.2s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--accent-glow);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.sub-label-badge {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.sub-label-badge strong {
+    color: var(--accent-green);
+}
+
+.btn-text-action {
+    background: none;
+    border: none;
+    color: #818cf8;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.btn-text-action:hover {
+    color: #a5b4fc;
+    text-decoration: underline;
+}
+
+/* ------------------ SMS COMPOSER & PLACEHOLDERS ------------------ */
+.sms-textarea {
+    resize: vertical;
+    min-height: 110px;
+    line-height: 1.5;
+    font-family: inherit;
+}
+
+.placeholder-tags {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.placeholder-tag {
+    background: rgba(99, 102, 241, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: #a5b4fc;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.placeholder-tag:hover {
+    background: var(--accent-glow);
+    color: white;
+}
+
+.sms-char-counter {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: right;
+    margin-top: 6px;
+}
+
+.sms-send-btn {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: none;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+.sms-send-btn:hover {
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.preview-badge {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #34d399;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* ------------------ SMARTPHONE SMS PREVIEW ------------------ */
+.phone-mockup-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 10px 0 20px 0;
+}
+
+.phone-mockup {
+    width: 100%;
+    max-width: 360px;
+    background: #0f172a;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+}
+
+body.light-theme .phone-mockup {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.phone-header {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+body.light-theme .phone-header {
+    background: #f1f5f9;
+    border-bottom-color: #e2e8f0;
+}
+
+.phone-sender {
+    font-weight: 700;
+    color: #6366f1;
+    font-size: 12px;
+}
+
+.phone-body {
+    padding: 20px 16px;
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.sms-bubble {
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    color: #ffffff;
+    padding: 14px 16px;
+    border-radius: 18px 18px 4px 18px;
+    font-size: 13px;
+    line-height: 1.5;
+    word-break: break-word;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+}
+
+.sms-time-stamp {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-align: right;
+    margin-top: 6px;
+    margin-right: 4px;
+}
+

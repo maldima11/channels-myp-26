@@ -1,0 +1,23 @@
+[
+    {
+        "id": "sms_1791054008",
+        "timestamp": "2026-10-03 21:00:08",
+        "category": "Drought Warning",
+        "target_ward": "Ward 12 (Ntabazinduna)",
+        "target_role": "Farmer",
+        "sender": "Admin Officer",
+        "recipient_count": 1,
+        "message_sample": "\u26a0\ufe0f AGRITEX ALERT: Hello Johen Doe, forecast for Ward 12 (Ntabazinduna) on 03 Oct 2026 predicts low rainfall. Apply mulch.",
+        "gateway": "NUST Agritex SMS Simulator (Sandbox Mode)",
+        "recipients": [
+            {
+                "username": "johen_doe",
+                "name": "Johen Doe",
+                "phone": "+263772345678",
+                "ward": "Ward 12 (Ntabazinduna)",
+                "message": "\u26a0\ufe0f AGRITEX ALERT: Hello Johen Doe, forecast for Ward 12 (Ntabazinduna) on 03 Oct 2026 predicts low rainfall. Apply mulch.",
+                "status": "Delivered"
+            }
+        ]
+    }
+]

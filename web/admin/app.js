@@ -1,37 +1,70 @@
 const STORAGE_KEY = 'nust_authorized_users';
 const THEME_KEY = 'nust_portal_theme';
 const USERS_API_URL = "http://127.0.0.1:5000/api/users";
+const SMS_BROADCAST_API_URL = "http://127.0.0.1:5000/api/sms/broadcast";
+const SMS_LOGS_API_URL = "http://127.0.0.1:5000/api/sms/logs";
+const PREDICT_API_URL = "http://127.0.0.1:5000/api/predict";
 
 const defaultUsers = [
-    { username: 'agritex_officer', password: 'nust_maize_2026', name: 'Primary Officer', role: 'Agritex Officer' }
+    { username: 'agritex_officer', password: 'nust_maize_2026', name: 'Primary Officer', role: 'Agritex Officer', phone: '+263771234567', ward: 'All Wards' },
+    { username: 'johen_doe', password: '12345', name: 'Johen Doe', role: 'Farmer', phone: '+263772345678', ward: 'Ward 12 (Ntabazinduna)' },
+    { username: 'farmer', password: 'farmer2026', name: 'Local Farmer', role: 'Farmer', phone: '+263773456789', ward: 'Ward 15 (Esigodini Centroid)' }
 ];
 
+const SMS_TEMPLATES = {
+    drought: "⚠️ AGRITEX DROUGHT ALERT: Hello {name}, forecast for {ward} on {date} predicts dry conditions. Practice mulching, maintain tied ridges, and conserve topsoil moisture.",
+    planting: "🌱 AGRITEX PLANTING ADVISORY: Hello {name}, effective planting window for {ward} is active ({date}). Use certified Seed Co varieties (SC301/SC436/SC529/SC719) with 25cm in-row spacing.",
+    fertilizer: "🧪 AGRITEX FERTILIZER NOTICE: Hello {name}, apply split-dose nitrogen top-dressing (AN/Urea) 3-4 weeks after germination for {ward} maize stands. Avoid application during peak dry heat.",
+    pest: "🐛 AGRITEX PEST ALERT: Attention {name} in {ward}, scout maize whorls for Fall Armyworm larvae ({date}). Apply registered biopesticides or contact your local Agritex officer immediately.",
+    harvest: "🌾 AGRITEX HARVEST NOTICE: Hello {name}, check cobs for physiological black-layer maturity in {ward} ({date}). Dry grain to under 12.5% moisture before silo storage.",
+    custom: "AGRITEX ADVISORY ({date}): Hello {name}, localized maize crop advice for {ward}: "
+};
+
+let cachedUsersList = [];
 let editMode = false;
 let editUsername = '';
 
-// 1. INITIALIZE LOCAL STORAGE CREDENTIALS & THEME ON LOAD
+// 1. INITIALIZE ON LOAD
 function initUsers() {
-    // Sync theme
     const savedTheme = localStorage.getItem(THEME_KEY);
     if (savedTheme === 'light') {
         document.body.classList.add('light-theme');
     }
     
     renderUsers();
+    loadSmsLogs();
+    applySmsTemplate();
 }
 
-// 2. THEME SWITCH CONTROLLER
+// 2. TAB SWITCHER
+function switchTab(tabName) {
+    document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+
+    const tabBtn = document.getElementById(`tab-${tabName}-btn`);
+    const tabPane = document.getElementById(`tab-${tabName}-content`);
+    
+    if (tabBtn) tabBtn.classList.add('active');
+    if (tabPane) tabPane.classList.add('active');
+
+    if (tabName === 'sms') {
+        updateRecipientCount();
+        loadSmsLogs();
+    }
+}
+
+// 3. THEME SWITCH CONTROLLER
 function toggleTheme() {
     const isLight = document.body.classList.toggle('light-theme');
     localStorage.setItem(THEME_KEY, isLight ? 'light' : 'dark');
 }
 
-// 3. NAVIGATION CONTROLLER
+// 4. NAVIGATION CONTROLLER
 function goBack() {
     window.location.href = "../index.html";
 }
 
-// Hash function with standard SHA-256 and FNV-1a fallback for offline / insecure file protocol
+// SHA-256 / FNV fallback for password hashing display
 function sha256(message) {
     if (window.crypto && crypto.subtle) {
         const msgBuffer = new TextEncoder().encode(message);
@@ -44,52 +77,66 @@ function sha256(message) {
         for (let i = 0; i < message.length; i++) {
             const char = message.charCodeAt(i);
             hash = ((hash << 5) - hash) + char;
-            hash = hash & hash; // Convert to 32bit integer
+            hash = hash & hash;
         }
         return Promise.resolve("fnv_" + Math.abs(hash).toString(16).padStart(8, '0'));
     }
 }
 
-// Helper to render users list
+// -------------------------------------------------------------
+// USER MANAGEMENT FUNCTIONS
+// -------------------------------------------------------------
 function drawUsersTable(users) {
+    cachedUsersList = users;
     const tbody = document.getElementById("user-table-body");
     tbody.innerHTML = "";
     
     let officerCount = 0;
     let farmerCount = 0;
+    let farmersWithPhone = 0;
 
     users.forEach(user => {
         if (user.role === "Agritex Officer") officerCount++;
-        if (user.role === "Farmer") farmerCount++;
+        if (user.role === "Farmer") {
+            farmerCount++;
+            if (user.phone && user.phone.length > 5) farmersWithPhone++;
+        }
 
         const tr = document.createElement("tr");
 
+        // Name
         const tdName = document.createElement("td");
         tdName.setAttribute("data-label", "Name");
         tdName.innerText = user.name;
         tr.appendChild(tdName);
 
+        // Username
         const tdUser = document.createElement("td");
         tdUser.setAttribute("data-label", "Username");
         tdUser.innerText = user.username;
         tr.appendChild(tdUser);
 
-        const tdPass = document.createElement("td");
-        tdPass.setAttribute("data-label", "Password");
-        tdPass.style.fontFamily = "monospace";
-        tdPass.style.fontSize = "12px";
-        tdPass.innerText = "Hashing...";
-        sha256(user.password).then(hash => {
-            tdPass.innerText = hash.substring(0, 16) + "...";
-            tdPass.title = hash;
-        });
-        tr.appendChild(tdPass);
+        // Phone (SMS)
+        const tdPhone = document.createElement("td");
+        tdPhone.setAttribute("data-label", "Phone");
+        tdPhone.innerHTML = user.phone ? `<span style="font-family: monospace; color: var(--accent-green);">${user.phone}</span>` : '<span style="color: var(--text-muted);">None</span>';
+        tr.appendChild(tdPhone);
 
+        // Ward
+        const tdWard = document.createElement("td");
+        tdWard.setAttribute("data-label", "Ward");
+        tdWard.innerText = user.ward || 'All Wards';
+        tr.appendChild(tdWard);
+
+        // Role
         const tdRole = document.createElement("td");
         tdRole.setAttribute("data-label", "Role");
-        tdRole.innerText = user.role;
+        tdRole.innerHTML = user.role === 'Farmer' 
+            ? `<span style="color: #34d399; font-weight:600;">🌾 Farmer</span>`
+            : `<span style="color: #818cf8; font-weight:600;">👔 Officer</span>`;
         tr.appendChild(tdRole);
 
+        // Actions
         const tdActions = document.createElement("td");
         tdActions.setAttribute("data-label", "Actions");
         
@@ -100,11 +147,11 @@ function drawUsersTable(users) {
         editBtn.onclick = () => startEdit(user);
         tdActions.appendChild(editBtn);
 
+        // Delete button
         const deleteBtn = document.createElement("button");
         deleteBtn.className = "delete-btn";
         deleteBtn.innerText = "Delete";
         
-        // Prevent deleting the primary fallback officer
         if (user.username === 'agritex_officer') {
             deleteBtn.disabled = true;
             deleteBtn.style.opacity = "0.5";
@@ -123,9 +170,30 @@ function drawUsersTable(users) {
     document.getElementById("stat-total").innerText = users.length;
     document.getElementById("stat-officers").innerText = officerCount;
     document.getElementById("stat-farmers").innerText = farmerCount;
+    
+    // Update SMS tab reach stats
+    const reachEl = document.getElementById("stat-sms-reach");
+    if (reachEl) reachEl.innerText = `${farmersWithPhone} / ${farmerCount}`;
+    
+    updateRecipientCount();
 }
 
-// 4. RENDER DIRECTORY TABLE AND UPDATE STATS (SYNCED WITH BACKEND)
+function filterUsersTable() {
+    const query = document.getElementById("search-users").value.toLowerCase().trim();
+    if (!query) {
+        drawUsersTable(cachedUsersList);
+        return;
+    }
+
+    const filtered = cachedUsersList.filter(u => 
+        (u.name && u.name.toLowerCase().includes(query)) ||
+        (u.username && u.username.toLowerCase().includes(query)) ||
+        (u.ward && u.ward.toLowerCase().includes(query)) ||
+        (u.phone && u.phone.includes(query))
+    );
+    drawUsersTable(filtered);
+}
+
 function renderUsers() {
     fetch(USERS_API_URL)
         .then(res => {
@@ -150,224 +218,404 @@ function renderUsers() {
                 } catch(e) {
                     users = defaultUsers;
                 }
-            } else {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultUsers));
             }
             drawUsersTable(users);
         });
 }
 
-// 5. CREATE USER ACCOUNT
 function createUser() {
-    const usernameInput = document.getElementById("reg-username");
-    const passwordInput = document.getElementById("reg-password");
-    const nameInput = document.getElementById("reg-name");
-    const roleInput = document.getElementById("reg-role");
+    const userField = document.getElementById("reg-username");
+    const passField = document.getElementById("reg-password");
+    const nameField = document.getElementById("reg-name");
+    const phoneField = document.getElementById("reg-phone");
+    const wardField = document.getElementById("reg-ward");
+    const roleField = document.getElementById("reg-role");
 
-    const username = usernameInput.value.trim().toLowerCase();
-    const password = passwordInput.value.trim();
-    const name = nameInput.value.trim();
-    const role = roleInput.value;
+    const err = document.getElementById("form-error");
+    const succ = document.getElementById("form-success");
 
-    const errorMsg = document.getElementById("form-error");
-    const successMsg = document.getElementById("form-success");
+    err.style.display = "none";
+    succ.style.display = "none";
 
-    errorMsg.style.display = "none";
-    successMsg.style.display = "none";
+    const username = userField.value.trim().toLowerCase();
+    const password = passField.value.trim();
+    const name = nameField.value.trim();
+    const phone = phoneField ? phoneField.value.trim() : '+263770000000';
+    const ward = wardField ? wardField.value : 'All Wards';
+    const role = roleField.value;
 
-    if (!username || !password || !name || !role) {
-        errorMsg.innerText = "Please fill all input fields.";
-        errorMsg.style.display = "block";
+    if (!username || !password || !name) {
+        err.innerText = "Please complete username, password, and name.";
+        err.style.display = "block";
         return;
     }
 
     if (editMode) {
-        updateUser(username, password, name, role);
-        return;
-    }
-
-    // Try posting to Flask API
-    fetch(USERS_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, name, role })
-    })
-    .then(res => {
-        return res.json().then(data => {
-            if (!res.ok) throw new Error(data.message || "Failed to register");
-            return data;
-        });
-    })
-    .then(data => {
-        // Clear inputs
-        usernameInput.value = "";
-        passwordInput.value = "";
-        nameInput.value = "";
-
-        successMsg.innerText = "User registered successfully!";
-        successMsg.style.display = "block";
-        renderUsers();
-    })
-    .catch(err => {
-        console.warn("Backend registration failed. Falling back to browser LocalStorage registry:", err.message);
-        
-        // Local fallback
-        const local = localStorage.getItem(STORAGE_KEY);
-        let users = [];
-        try {
-            users = JSON.parse(local) || [];
-        } catch(e) {
-            users = [];
-        }
-
-        const exists = users.some(u => u.username === username);
-        if (exists) {
-            errorMsg.innerText = `Username '${username}' is already registered.`;
-            errorMsg.style.display = "block";
-            return;
-        }
-
-        users.push({ username, password, name, role });
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
-
-        // Clear inputs
-        usernameInput.value = "";
-        passwordInput.value = "";
-        nameInput.value = "";
-
-        successMsg.innerText = "User registered locally (Backend offline)!";
-        successMsg.style.display = "block";
-        renderUsers();
-    });
-}
-
-// 5b. UPDATE USER ACCOUNT ADJUSTMENTS
-function updateUser(username, password, name, role) {
-    const errorMsg = document.getElementById("form-error");
-    const successMsg = document.getElementById("form-success");
-
-    fetch(`${USERS_API_URL}/${username}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password, name, role })
-    })
-    .then(res => {
-        return res.json().then(data => {
-            if (!res.ok) throw new Error(data.message || "Failed to update user");
-            return data;
-        });
-    })
-    .then(data => {
-        cancelEdit();
-        successMsg.innerText = "User adjusted successfully!";
-        successMsg.style.display = "block";
-        renderUsers();
-    })
-    .catch(err => {
-        console.warn("Backend update request failed. Falling back to local update:", err.message);
-        
-        // Local fallback
-        const local = localStorage.getItem(STORAGE_KEY);
-        let users = [];
-        try {
-            users = JSON.parse(local) || [];
-        } catch(e) {
-            users = [];
-        }
-
-        let userFound = false;
-        for (let u of users) {
-            if (u.username === username) {
-                u.password = password;
-                u.name = name;
-                u.role = role;
-                userFound = true;
-                break;
+        fetch(`${USERS_API_URL}/${editUsername}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password, name, role, phone, ward })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "success") {
+                finishEditForm(succ, "User updated successfully!");
+                renderUsers();
+            } else {
+                throw new Error(data.message || "Failed to update");
             }
-        }
-
-        if (!userFound) {
-            errorMsg.innerText = `User '${username}' not found.`;
-            errorMsg.style.display = "block";
-            return;
-        }
-
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
-        cancelEdit();
-        successMsg.innerText = "User adjusted locally (Backend offline)!";
-        successMsg.style.display = "block";
-        renderUsers();
-    });
+        })
+        .catch(errObj => {
+            const local = localStorage.getItem(STORAGE_KEY);
+            let users = local ? JSON.parse(local) : defaultUsers;
+            users = users.map(u => u.username === editUsername ? { ...u, password, name, role, phone, ward } : u);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+            finishEditForm(succ, "User updated in local storage (Offline)");
+            drawUsersTable(users);
+        });
+    } else {
+        fetch(USERS_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password, name, role, phone, ward })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "success") {
+                succ.innerText = "User registered successfully!";
+                succ.style.display = "block";
+                clearForm();
+                renderUsers();
+            } else {
+                throw new Error(data.message || "Failed to register user");
+            }
+        })
+        .catch(errObj => {
+            const local = localStorage.getItem(STORAGE_KEY);
+            let users = local ? JSON.parse(local) : defaultUsers;
+            if (users.find(u => u.username === username)) {
+                err.innerText = `Username '${username}' already exists.`;
+                err.style.display = "block";
+                return;
+            }
+            users.push({ username, password, name, role, phone, ward });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+            succ.innerText = "User registered in local storage (Offline)";
+            succ.style.display = "block";
+            clearForm();
+            drawUsersTable(users);
+        });
+    }
 }
 
-// 5c. EDIT CONTROL TRIGGERS
 function startEdit(user) {
+    switchTab('users');
+    editMode = true;
+    editUsername = user.username;
+
+    document.getElementById("form-title-action").innerText = `Edit Account (${user.username})`;
     document.getElementById("reg-username").value = user.username;
     document.getElementById("reg-username").disabled = true;
     document.getElementById("reg-password").value = user.password;
     document.getElementById("reg-name").value = user.name;
+    if (document.getElementById("reg-phone")) document.getElementById("reg-phone").value = user.phone || '+26377';
+    if (document.getElementById("reg-ward")) document.getElementById("reg-ward").value = user.ward || 'All Wards';
     document.getElementById("reg-role").value = user.role;
 
-    editMode = true;
-    editUsername = user.username;
-
-    document.getElementById("form-title-action").innerText = "Edit Authorized Account";
-    document.getElementById("reg-primary-btn").innerText = "Save Adjustments";
-    document.getElementById("reg-cancel-btn").style.display = "inline-block";
-
-    document.getElementById("form-error").style.display = "none";
-    document.getElementById("form-success").style.display = "none";
+    document.getElementById("reg-primary-btn").innerText = "Save Changes";
+    document.getElementById("reg-cancel-btn").style.display = "block";
 }
 
 function cancelEdit() {
-    document.getElementById("reg-username").value = "";
-    document.getElementById("reg-username").disabled = false;
-    document.getElementById("reg-password").value = "";
-    document.getElementById("reg-name").value = "";
-    document.getElementById("reg-role").value = "Agritex Officer";
-
+    clearForm();
     editMode = false;
-    editUsername = "";
-
+    editUsername = '';
     document.getElementById("form-title-action").innerText = "Add Authorized Account";
+    document.getElementById("reg-username").disabled = false;
     document.getElementById("reg-primary-btn").innerText = "Register User";
     document.getElementById("reg-cancel-btn").style.display = "none";
-
-    document.getElementById("form-error").style.display = "none";
-    document.getElementById("form-success").style.display = "none";
 }
 
-// 6. DELETE USER ACCOUNT
+function finishEditForm(succEl, msg) {
+    succEl.innerText = msg;
+    succEl.style.display = "block";
+    cancelEdit();
+}
+
+function clearForm() {
+    document.getElementById("reg-username").value = "";
+    document.getElementById("reg-password").value = "";
+    document.getElementById("reg-name").value = "";
+    if (document.getElementById("reg-phone")) document.getElementById("reg-phone").value = "+26377";
+    if (document.getElementById("reg-ward")) document.getElementById("reg-ward").value = "All Wards";
+}
+
 function deleteUser(username) {
-    fetch(`${USERS_API_URL}/${username}`, {
-        method: "DELETE"
-    })
-    .then(res => {
-        return res.json().then(data => {
-            if (!res.ok) throw new Error(data.message || "Failed to delete");
-            return data;
+    if (!confirm(`Are you sure you want to delete user '${username}'?`)) return;
+
+    fetch(`${USERS_API_URL}/${username}`, { method: 'DELETE' })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "success") {
+                renderUsers();
+            } else {
+                throw new Error(data.message || "Failed to delete");
+            }
+        })
+        .catch(err => {
+            const local = localStorage.getItem(STORAGE_KEY);
+            if (local) {
+                let users = JSON.parse(local);
+                users = users.filter(u => u.username !== username);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+                drawUsersTable(users);
+            }
         });
+}
+
+// -------------------------------------------------------------
+// SMS BROADCAST CONSOLE FUNCTIONS
+// -------------------------------------------------------------
+function applySmsTemplate() {
+    const select = document.getElementById("sms-template-select");
+    const textarea = document.getElementById("sms-message-text");
+    if (!select || !textarea) return;
+
+    const key = select.value;
+    textarea.value = SMS_TEMPLATES[key] || SMS_TEMPLATES.drought;
+    updateSmsPreview();
+}
+
+function insertPlaceholder(tag) {
+    const textarea = document.getElementById("sms-message-text");
+    if (!textarea) return;
+    
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    
+    textarea.value = text.substring(0, start) + tag + text.substring(end);
+    textarea.focus();
+    textarea.selectionStart = textarea.selectionEnd = start + tag.length;
+    updateSmsPreview();
+}
+
+function updateSmsPreview() {
+    const textarea = document.getElementById("sms-message-text");
+    const charCountEl = document.getElementById("sms-char-count");
+    const segmentCountEl = document.getElementById("sms-segment-count");
+    const phoneBubble = document.getElementById("phone-sms-preview");
+    const phoneTime = document.getElementById("phone-sms-time");
+
+    if (!textarea) return;
+
+    const rawText = textarea.value;
+    const length = rawText.length;
+    const segments = Math.max(1, Math.ceil(length / 160));
+
+    if (charCountEl) charCountEl.innerText = length;
+    if (segmentCountEl) segmentCountEl.innerText = segments;
+
+    // Simulate replacement for phone preview
+    const ward = document.getElementById("sms-target-ward") ? document.getElementById("sms-target-ward").value : "Ward 12";
+    const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    
+    let previewText = rawText
+        .replace(/{name}/g, "John Moyo")
+        .replace(/{ward}/g, ward)
+        .replace(/{date}/g, dateStr);
+
+    if (phoneBubble) {
+        phoneBubble.innerText = previewText || "Type your advisory message above to see a live recipient simulation...";
+    }
+    if (phoneTime) {
+        const now = new Date();
+        phoneTime.innerText = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')} • SMS (${segments} seg)`;
+    }
+}
+
+function updateRecipientCount() {
+    const wardSelect = document.getElementById("sms-target-ward");
+    const countBadge = document.getElementById("sms-count-badge");
+    if (!wardSelect || !countBadge) return;
+
+    const targetWard = wardSelect.value;
+    const local = localStorage.getItem(STORAGE_KEY);
+    const users = local ? JSON.parse(local) : cachedUsersList;
+
+    const matchingFarmers = users.filter(u => {
+        if (u.role !== 'Farmer') return false;
+        if (targetWard === 'All Wards') return true;
+        return u.ward === targetWard || u.ward === 'All Wards' || (u.ward && u.ward.includes(targetWard));
+    });
+
+    countBadge.innerText = matchingFarmers.length;
+    updateSmsPreview();
+}
+
+function fetchLiveModelAdvisory() {
+    const wardSelect = document.getElementById("sms-target-ward");
+    const textarea = document.getElementById("sms-message-text");
+    const selectedWard = wardSelect ? wardSelect.value : "Ward 12";
+    
+    const cleanWard = selectedWard.split(" (")[0] || "Ward 12";
+
+    textarea.value = "Fetching latest biophysical AI model forecast...";
+    updateSmsPreview();
+
+    fetch(PREDICT_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            ward: cleanWard,
+            variety: "SC719",
+            precip: 0.38,
+            heat: 0.42,
+            sand: 65,
+            clay: 20
+        })
     })
+    .then(res => res.json())
     .then(data => {
-        renderUsers();
-    })
-    .catch(err => {
-        console.warn("Backend delete request failed. Falling back to local deletion:", err.message);
-        
-        // Local fallback
-        const local = localStorage.getItem(STORAGE_KEY);
-        let users = [];
-        try {
-            users = JSON.parse(local) || [];
-        } catch(e) {
-            users = [];
+        if (data.status === "success" && data.forecast) {
+            const f = data.forecast;
+            const dateStr = "{date}";
+            textarea.value = `🌾 NUST AGRITEX AI ALERT (${dateStr}): Hello {name}, forecast for ${selectedWard}: Yield [${f.low}-${f.high}] kg/ha. Rainfall is restricted. Apply mulch and conservation ridges.`;
+            updateSmsPreview();
+        } else {
+            throw new Error("Invalid forecast");
         }
-        
-        users = users.filter(u => u.username !== username);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
-        renderUsers();
+    })
+    .catch(() => {
+        const dateStr = "{date}";
+        textarea.value = `🌾 NUST AGRITEX ADVISORY (${dateStr}): Hello {name}, biophysical models predict low moisture for ${selectedWard}. Practice water-harvesting and split nitrogen top-dressing.`;
+        updateSmsPreview();
     });
 }
 
-// Run init on load
+function sendSmsBroadcast() {
+    const wardSelect = document.getElementById("sms-target-ward");
+    const templateSelect = document.getElementById("sms-template-select");
+    const textarea = document.getElementById("sms-message-text");
+    const sendBtn = document.getElementById("sms-broadcast-btn");
+    const statusMsg = document.getElementById("sms-status-msg");
+
+    const targetWard = wardSelect.value;
+    const category = templateSelect.options[templateSelect.selectedIndex].text;
+    const message = textarea.value.trim();
+
+    if (!message) {
+        statusMsg.className = "status-msg error-msg";
+        statusMsg.innerText = "Please enter an advisory message to broadcast.";
+        statusMsg.style.display = "block";
+        return;
+    }
+
+    sendBtn.disabled = true;
+    sendBtn.innerText = "⏳ Dispatching SMS Broadcast...";
+    statusMsg.style.display = "none";
+
+    fetch(SMS_BROADCAST_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            ward: targetWard,
+            role: "Farmer",
+            category: category,
+            message: message,
+            sender: "District Agritex Admin"
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        sendBtn.disabled = false;
+        sendBtn.innerText = "📡 Dispatch SMS Broadcast";
+
+        if (data.status === "success") {
+            statusMsg.className = "status-msg success-msg";
+            statusMsg.innerHTML = `✅ <strong>Success!</strong> ${data.message} <br><small>Gateway: ${data.gateway}</small>`;
+            statusMsg.style.display = "block";
+            loadSmsLogs();
+        } else if (data.status === "warning") {
+            statusMsg.className = "status-msg error-msg";
+            statusMsg.innerText = `⚠️ ${data.message}`;
+            statusMsg.style.display = "block";
+        } else {
+            throw new Error(data.message || "Failed to dispatch SMS broadcast");
+        }
+    })
+    .catch(err => {
+        sendBtn.disabled = false;
+        sendBtn.innerText = "📡 Dispatch SMS Broadcast";
+
+        // Local simulation fallback
+        const local = localStorage.getItem(STORAGE_KEY);
+        const users = local ? JSON.parse(local) : cachedUsersList;
+        const matchingFarmers = users.filter(u => u.role === 'Farmer' && (targetWard === 'All Wards' || u.ward === targetWard || u.ward === 'All Wards'));
+
+        statusMsg.className = "status-msg success-msg";
+        statusMsg.innerHTML = `✅ <strong>Offline Simulation:</strong> Dispatched advisory to ${matchingFarmers.length} registered farmer(s). <br><small>Gateway: Local Mock Simulator</small>`;
+        statusMsg.style.display = "block";
+    });
+}
+
+function loadSmsLogs() {
+    const logsBody = document.getElementById("sms-logs-body");
+    const totalEl = document.getElementById("stat-sms-total");
+    const gatewayEl = document.getElementById("stat-sms-gateway");
+    if (!logsBody) return;
+
+    fetch(SMS_LOGS_API_URL)
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "success" && data.logs) {
+                renderSmsLogsTable(data.logs);
+                if (totalEl) totalEl.innerText = data.total || data.logs.length;
+                if (data.logs.length > 0 && gatewayEl) {
+                    gatewayEl.innerText = data.logs[0].gateway.includes("Africa") ? "Africa's Talking" : (data.logs[0].gateway.includes("Twilio") ? "Twilio" : "Simulator");
+                }
+            }
+        })
+        .catch(() => {
+            renderSmsLogsTable([]);
+        });
+}
+
+function renderSmsLogsTable(logs) {
+    const tbody = document.getElementById("sms-logs-body");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    if (!logs || logs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">No broadcast history recorded yet.</td></tr>`;
+        return;
+    }
+
+    logs.slice(0, 10).forEach(log => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td style="font-size: 12px; white-space: nowrap;">${log.timestamp}</td>
+            <td><span style="font-weight: 600; color: #818cf8;">${log.target_ward}</span></td>
+            <td><span style="color: #34d399; font-weight: bold;">${log.recipient_count} Farmers</span></td>
+            <td style="font-size: 12px; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${log.message_sample}">${log.message_sample}</td>
+            <td><span style="font-size: 11px; color: var(--text-muted);">${log.gateway}</span></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function clearSmsLogs() {
+    if (!confirm("Are you sure you want to clear the SMS broadcast history?")) return;
+
+    fetch(SMS_LOGS_API_URL, { method: 'DELETE' })
+        .then(res => res.json())
+        .then(() => {
+            loadSmsLogs();
+        })
+        .catch(() => {
+            renderSmsLogsTable([]);
+        });
+}
+
+// 5. BOOTSTRAP ON LOAD
 window.onload = initUsers;

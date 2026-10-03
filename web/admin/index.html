@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NUST Yield Portal - Admin Center</title>
+    <title>NUST Yield Portal - Admin & SMS Broadcast Center</title>
     <!-- Modern Premium Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,7 +16,7 @@
     <header>
         <div class="logo-text">NUST Admin Panel</div>
         <div class="header-metadata">
-            <div class="badge">Role Management Console</div>
+            <div class="badge" id="gateway-badge">SMS Gateway: Active</div>
             <button class="theme-btn" onclick="toggleTheme()" title="Toggle Interface Mode">🌓 Theme Mode</button>
             <button class="back-btn" onclick="goBack()">Back to Yield Portal</button>
         </div>
@@ -25,79 +25,280 @@
     <!-- MAIN CONTENT CONTAINER -->
     <div class="main-container">
         
-        <!-- ROW 1: METRICS HIGHLIGHTS -->
-        <div class="metrics-grid">
-            <div class="metric-card glass-panel">
-                <span class="metric-label">Total Registered</span>
-                <span id="stat-total" class="metric-value">0</span>
+        <!-- NAVIGATION TABS -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" id="tab-users-btn" onclick="switchTab('users')">
+                👥 User & Role Management
+            </button>
+            <button class="nav-tab" id="tab-sms-btn" onclick="switchTab('sms')">
+                📲 SMS Advisory Broadcast Center
+            </button>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- TAB 1: USER & ROLE MANAGEMENT -->
+        <!-- ========================================================= -->
+        <div id="tab-users-content" class="tab-pane active">
+            
+            <!-- ROW 1: METRICS HIGHLIGHTS -->
+            <div class="metrics-grid">
+                <div class="metric-card glass-panel">
+                    <span class="metric-label">Total Registered</span>
+                    <span id="stat-total" class="metric-value">0</span>
+                </div>
+                <div class="metric-card glass-panel">
+                    <span class="metric-label">Agritex Officers</span>
+                    <span id="stat-officers" class="metric-value">0</span>
+                </div>
+                <div class="metric-card glass-panel">
+                    <span class="metric-label">Registered Farmers</span>
+                    <span id="stat-farmers" class="metric-value">0</span>
+                </div>
             </div>
-            <div class="metric-card glass-panel">
-                <span class="metric-label">Agritex Officers</span>
-                <span id="stat-officers" class="metric-value">0</span>
-            </div>
-            <div class="metric-card glass-panel">
-                <span class="metric-label">Registered Farmers</span>
-                <span id="stat-farmers" class="metric-value">0</span>
+
+            <div class="dashboard-grid">
+                <!-- COLUMN 1: ADD/EDIT USER FORM -->
+                <div class="glass-panel form-card">
+                    <div class="panel-title">
+                        <span class="bullet-accent">■</span> <span id="form-title-action">Add Authorized Account</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="reg-username">Username</label>
+                        <input type="text" id="reg-username" class="input-field" placeholder="e.g. jdoe">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reg-password">Password</label>
+                        <input type="password" id="reg-password" class="input-field" placeholder="••••••••">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reg-name">Full Name</label>
+                        <input type="text" id="reg-name" class="input-field" placeholder="e.g. John Doe">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reg-phone">Mobile Phone (SMS Target)</label>
+                        <input type="tel" id="reg-phone" class="input-field" placeholder="e.g. +263771234567" value="+26377">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reg-ward">Assigned Ward (Umzingwane District)</label>
+                        <select id="reg-ward" class="input-field">
+                            <option value="All Wards">All Wards (District-Wide)</option>
+                            <option value="Ward 1 (Nswazi North)">Ward 1 (Nswazi North)</option>
+                            <option value="Ward 2 (Sihlengeni)">Ward 2 (Sihlengeni)</option>
+                            <option value="Ward 3 (Matshetshe)">Ward 3 (Matshetshe)</option>
+                            <option value="Ward 4 (Kumbudzi)">Ward 4 (Kumbudzi)</option>
+                            <option value="Ward 5 (Zimnyathini)">Ward 5 (Zimnyathini)</option>
+                            <option value="Ward 6 (Mawabeni)">Ward 6 (Mawabeni)</option>
+                            <option value="Ward 7 (Sihlengeni South)">Ward 7 (Sihlengeni South)</option>
+                            <option value="Ward 8 (Shale)">Ward 8 (Shale)</option>
+                            <option value="Ward 9 (Mtshede)">Ward 9 (Mtshede)</option>
+                            <option value="Ward 10 (Vulindlela)">Ward 10 (Vulindlela)</option>
+                            <option value="Ward 11 (How Mine)">Ward 11 (How Mine)</option>
+                            <option value="Ward 12 (Ntabazinduna)">Ward 12 (Ntabazinduna)</option>
+                            <option value="Ward 13 (Inyankuni)">Ward 13 (Inyankuni)</option>
+                            <option value="Ward 14 (Mbizingwe)">Ward 14 (Mbizingwe)</option>
+                            <option value="Ward 15 (Esigodini Centroid)">Ward 15 (Esigodini Centroid)</option>
+                            <option value="Ward 16 (eSibomvu)">Ward 16 (eSibomvu)</option>
+                            <option value="Ward 17 (Dula)">Ward 17 (Dula)</option>
+                            <option value="Ward 18 (Umzingwane South)">Ward 18 (Umzingwane South)</option>
+                            <option value="Ward 19 (Bezha)">Ward 19 (Bezha)</option>
+                            <option value="Ward 20 (Mulungwane)">Ward 20 (Mulungwane)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reg-role">System Role</label>
+                        <select id="reg-role" class="input-field">
+                            <option value="Farmer">Farmer</option>
+                            <option value="Agritex Officer">Agritex Officer</option>
+                        </select>
+                    </div>
+
+                    <button class="action-btn" id="reg-primary-btn" onclick="createUser()">Register User</button>
+                    <button class="action-btn" id="reg-cancel-btn" onclick="cancelEdit()" style="display:none; background:#475569; margin-top: 10px;">Cancel Edit</button>
+                    <div id="form-error" class="status-msg error-msg">Please fill all fields.</div>
+                    <div id="form-success" class="status-msg success-msg">User registered successfully!</div>
+                </div>
+
+                <!-- COLUMN 2: ACTIVE USERS DIRECTORY -->
+                <div class="glass-panel directory-card">
+                    <div class="panel-title-row">
+                        <div class="panel-title">
+                            <span class="bullet-accent">■</span> Credentials Directory
+                        </div>
+                        <input type="text" id="search-users" class="search-input" placeholder="🔍 Search by name or ward..." oninput="filterUsersTable()">
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="user-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Username</th>
+                                    <th>Phone (SMS)</th>
+                                    <th>Ward</th>
+                                    <th>Role</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="user-table-body">
+                                <!-- Populated dynamically via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="dashboard-grid">
-            <!-- COLUMN 1: ADD/EDIT USER FORM -->
-            <div class="glass-panel form-card">
-                <div class="panel-title">
-                    <span class="bullet-accent">■</span> <span id="form-title-action">Add Authorized Account</span>
+        <!-- ========================================================= -->
+        <!-- TAB 2: SMS ADVISORY BROADCAST CENTER -->
+        <!-- ========================================================= -->
+        <div id="tab-sms-content" class="tab-pane">
+            
+            <!-- SMS METRICS -->
+            <div class="metrics-grid">
+                <div class="metric-card glass-panel">
+                    <span class="metric-label">Total SMS Dispatched</span>
+                    <span id="stat-sms-total" class="metric-value">0</span>
                 </div>
-                
-                <div class="form-group">
-                    <label for="reg-username">Username</label>
-                    <input type="text" id="reg-username" class="input-field" placeholder="e.g. jdoe">
+                <div class="metric-card glass-panel">
+                    <span class="metric-label">Farmers With Phone</span>
+                    <span id="stat-sms-reach" class="metric-value">0</span>
                 </div>
-
-                <div class="form-group">
-                    <label for="reg-password">Password</label>
-                    <input type="password" id="reg-password" class="input-field" placeholder="••••••••">
+                <div class="metric-card glass-panel">
+                    <span class="metric-label">Active Gateway</span>
+                    <span id="stat-sms-gateway" class="metric-value" style="font-size: 16px;">Simulator (Active)</span>
                 </div>
-
-                <div class="form-group">
-                    <label for="reg-name">Full Name</label>
-                    <input type="text" id="reg-name" class="input-field" placeholder="e.g. John Doe">
-                </div>
-
-                <div class="form-group">
-                    <label for="reg-role">System Role</label>
-                    <select id="reg-role" class="input-field">
-                        <option value="Agritex Officer">Agritex Officer</option>
-                        <option value="Farmer">Farmer</option>
-                    </select>
-                </div>
-
-                <button class="action-btn" id="reg-primary-btn" onclick="createUser()">Register User</button>
-                <button class="action-btn" id="reg-cancel-btn" onclick="cancelEdit()" style="display:none; background:#475569; margin-top: 10px;">Cancel Edit</button>
-                <div id="form-error" class="status-msg error-msg">Please fill all fields.</div>
-                <div id="form-success" class="status-msg success-msg">User registered successfully!</div>
             </div>
 
-            <!-- COLUMN 2: ACTIVE USERS DIRECTORY -->
-            <div class="glass-panel directory-card">
-                <div class="panel-title">
-                    <span class="bullet-accent">■</span> Credentials Directory
+            <div class="dashboard-grid">
+                <!-- COLUMN 1: BROADCAST COMPOSER -->
+                <div class="glass-panel form-card">
+                    <div class="panel-title">
+                        <span class="bullet-accent">■</span> Broadcast Advisory to Farmers
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sms-target-ward">Target Recipient Ward</label>
+                        <select id="sms-target-ward" class="input-field" onchange="updateRecipientCount()">
+                            <option value="All Wards">All Wards (Broadcast to All Farmers)</option>
+                            <option value="Ward 1 (Nswazi North)">Ward 1 (Nswazi North)</option>
+                            <option value="Ward 2 (Sihlengeni)">Ward 2 (Sihlengeni)</option>
+                            <option value="Ward 3 (Matshetshe)">Ward 3 (Matshetshe)</option>
+                            <option value="Ward 4 (Kumbudzi)">Ward 4 (Kumbudzi)</option>
+                            <option value="Ward 5 (Zimnyathini)">Ward 5 (Zimnyathini)</option>
+                            <option value="Ward 6 (Mawabeni)">Ward 6 (Mawabeni)</option>
+                            <option value="Ward 7 (Sihlengeni South)">Ward 7 (Sihlengeni South)</option>
+                            <option value="Ward 8 (Shale)">Ward 8 (Shale)</option>
+                            <option value="Ward 9 (Mtshede)">Ward 9 (Mtshede)</option>
+                            <option value="Ward 10 (Vulindlela)">Ward 10 (Vulindlela)</option>
+                            <option value="Ward 11 (How Mine)">Ward 11 (How Mine)</option>
+                            <option value="Ward 12 (Ntabazinduna)">Ward 12 (Ntabazinduna)</option>
+                            <option value="Ward 13 (Inyankuni)">Ward 13 (Inyankuni)</option>
+                            <option value="Ward 14 (Mbizingwe)">Ward 14 (Mbizingwe)</option>
+                            <option value="Ward 15 (Esigodini Centroid)">Ward 15 (Esigodini Centroid)</option>
+                            <option value="Ward 16 (eSibomvu)">Ward 16 (eSibomvu)</option>
+                            <option value="Ward 17 (Dula)">Ward 17 (Dula)</option>
+                            <option value="Ward 18 (Umzingwane South)">Ward 18 (Umzingwane South)</option>
+                            <option value="Ward 19 (Bezha)">Ward 19 (Bezha)</option>
+                            <option value="Ward 20 (Mulungwane)">Ward 20 (Mulungwane)</option>
+                        </select>
+                        <div id="sms-recipient-counter" class="sub-label-badge">
+                            Targeting: <strong id="sms-count-badge">0</strong> Farmers
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sms-template-select">Advisory Category & Preset Template</label>
+                        <select id="sms-template-select" class="input-field" onchange="applySmsTemplate()">
+                            <option value="drought">⚠️ Drought Warning & Moisture Advisory</option>
+                            <option value="planting">🌱 Planting Window & Cultivar Selection</option>
+                            <option value="fertilizer">🧪 Top-Dressing & Split-Dose Application</option>
+                            <option value="pest">🐛 Fall Armyworm & Pest Surveillance</option>
+                            <option value="harvest">🌾 Pre-Harvest & Storage Safety</option>
+                            <option value="custom">✍️ Custom Advisory Message</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <label for="sms-message-text" style="margin-bottom: 0;">SMS Advisory Content</label>
+                            <button type="button" class="btn-text-action" onclick="fetchLiveModelAdvisory()">⚡ Pull Live AI Model Advice</button>
+                        </div>
+                        <textarea id="sms-message-text" class="input-field sms-textarea" rows="5" oninput="updateSmsPreview()"></textarea>
+                        
+                        <div class="placeholder-tags">
+                            <span class="placeholder-tag" onclick="insertPlaceholder('{name}')">+ {name}</span>
+                            <span class="placeholder-tag" onclick="insertPlaceholder('{ward}')">+ {ward}</span>
+                            <span class="placeholder-tag" onclick="insertPlaceholder('{date}')">+ {date}</span>
+                        </div>
+
+                        <div class="sms-char-counter">
+                            <span id="sms-char-count">0</span>/160 chars (<span id="sms-segment-count">1</span> SMS segment)
+                        </div>
+                    </div>
+
+                    <button class="action-btn sms-send-btn" id="sms-broadcast-btn" onclick="sendSmsBroadcast()">
+                        📡 Dispatch SMS Broadcast
+                    </button>
+                    <div id="sms-status-msg" class="status-msg"></div>
                 </div>
-                
-                <div class="table-container">
-                    <table class="user-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Username</th>
-                                <th>Password</th>
-                                <th>Role</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="user-table-body">
-                            <!-- Populated dynamically via JS -->
-                        </tbody>
-                    </table>
+
+                <!-- COLUMN 2: LIVE PHONE PREVIEW & LOGS -->
+                <div class="glass-panel directory-card">
+                    <div class="panel-title-row">
+                        <div class="panel-title">
+                            <span class="bullet-accent">■</span> Recipient Mobile Preview
+                        </div>
+                        <span class="preview-badge">Live SMS Simulation</span>
+                    </div>
+
+                    <!-- PHONE MOCKUP -->
+                    <div class="phone-mockup-wrapper">
+                        <div class="phone-mockup">
+                            <div class="phone-header">
+                                <span class="phone-time">12:30</span>
+                                <span class="phone-sender">Agritex Advisory</span>
+                                <span class="phone-battery">🔋 98%</span>
+                            </div>
+                            <div class="phone-body">
+                                <div class="sms-bubble" id="phone-sms-preview">
+                                    Hello Farmer, NUST Agritex Forecast: Moderate drought expected in your ward. Practice mulching and prepare tied ridges.
+                                </div>
+                                <div class="sms-time-stamp" id="phone-sms-time">Just now • SMS</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RECENT SMS DISPATCH LOGS -->
+                    <div class="panel-title-row" style="margin-top: 24px;">
+                        <div class="panel-title" style="font-size: 15px;">
+                            <span class="bullet-accent">■</span> Recent SMS Broadcast Logs
+                        </div>
+                        <button class="btn-text-action" onclick="clearSmsLogs()">Clear History</button>
+                    </div>
+
+                    <div class="table-container" style="max-height: 240px;">
+                        <table class="user-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Ward</th>
+                                    <th>Sent</th>
+                                    <th>Message Sample</th>
+                                    <th>Gateway</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sms-logs-body">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+
                 </div>
             </div>
         </div>

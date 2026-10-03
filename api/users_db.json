@@ -3,12 +3,32 @@
         "username": "agritex_officer",
         "password": "nust_maize_2026",
         "name": "Primary Officer",
-        "role": "Agritex Officer"
+        "role": "Agritex Officer",
+        "phone": "+263771234567",
+        "ward": "All Wards"
     },
     {
         "username": "johen_doe",
         "password": "12345",
         "name": "Johen Doe",
-        "role": "Farmer"
+        "role": "Farmer",
+        "phone": "+263772345678",
+        "ward": "Ward 12 (Ntabazinduna)"
+    },
+    {
+        "username": "farmer",
+        "password": "farmer2026",
+        "name": "Local Farmer",
+        "role": "Farmer",
+        "phone": "+263773456789",
+        "ward": "Ward 15 (Esigodini Centroid)"
+    },
+    {
+        "username": "admin",
+        "password": "admin123",
+        "name": "System Admin",
+        "role": "Administrator",
+        "phone": "+263774567890",
+        "ward": "All Wards"
     }
 ]

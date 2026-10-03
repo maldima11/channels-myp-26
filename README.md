@@ -1,133 +1,141 @@
-# Multi-Channel Maize Yield Forecasting & Advisory System
+# NUST Maize Yield Forecasting, Advisory & SMS Broadcast System
 
-This repository contains the deployment components for the National University of Science and Technology (NUST) MPhil thesis hybrid yield prediction model. It provides separate codebases and environments for three key distribution channels (USSD, Web, and Mobile) connected to a central biophysical prediction API.
+This repository houses the deployment architecture for the **National University of Science and Technology (NUST)** MPhil thesis hybrid biophysical crop yield forecasting model for **Umzingwane District, Matabeleland South**.
+
+It connects predictive biophysical AI/XGBoost models to multi-channel interfaces: **Web Portal**, **Admin Credentials & SMS Broadcast Center**, **React Native Mobile App (Android & iOS)**, and **USSD Telephony**.
 
 ---
 
 ## Repository Structure
 
 ```
-deployment_channels/
-├── README.md                  # This file
-├── api/                       # Biophysical Yield Prediction API (Python Flask)
-│   ├── app.py                 # REST endpoint for predictions and validation
-│   └── requirements.txt       # Python environment dependencies
-├── ussd/                      # USSD Telephony Server (Node.js Express)
-│   ├── server.js              # State engine decoding session callbacks & calling API
-│   └── package.json           # Node configuration and script runners
-├── web/                       # Modernized Web Portal Dashboard (HTML/CSS/JS)
-│   ├── index.html             # Authorized portal gate & main workspace
-│   ├── styles.css             # Premium glassmorphism dark-mode styles
-│   ├── app.js                 # AJAX request handlers, canvas charts, and report generator
-│   └── package.json           # Local dev web server configuration
-└── mobile/                    # Mobile Application View (React Native Component)
-    ├── App.js                 # Styled mobile view, input sliders, and SVG chart graphics
-    └── package.json           # React Native node packages
+channels-myp-26/
+├── README.md                  # Project overview, architecture, and SMS setup guide
+├── api/                       # Biophysical AI Forecasting & SMS Gateway Microservice
+│   ├── app.py                 # Flask REST API endpoints (predict, users, sms broadcast)
+│   ├── users_db.json          # Central credentials, phone numbers & ward registry
+│   ├── sms_logs.json          # Audit log for dispatched SMS advisories
+│   └── requirements.txt       # Python dependencies (Flask, XGBoost, etc.)
+├── web/                       # Web Portal & Admin Center
+│   ├── index.html             # Multi-role portal (Farmer & Agritex Officer consoles)
+│   ├── styles.css             # Glassmorphism dark/light UI design system
+│   ├── app.js                 # Prediction UI, biophysical gauges, and PDF export
+│   └── admin/                 # Administrator Console & SMS Broadcast Center
+│       ├── index.html         # User Management & SMS Broadcast tabs
+│       ├── styles.css         # Admin styling, live phone mockup, and tables
+│       ├── app.js             # User CRUD, template composer, and SMS dispatch engine
+│       └── README.md          # Admin Center & SMS quick-start guide
+└── mobile/                    # React Native Mobile Application
+    ├── App.js                 # Standalone mobile app with offline emulator fallback
+    ├── package.json           # React Native dependencies
+    └── android/               # Native Android configuration (APK / Play Store bundle)
 ```
 
 ---
 
-## 1. Prediction API (`/api`)
-The core prediction engine runs as a lightweight Python microservice. It models the calibrated hybrid neural/tabular limits of the thesis models and returns the 10th (low), 50th (median), and 90th (high) percentile yield forecasts.
+## 1. Prediction & SMS API Service (`/api`)
+
+The Python Flask microservice handles:
+1. **Hybrid Biophysical & XGBoost Yield Inferences**: Returns probabilistic boundaries (q10 low, q50 median, q90 high in kg/ha) and agronomic advice.
+2. **Centralized User Account Registry**: Stores and authenticates Agritex Officers and Farmers with phone numbers and assigned wards.
+3. **SMS Advisory Gateway Engine**: Supports **Africa's Talking**, **Twilio**, or the **Built-in Mock Simulator** for local and offline testing.
 
 ### Setup & Launch
-1. Navigate to `/api` directory.
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. Start the Flask service:
-   ```bash
-   python app.py
-   ```
-   *The API will run on `http://127.0.0.1:5000`.*
+```bash
+cd api
+pip install -r requirements.txt
+python app.py
+```
+*API runs at `http://127.0.0.1:5000`.*
 
-### API Endpoints
-*   **POST `/api/predict`**
-    *   **Payload**:
-        ```json
-        {
-          "ward": "Ward 12",
-          "variety": "SC719",
-          "precip": 0.65,
-          "heat": 0.32,
-          "sand": 62,
-          "clay": 25
-        }
-        ```
-    *   **Success Response (200 OK)**:
-        ```json
-        {
-          "status": "success",
-          "forecast": {
-            "low": 650,
-            "med": 920,
-            "high": 1150,
-            "variety": "SC719",
-            "ward": "Ward 12",
-            "precip": 0.65,
-            "heat": 0.32,
-            "sand": 62,
-            "clay": 25,
-            "advisory": "Standard Season Advisory:\n- Yield forecasts are favorable..."
-          }
-        }
-        ```
-    *   **Error Response (400 Bad Request)**:
-        ```json
-        {
-          "status": "error",
-          "message": "Maize cultivar 'PIONEER' is not supported by this calibration.",
-          "valid_cultivars": ["SC301", "SC436", "SC529", "SC719"]
-        }
-        ```
+### SMS Gateway Configuration (Environment Variables)
+
+To enable live cellular SMS delivery to farmers via telecommunications networks, set the following environment variables before launching `app.py`:
+
+#### Option A: Africa's Talking (Recommended for Zimbabwe / Southern Africa)
+```bash
+export AFRICASTALKING_USERNAME="your_username"
+export AFRICASTALKING_API_KEY="your_api_key"
+export AFRICASTALKING_SENDER_ID="AGRITEX"  # Optional custom alphanumeric sender ID
+```
+
+#### Option B: Twilio
+```bash
+export TWILIO_ACCOUNT_SID="your_account_sid"
+export TWILIO_AUTH_TOKEN="your_auth_token"
+export TWILIO_FROM_NUMBER="+1234567890"
+```
+
+*(If no gateway credentials are set, the system automatically runs in **High-Fidelity Sandbox Simulator Mode**, personalizing and logging all sent SMS messages to `api/sms_logs.json` for risk-free testing).*
+
+### Key API Endpoints
+* **`POST /api/predict`**: Computes quantile yield forecasts based on ward, variety, precipitation, and heat stress.
+* **`GET /api/users`** / **`POST /api/users`** / **`PUT /api/users/<username>`** / **`DELETE /api/users/<username>`**: Manages user directory (Name, Username, Role, Phone, Ward).
+* **`POST /api/sms/broadcast`**: Dispatches targeted SMS broadcasts to farmers filtered by Ward or All Wards with dynamic placeholder merging (`{name}`, `{ward}`, `{date}`).
+* **`POST /api/sms/send`**: Dispatches a single SMS advisory to a specific phone number.
+* **`GET /api/sms/logs`**: Retrieves the audit history of sent SMS broadcasts.
+* **`DELETE /api/sms/logs`**: Clears SMS dispatch history.
 
 ---
 
-## 2. USSD Telephony Server (`/ussd`)
-Designed to interface with commercial telecommunications gateways (e.g., Africa's Talking USSD service), this server manages session states for smallholder farmers using basic feature phones.
+## 2. Web Portal & Admin Center (`/web`)
 
-### Setup & Launch
-1. Navigate to `/ussd` directory.
-2. Install Node packages:
-   ```bash
-   npm install
-   ```
-3. Start the callback listener:
-   ```bash
-   npm start
-   ```
-   *The server runs on `http://127.0.0.1:3000/ussd`.*
+### A. Main Yield Portal (`/web/index.html`)
+* **Multi-Role Access**: Dedicated sign-in paths for **Farmers** and **Agritex Officers**.
+* **Live Biophysical Controls**: Steppers and interactive sliders for Precipitation and Thermal Stress.
+* **Meters & Gauges**: Real-time **Water Deficit Index (WDI)** and **Heat Accumulation Stress** gauges.
+* **Presentable PDF Export**: One-click **"Download Report"** button that invokes browser Print-to-PDF formatting (no `.html` files).
 
-### USSD State Interaction Flow
-*   **Initial Dial**: User dials `*140#` -> Receives `Select Ward:` prompt.
-*   **Step 1**: User inputs ward option -> Receives `Select Variety:` menu list.
-*   **Step 2**: User inputs variety selection. If they input `5` ("Other"), the USSD session returns an error explaining which varieties are supported and prompts them to go back.
-*   **Step 3**: User inputs rain scenario (Drought, Normal, Wet) -> Server fetches predictions from `/api/predict` and displays final yield bounds and agricultural advice via `END` response.
+### B. Admin & SMS Advisory Center (`/web/admin/index.html`)
+* **User & Role Management**:
+  * Create, edit, and delete **Farmer** and **Agritex Officer** accounts.
+  * Assign phone numbers (*e.g., `+263771234567`*) and specific location wards (Wards 1–20).
+  * Real-time search and filtering directory.
+* **SMS Advisory Broadcast Console**:
+  * **Targeting Filter**: Select specific ward (*e.g., Ward 12*) or broadcast to all registered farmers.
+  * **Preset Advisory Templates**:
+    - *⚠️ Drought Early Warning & Moisture Conservation*
+    - *🌱 Planting Window & Cultivar Selection*
+    - *🧪 Top-Dressing & Fertilizer Scheduling*
+    - *🐛 Fall Armyworm & Pest Surveillance*
+    - *🌾 Pre-Harvest & Storage Safety*
+    - *✍️ Custom Advisory*
+  * **Pull Live AI Model Advice**: Automatically queries `/api/predict` for the selected ward to generate localized SMS advice.
+  * **Live Smartphone Mockup Preview**: Renders dynamic placeholders in real-time.
+  * **SMS Segment Counter**: 160-character segment tracker to optimize telco costs.
+  * **Audit Log Viewer**: Shows sent date, recipient count, gateway used, and message preview.
 
----
-
-## 3. Web Portal Dashboard (`/web`)
-A highly polished, responsive dashboard gated by an Agritex Officer authentication screen.
-
-### Credentials
-*   **Username**: `agritex_officer`
-*   **Password**: `nust_maize_2026`
-
-### Setup & Launch
-1. Navigate to `/web` directory.
-2. Install packages and run dev server:
-   ```bash
-   npm install
-   npm run dev
-   ```
-3. Open `http://localhost:8080` in your web browser.
+### Default Login Accounts
+| Role | Username | Password | Default Ward |
+| :--- | :--- | :--- | :--- |
+| **Agritex Officer** | `agritex_officer` | `nust_maize_2026` | All Wards |
+| **Farmer** | `johen_doe` | `12345` | Ward 12 (Ntabazinduna) |
+| **Farmer** | `farmer` | `farmer2026` | Ward 15 (Esigodini Centroid) |
+| **Administrator** | `admin` | `admin123` | All Wards |
 
 ---
 
-## 4. Mobile Screen Component (`/mobile`)
-Designed as a React Native screen component that can be integrated into the Agritex mobile app. It matches the dark mode glassmorphism theme and uses high-fidelity SVG graphics to chart the yield envelope ranges.
+## 3. React Native Mobile Application (`/mobile`)
 
-### Setup
-1. Include `App.js` into your React Native project directory.
-2. Run `npm install` inside the folder to align version configurations.
+The mobile application runs on Android and iOS devices, featuring biophysical sliders, quantile charts, and an offline biophysical emulator fallback.
+
+### Features
+* **Android Status Bar Inset**: Content aligns below device battery, time, and notch areas.
+* **Far-End Dropdown Indicators**: Location ward and maize cultivar dropdown buttons have arrows (`▾`) aligned to the far right.
+* **Presentable PDF / Native Share Sheet**: Tapping **"Download & Share Report"** opens the device's native sharing menu to save or share reports as PDF summaries without `.html` extensions.
+* **Cross-Platform Authentication**: Works seamlessly with all accounts created in the Admin panel.
+
+### Building & Running Standalone APK
+```bash
+cd mobile/android
+./gradlew assembleRelease
+```
+*Generated Standalone APK:*
+`mobile/android/app/build/outputs/apk/release/app-release.apk`
+
+---
+
+## License & Copyright
+
+© 2026 National University of Science and Technology (NUST). All rights reserved.  
+Thesis Hybrid Biophysical Modeling for Umzingwane District, Matabeleland South.
