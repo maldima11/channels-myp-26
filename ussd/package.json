@@ -1,0 +1,14 @@
+{
+  "name": "nust-maize-yield-ussd",
+  "version": "1.0.0",
+  "description": "USSD Telephony Server for NUST Maize Yield Forecasting",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "express": "^4.19.2"
+  },
+  "private": true
+}
