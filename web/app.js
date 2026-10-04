@@ -543,7 +543,7 @@ function downloadReport() {
             doc.setFont("helvetica", "normal");
             doc.setFontSize(9);
             doc.setTextColor(100, 116, 139); // #64748b
-            doc.text("Umzingwane District • Matabeleland South • Agro-Ecological Region IV/V", 16, 37);
+            doc.text("Umzingwane District | Matabeleland South | Agro-Ecological Region IV/V", 16, 37);
 
             // Status Badge on Top Right
             doc.setFillColor(238, 242, 255);
@@ -587,76 +587,76 @@ function downloadReport() {
 
             // --- 3. PRIMARY EXPECTED YIELD BANNER ---
             doc.setFillColor(79, 70, 229); // Royal Indigo
-            doc.roundedRect(16, 84, 178, 24, 3, 3, "F");
+            doc.roundedRect(16, 84, 178, 26, 3, 3, "F");
 
             // Left side text
             doc.setFont("helvetica", "bold");
             doc.setFontSize(8.5);
             doc.setTextColor(224, 231, 255);
-            doc.text("EXPECTED MEDIAN YIELD FORECAST (q50)", 22, 93);
+            doc.text("EXPECTED MEDIAN YIELD FORECAST (q50)", 22, 94);
 
             doc.setFont("helvetica", "normal");
             doc.setFontSize(7.5);
             doc.setTextColor(199, 210, 254);
-            doc.text("Calibrated for Agro-Ecological Region IV/V meteorological alignment", 22, 99);
+            doc.text("Calibrated for Agro-Ecological Region IV/V meteorological alignment", 22, 101);
 
             // Right side yield value
             doc.setFont("helvetica", "bold");
             doc.setFontSize(22);
             doc.setTextColor(255, 255, 255);
-            doc.text(`${data.med} kg/ha`, 188, 96, { align: "right" });
+            doc.text(`${data.med} kg/ha`, 186, 96, { align: "right" });
 
             doc.setFont("helvetica", "normal");
             doc.setFontSize(8.5);
             doc.setTextColor(224, 231, 255);
-            doc.text(`≈ ${(data.med / 1000).toFixed(2)} tonnes / hectare`, 188, 102, { align: "right" });
+            doc.text(`Equivalent: ${(data.med / 1000).toFixed(2)} tonnes / hectare`, 186, 103, { align: "right" });
 
             // --- 4. QUANTILE ENVELOPE (q10, q50, q90) ---
             // Card 1: Lower Bound (q10)
             doc.setFillColor(255, 241, 242);
             doc.setDrawColor(244, 63, 94);
             doc.setLineWidth(0.4);
-            doc.roundedRect(16, 113, 56, 23, 2, 2, "FD");
+            doc.roundedRect(16, 115, 56, 23, 2, 2, "FD");
             doc.setFont("helvetica", "bold");
             doc.setFontSize(7);
             doc.setTextColor(225, 29, 72);
-            doc.text("LOWER BOUND (q10)", 20, 119);
+            doc.text("LOWER BOUND (q10)", 20, 121);
             doc.setFontSize(13);
-            doc.text(`${data.low} kg/ha`, 20, 126);
+            doc.text(`${data.low} kg/ha`, 20, 128);
             doc.setFont("helvetica", "normal");
             doc.setFontSize(6.5);
             doc.setTextColor(159, 18, 57);
-            doc.text("Severe drought shock limit", 20, 131);
+            doc.text("Severe drought shock limit", 20, 133);
 
             // Card 2: Median (q50)
             doc.setFillColor(238, 242, 255);
             doc.setDrawColor(99, 102, 241);
-            doc.roundedRect(77, 113, 56, 23, 2, 2, "FD");
+            doc.roundedRect(77, 115, 56, 23, 2, 2, "FD");
             doc.setFont("helvetica", "bold");
             doc.setFontSize(7);
             doc.setTextColor(79, 70, 229);
-            doc.text("MEDIAN YIELD (q50)", 81, 119);
+            doc.text("MEDIAN YIELD (q50)", 81, 121);
             doc.setFontSize(13);
-            doc.text(`${data.med} kg/ha`, 81, 126);
+            doc.text(`${data.med} kg/ha`, 81, 128);
             doc.setFont("helvetica", "normal");
             doc.setFontSize(6.5);
             doc.setTextColor(67, 56, 202);
-            doc.text("Most probable baseline harvest", 81, 131);
+            doc.text("Most probable baseline harvest", 81, 133);
 
             // Card 3: Upper Bound (q90)
             doc.setFillColor(236, 253, 245);
             doc.setDrawColor(16, 185, 129);
-            doc.roundedRect(138, 113, 56, 23, 2, 2, "FD");
+            doc.roundedRect(138, 115, 56, 23, 2, 2, "FD");
             doc.setFont("helvetica", "bold");
             doc.setFontSize(7);
             doc.setTextColor(5, 150, 105);
-            doc.text("UPPER BOUND (q90)", 142, 119);
+            doc.text("UPPER BOUND (q90)", 142, 121);
             doc.setFontSize(13);
-            doc.text(`${data.high} kg/ha`, 142, 126);
+            doc.text(`${data.high} kg/ha`, 142, 128);
             doc.setFont("helvetica", "normal");
             doc.setFontSize(6.5);
             doc.setTextColor(6, 95, 70);
-            doc.text("Optimal rainfall distribution", 142, 131);
+            doc.text("Optimal rainfall distribution", 142, 133);
 
             // --- 5. AGRONOMIC RECOMMENDATION BOX ---
             const advisoryText = data.advisory || "Standard Seasonal Advisory for Matabeleland South Region.";
@@ -666,21 +666,21 @@ function downloadReport() {
             doc.setFillColor(248, 250, 252);
             doc.setDrawColor(226, 232, 240);
             doc.setLineWidth(0.3);
-            doc.roundedRect(16, 142, 178, boxHeight, 2, 2, "FD");
+            doc.roundedRect(16, 144, 178, boxHeight, 2, 2, "FD");
 
             // Left Emerald accent border
             doc.setFillColor(16, 185, 129);
-            doc.rect(16, 142, 3.5, boxHeight, "F");
+            doc.rect(16, 144, 3.5, boxHeight, "F");
 
             doc.setFont("helvetica", "bold");
             doc.setFontSize(9.5);
             doc.setTextColor(15, 23, 42);
-            doc.text("AGRONOMIC RECOMMENDATIONS & EXTENSION ADVISORY", 24, 149.5);
+            doc.text("AGRONOMIC RECOMMENDATIONS & EXTENSION ADVISORY", 24, 151.5);
 
             doc.setFont("helvetica", "normal");
             doc.setFontSize(8.5);
             doc.setTextColor(51, 65, 85); // #334155
-            let lineY = 156;
+            let lineY = 158;
             for (let i = 0; i < splitLines.length; i++) {
                 doc.text(splitLines[i], 24, lineY);
                 lineY += 4.5;
@@ -695,14 +695,14 @@ function downloadReport() {
             doc.setFont("helvetica", "normal");
             doc.setFontSize(7.5);
             doc.setTextColor(100, 116, 139);
-            doc.text("Generated via NUST MPhil Thesis Biophysical & ML Fusion Architecture (Option B) • Spatial Resolution: Ward Centroids", 16, footerY + 5);
+            doc.text("Generated via NUST MPhil Thesis Biophysical & ML Fusion Architecture (Option B) - Spatial Resolution: Ward Centroids", 16, footerY + 5);
 
             const serial = "NUST-AGX-" + Math.random().toString(36).substring(2, 8).toUpperCase();
-            doc.text(`Digital Verification: Authorized Agritex Officer Digital Sign-off • Ref: ${serial} • Issue Date: ${today}`, 16, footerY + 9.5);
+            doc.text(`Digital Verification: Authorized Agritex Officer Digital Sign-off | Ref: ${serial} | Issue Date: ${today}`, 16, footerY + 9.5);
 
             doc.setFontSize(7);
             doc.setTextColor(148, 163, 184);
-            doc.text("© 2026 National University of Science and Technology (NUST). All rights reserved.", 16, footerY + 14);
+            doc.text("Copyright (c) 2026 National University of Science and Technology (NUST). All rights reserved.", 16, footerY + 14);
 
             // SAVE NATIVE VECTOR PDF
             doc.save(pdfFilename);
