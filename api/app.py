@@ -8,6 +8,23 @@ import base64
 
 app = Flask(__name__)
 
+# Global Universal CORS Handlers
+@app.before_request
+def handle_preflight():
+    if request.method == 'OPTIONS':
+        res = app.make_default_options_response()
+        res.headers['Access-Control-Allow-Origin'] = '*'
+        res.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
+        res.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
+        return res
+
+@app.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
+    return response
+
 # Production Hybrid XGBoost model loader
 models_loaded = False
 bst_low, bst_med, bst_high = None, None, None
@@ -657,7 +674,7 @@ def predict():
                 "sand": sand,
                 "clay": clay,
                 "advisory": advisory,
-                "engine": "XGBoost Quantile Model (Option B)" if models_loaded else "Biophysical Emulation Fallback"
+                "engine": "XGBoost Quantile Model (Option B - Flask API Connected)" if models_loaded else "Biophysical Emulation (Flask API Connected)"
             }
         })
 

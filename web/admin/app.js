@@ -1,8 +1,7 @@
 const STORAGE_KEY = 'nust_authorized_users';
 const THEME_KEY = 'nust_portal_theme';
-const BASE_API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://127.0.0.1:5000'
-    : '';
+const isVercelDeployment = window.location.hostname.endsWith('vercel.app');
+const BASE_API_URL = isVercelDeployment ? '' : 'http://127.0.0.1:5000';
 const USERS_API_URL = `${BASE_API_URL}/api/users`;
 const SMS_BROADCAST_API_URL = `${BASE_API_URL}/api/sms/broadcast`;
 const SMS_LOGS_API_URL = `${BASE_API_URL}/api/sms/logs`;

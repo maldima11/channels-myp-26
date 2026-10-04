@@ -1,6 +1,5 @@
-const BASE_API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://127.0.0.1:5000'
-    : '';
+const isVercelDeployment = window.location.hostname.endsWith('vercel.app');
+const BASE_API_URL = isVercelDeployment ? '' : 'http://127.0.0.1:5000';
 const API_URL = `${BASE_API_URL}/api/predict`;
 const USERS_API_URL = `${BASE_API_URL}/api/users`;
 const USER_KEY = 'nust_authorized_users';
