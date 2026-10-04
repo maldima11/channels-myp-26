@@ -30,6 +30,8 @@ const SEED_USERS = [
   { username: "johen_doe", password: "12345", name: "Johen Doe", role: "Farmer", phone: "+263772345678", ward: "Ward 12 (Ntabazinduna)" },
   { username: "farmer", password: "farmer2026", name: "Local Farmer", role: "Farmer", phone: "+263773456789", ward: "Ward 15 (Esigodini Centroid)" },
   { username: "maldima_farmer", password: "farmerpass123", name: "Stephen Maldima", role: "Farmer", phone: "+263775551234", ward: "Ward 1 (Nswazi North)" },
+  { username: "umzingwane_grower", password: "harvest2026", name: "Nomusa Khumalo", role: "Farmer", phone: "+263776112233", ward: "Ward 15 (Esigodini Centroid)" },
+  { username: "zipper", password: "farmer234", name: "Zipper Farmer", role: "Farmer", phone: "+263777889900", ward: "Ward 15 (Esigodini Centroid)" },
   { username: "admin", password: "admin123", name: "System Admin", role: "Administrator", phone: "+263774567890", ward: "All Wards" }
 ];
 

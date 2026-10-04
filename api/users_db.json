@@ -58,5 +58,15 @@
         "phone": "+263776112233",
         "ward": "Ward 15 (Esigodini Centroid)",
         "created_at": "2026-10-04 21:16:55"
+    },
+    {
+        "id": 7,
+        "username": "zipper",
+        "password": "farmer234",
+        "name": "Zipper Farmer",
+        "role": "Farmer",
+        "phone": "+263777889900",
+        "ward": "Ward 15 (Esigodini Centroid)",
+        "created_at": "2026-10-04 22:26:25"
     }
 ]
