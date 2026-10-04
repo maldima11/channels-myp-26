@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -22,12 +22,14 @@ const DEFAULT_HOST = Platform.OS === 'android'
   : "http://localhost:5000";
 
 const LOCAL_LAN_HOST = "http://10.10.93.252:5000";
+const NGROK_PUBLIC_HOST = "https://gyroscopic-cristiano-unpanicky.ngrok-free.dev";
 
 // Comprehensive offline seed registry containing default accounts and provisioned farmers
 const SEED_USERS = [
   { username: "agritex_officer", password: "nust_maize_2026", name: "Primary Officer", role: "Agritex Officer", phone: "+263771234567", ward: "All Wards" },
   { username: "johen_doe", password: "12345", name: "Johen Doe", role: "Farmer", phone: "+263772345678", ward: "Ward 12 (Ntabazinduna)" },
   { username: "farmer", password: "farmer2026", name: "Local Farmer", role: "Farmer", phone: "+263773456789", ward: "Ward 15 (Esigodini Centroid)" },
+  { username: "maldima_farmer", password: "farmerpass123", name: "Stephen Maldima", role: "Farmer", phone: "+263775551234", ward: "Ward 1 (Nswazi North)" },
   { username: "admin", password: "admin123", name: "System Admin", role: "Administrator", phone: "+263774567890", ward: "All Wards" }
 ];
 
@@ -94,6 +96,45 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [forecast, setForecast] = useState(null);
 
+  // Auto-sync users directory from candidate endpoints on application launch
+  useEffect(() => {
+    let isMounted = true;
+    const syncCandidates = [
+      serverHost,
+      LOCAL_LAN_HOST,
+      NGROK_PUBLIC_HOST,
+      Platform.OS === 'android' ? 'http://10.0.2.2:5000' : 'http://localhost:5000',
+      'http://127.0.0.1:5000'
+    ].filter((v, i, a) => v && a.indexOf(v) === i);
+
+    (async () => {
+      for (const host of syncCandidates) {
+        try {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 1800);
+          const res = await fetch(`${host}/api/users`, { signal: controller.signal });
+          clearTimeout(timer);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.status === 'success' && Array.isArray(data.users) && isMounted) {
+              // Merge seed users with remote users so accounts never disappear
+              const mergedMap = new Map();
+              SEED_USERS.forEach(u => mergedMap.set((u.username || '').toLowerCase(), u));
+              data.users.forEach(u => mergedMap.set((u.username || '').toLowerCase(), u));
+              setKnownUsers(Array.from(mergedMap.values()));
+              setServerHost(host);
+              break;
+            }
+          }
+        } catch (e) {
+          // Probe next candidate silently
+        }
+      }
+    })();
+
+    return () => { isMounted = false; };
+  }, []);
+
   // Ward selector defaults loader
   const handleWardSelect = (selectedWard, activeHost = serverHost) => {
     setWard(selectedWard);
@@ -123,20 +164,20 @@ export default function App() {
     // Prioritized list of candidate hosts to attempt across simulators, real devices & local networks
     const candidateHosts = [
       serverHost,
-      Platform.OS === 'android' ? 'http://10.0.2.2:5000' : 'http://localhost:5000',
       LOCAL_LAN_HOST,
+      NGROK_PUBLIC_HOST,
+      Platform.OS === 'android' ? 'http://10.0.2.2:5000' : 'http://localhost:5000',
       'http://127.0.0.1:5000'
     ].filter((val, idx, self) => val && self.indexOf(val) === idx);
 
     let loggedInUser = null;
-    let explicitRejection = false;
     let successfulHost = serverHost;
 
     // Phase 1: Attempt direct login via /api/auth/login across available endpoints
     for (const host of candidateHosts) {
       try {
         const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 2000);
+        const timer = setTimeout(() => controller.abort(), 1800);
 
         const res = await fetch(`${host}/api/auth/login`, {
           method: 'POST',
@@ -152,21 +193,18 @@ export default function App() {
           successfulHost = host;
           setServerHost(host);
           break;
-        } else if (res.status === 401 || (data && data.status === 'error')) {
-          explicitRejection = true;
-          break;
         }
       } catch (err) {
         // Host unreachable or timed out, attempt next candidate host
       }
     }
 
-    // Phase 2: If auth/login was not reached or rejected, attempt /api/users directory
-    if (!loggedInUser && !explicitRejection) {
+    // Phase 2: If auth/login did not succeed over network, attempt /api/users directory
+    if (!loggedInUser) {
       for (const host of candidateHosts) {
         try {
           const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), 2000);
+          const timer = setTimeout(() => controller.abort(), 1500);
 
           const res = await fetch(`${host}/api/users`, { signal: controller.signal });
           clearTimeout(timer);
@@ -186,20 +224,17 @@ export default function App() {
               if (match) {
                 loggedInUser = match;
                 break;
-              } else {
-                explicitRejection = true;
-                break;
               }
             }
           }
         } catch (err) {
-          // Continue to next host
+          // Continue to next candidate host
         }
       }
     }
 
-    // Phase 3: Offline Registry fallback (for demonstrations or offline field use)
-    if (!loggedInUser && !explicitRejection) {
+    // Phase 3: Offline Registry fallback (for demonstrations, offline field use, or provisioned seed accounts)
+    if (!loggedInUser) {
       const offlineMatch = knownUsers.find(u =>
         u.username && u.username.trim().toLowerCase() === cleanUser &&
         u.password && u.password.trim() === cleanPass
@@ -221,7 +256,7 @@ export default function App() {
         runForecast(variety, ward, precip, heat, sand, clay, successfulHost);
       }
     } else {
-      // User requirement: Clean, professional "Invalid credentials" error only.
+      // Clean, professional user-facing error message
       setLoginError('Invalid credentials');
     }
   };

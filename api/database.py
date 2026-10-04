@@ -256,7 +256,7 @@ def verify_and_log_login(username, password, role=None, ip_address='127.0.0.1'):
     authenticated_user = None
 
     if row and row['password'] == clean_pass:
-        if role and row['role'] != role:
+        if role and str(row['role']).strip().lower() != str(role).strip().lower():
             status = f"FAILED_ROLE_MISMATCH (Expected {role}, got {row['role']})"
         else:
             status = 'SUCCESS'

@@ -459,6 +459,29 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Universal API Proxy Endpoint: Forwards /api/* to Flask backend on port 5000
+  if (url.startsWith('/api/')) {
+    const proxyReq = http.request({
+      hostname: '127.0.0.1',
+      port: 5000,
+      path: req.url,
+      method: req.method,
+      headers: {
+        ...req.headers,
+        host: '127.0.0.1:5000'
+      }
+    }, (proxyRes) => {
+      res.writeHead(proxyRes.statusCode, proxyRes.headers);
+      proxyRes.pipe(res, { end: true });
+    });
+    proxyReq.on('error', (err) => {
+      res.writeHead(502, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: 'error', message: 'Backend service unreachable: ' + err.message }));
+    });
+    req.pipe(proxyReq, { end: true });
+    return;
+  }
+
   // 404 for unrecognized routes
   res.writeHead(404, { 'Content-Type': 'text/plain' });
   res.end('Not Found');
