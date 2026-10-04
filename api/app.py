@@ -154,7 +154,7 @@ def auth_login():
         else:
             return make_cors_response({
                 "status": "error",
-                "message": f"Authentication rejected: {status_msg}"
+                "message": "Invalid credentials"
             }, 401)
     except Exception as e:
         return make_cors_response({"status": "error", "message": str(e)}, 500)

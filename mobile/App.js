@@ -16,14 +16,20 @@ import {
   Share
 } from 'react-native';
 
-// Dynamic host loopback depending on simulator platform (iOS vs Android)
-const API_URL = Platform.OS === 'android'
-  ? "http://10.0.2.2:5000/api/predict"
-  : "http://localhost:5000/api/predict";
+// Dynamic host loopback and candidate endpoints for local, simulator, and device environments
+const DEFAULT_HOST = Platform.OS === 'android'
+  ? "http://10.0.2.2:5000"
+  : "http://localhost:5000";
 
-const USERS_API_URL = Platform.OS === 'android'
-  ? "http://10.0.2.2:5000/api/users"
-  : "http://localhost:5000/api/users";
+const LOCAL_LAN_HOST = "http://10.10.93.252:5000";
+
+// Comprehensive offline seed registry containing default accounts and provisioned farmers
+const SEED_USERS = [
+  { username: "agritex_officer", password: "nust_maize_2026", name: "Primary Officer", role: "Agritex Officer", phone: "+263771234567", ward: "All Wards" },
+  { username: "johen_doe", password: "12345", name: "Johen Doe", role: "Farmer", phone: "+263772345678", ward: "Ward 12 (Ntabazinduna)" },
+  { username: "farmer", password: "farmer2026", name: "Local Farmer", role: "Farmer", phone: "+263773456789", ward: "Ward 15 (Esigodini Centroid)" },
+  { username: "admin", password: "admin123", name: "System Admin", role: "Administrator", phone: "+263774567890", ward: "All Wards" }
+];
 
 const VALID_CULTIVARS = ["SC301", "SC436", "SC529", "SC719"];
 
@@ -62,6 +68,12 @@ export default function App() {
   const [showGuide, setShowGuide] = useState(false);
   const [showGlossary, setShowGlossary] = useState(false);
 
+  // Network & Server Connectivity States
+  const [serverHost, setServerHost] = useState(DEFAULT_HOST);
+  const [knownUsers, setKnownUsers] = useState(SEED_USERS);
+  const [showServerConfig, setShowServerConfig] = useState(false);
+  const [customHostInput, setCustomHostInput] = useState(DEFAULT_HOST);
+
   // Modals
   const [showWardModal, setShowWardModal] = useState(false);
   const [showCultivarModal, setShowCultivarModal] = useState(false);
@@ -83,7 +95,7 @@ export default function App() {
   const [forecast, setForecast] = useState(null);
 
   // Ward selector defaults loader
-  const handleWardSelect = (selectedWard) => {
+  const handleWardSelect = (selectedWard, activeHost = serverHost) => {
     setWard(selectedWard);
     const defaults = WARD_DEFAULTS[selectedWard];
     if (defaults) {
@@ -91,12 +103,12 @@ export default function App() {
       setHeat(defaults.heat);
       setSand(defaults.sand);
       setClay(defaults.clay);
-      runForecast(variety, selectedWard, defaults.precip, defaults.heat, defaults.sand, defaults.clay);
+      runForecast(variety, selectedWard, defaults.precip, defaults.heat, defaults.sand, defaults.clay, activeHost);
     }
   };
 
   // 1. GENERAL MULTI-ROLE AUTHENTICATION HANDLER
-  const handleLogin = () => {
+  const handleLogin = async () => {
     const cleanUser = username.trim().toLowerCase();
     const cleanPass = password.trim();
 
@@ -108,57 +120,110 @@ export default function App() {
     setLoading(true);
     setLoginError('');
 
-    fetch(USERS_API_URL)
-      .then(res => {
-        if (!res.ok) throw new Error("API Offline");
-        return res.json();
-      })
-      .then(data => {
-        if (data.status === "success" && data.users) {
-          const matched = data.users.find(u =>
-            u.username.trim().toLowerCase() === cleanUser &&
-            u.password.trim() === cleanPass
-          );
-          if (matched) {
-            setIsLoggedIn(true);
-            setUserProfile(matched);
-            setLoginError('');
-            setLoading(false);
-            runForecast(variety, ward, precip, heat, sand, clay);
-          } else {
-            throw new Error("Invalid credentials. Please verify account with Agritex Admin.");
-          }
-        } else {
-          throw new Error("Invalid response format from auth service.");
-        }
-      })
-      .catch(err => {
-        console.warn("Mobile auth API offline/error. Checking offline registry:", err.message);
-        setLoading(false);
+    // Prioritized list of candidate hosts to attempt across simulators, real devices & local networks
+    const candidateHosts = [
+      serverHost,
+      Platform.OS === 'android' ? 'http://10.0.2.2:5000' : 'http://localhost:5000',
+      LOCAL_LAN_HOST,
+      'http://127.0.0.1:5000'
+    ].filter((val, idx, self) => val && self.indexOf(val) === idx);
 
-        // Fallback accounts for offline demonstrations
-        if (cleanUser === 'agritex_officer' && cleanPass === 'nust_maize_2026') {
-          setIsLoggedIn(true);
-          setUserProfile({ username: 'agritex_officer', name: 'Primary Officer', role: 'Agritex Officer' });
-          setLoginError('');
-          runForecast(variety, ward, precip, heat, sand, clay);
-        } else if (cleanUser === 'farmer' && cleanPass === 'farmer2026') {
-          setIsLoggedIn(true);
-          setUserProfile({ username: 'farmer', name: 'Local Farmer', role: 'Farmer' });
-          setLoginError('');
-          runForecast(variety, ward, precip, heat, sand, clay);
-        } else if (cleanUser === 'admin' && cleanPass === 'admin123') {
-          setIsLoggedIn(true);
-          setUserProfile({ username: 'admin', name: 'System Admin', role: 'Administrator' });
-          setLoginError('');
-          runForecast(variety, ward, precip, heat, sand, clay);
-        } else {
-          setLoginError(err.message === "API Offline" 
-            ? "Auth API offline. Use demo account (agritex_officer / nust_maize_2026) or connect server."
-            : (err.message || 'Invalid Username or Password.')
-          );
+    let loggedInUser = null;
+    let explicitRejection = false;
+    let successfulHost = serverHost;
+
+    // Phase 1: Attempt direct login via /api/auth/login across available endpoints
+    for (const host of candidateHosts) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 2000);
+
+        const res = await fetch(`${host}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: cleanUser, password: cleanPass }),
+          signal: controller.signal
+        });
+        clearTimeout(timer);
+
+        const data = await res.json();
+        if (res.ok && data.status === 'success' && data.user) {
+          loggedInUser = data.user;
+          successfulHost = host;
+          setServerHost(host);
+          break;
+        } else if (res.status === 401 || (data && data.status === 'error')) {
+          explicitRejection = true;
+          break;
         }
-      });
+      } catch (err) {
+        // Host unreachable or timed out, attempt next candidate host
+      }
+    }
+
+    // Phase 2: If auth/login was not reached or rejected, attempt /api/users directory
+    if (!loggedInUser && !explicitRejection) {
+      for (const host of candidateHosts) {
+        try {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 2000);
+
+          const res = await fetch(`${host}/api/users`, { signal: controller.signal });
+          clearTimeout(timer);
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data.status === 'success' && Array.isArray(data.users)) {
+              successfulHost = host;
+              setServerHost(host);
+              setKnownUsers(data.users);
+
+              const match = data.users.find(u =>
+                u.username && u.username.trim().toLowerCase() === cleanUser &&
+                u.password && u.password.trim() === cleanPass
+              );
+
+              if (match) {
+                loggedInUser = match;
+                break;
+              } else {
+                explicitRejection = true;
+                break;
+              }
+            }
+          }
+        } catch (err) {
+          // Continue to next host
+        }
+      }
+    }
+
+    // Phase 3: Offline Registry fallback (for demonstrations or offline field use)
+    if (!loggedInUser && !explicitRejection) {
+      const offlineMatch = knownUsers.find(u =>
+        u.username && u.username.trim().toLowerCase() === cleanUser &&
+        u.password && u.password.trim() === cleanPass
+      );
+      if (offlineMatch) {
+        loggedInUser = offlineMatch;
+      }
+    }
+
+    setLoading(false);
+
+    if (loggedInUser) {
+      setIsLoggedIn(true);
+      setUserProfile(loggedInUser);
+      setLoginError('');
+      if (loggedInUser.ward && WARD_DEFAULTS[loggedInUser.ward]) {
+        handleWardSelect(loggedInUser.ward, successfulHost);
+      } else {
+        runForecast(variety, ward, precip, heat, sand, clay, successfulHost);
+      }
+    } else {
+      // User requirement: Clean, professional "Invalid credentials" error only.
+      setLoginError('Invalid credentials');
+    }
   };
 
   const handleLogout = () => {
@@ -175,14 +240,15 @@ export default function App() {
     targetPrecip = precip,
     targetHeat = heat,
     targetSand = sand,
-    targetClay = clay
+    targetClay = clay,
+    activeHost = serverHost
   ) => {
     setLoading(true);
 
     // Extract base ward code (e.g., 'Ward 12') for API compatibility
     const apiWard = WARD_DEFAULTS[targetWard]?.base || targetWard.split(' (')[0] || targetWard;
 
-    fetch(API_URL, {
+    fetch(`${activeHost}/api/predict`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -404,6 +470,64 @@ Security Signature: Authorized Agritex Officer System Log Verification
             <Text style={[styles.authHint, isLightTheme && styles.authHintLight]}>
               Logins are provisioned by the Agritex District Administrator.
             </Text>
+          </View>
+
+          {/* API SERVER & NETWORK SETTINGS */}
+          <View style={[styles.guideCard, isLightTheme && styles.guideCardLight, { marginBottom: 12 }]}>
+            <TouchableOpacity 
+              style={styles.guideHeader} 
+              onPress={() => setShowServerConfig(prev => !prev)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.guideHeaderLeft}>
+                <Text style={styles.guideIcon}>🌐</Text>
+                <Text style={[styles.guideTitle, isLightTheme && styles.guideTitleLight]}>API Server Connection</Text>
+              </View>
+              <Text style={[styles.guideArrow, isLightTheme && styles.guideArrowLight]}>
+                {showServerConfig ? '▲ Close' : `▼ ${serverHost.replace('http://', '')}`}
+              </Text>
+            </TouchableOpacity>
+
+            {showServerConfig && (
+              <View style={styles.guideBody}>
+                <Text style={[styles.guideIntro, isLightTheme && styles.guideIntroLight]}>
+                  Connect physical devices or emulators to the central NUST backend:
+                </Text>
+                <TextInput
+                  style={[styles.authInput, { fontSize: 13, paddingVertical: 10, marginBottom: 8 }, isLightTheme && styles.authInputLight]}
+                  value={customHostInput}
+                  onChangeText={setCustomHostInput}
+                  placeholder="e.g. http://10.10.93.252:5000"
+                  placeholderTextColor={isLightTheme ? "#94a3b8" : "#64748b"}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <TouchableOpacity
+                    style={[styles.smallActionBtn, { flex: 1 }]}
+                    onPress={() => {
+                      const trimmed = customHostInput.trim();
+                      if (trimmed) {
+                        setServerHost(trimmed);
+                        Alert.alert("Server Configured", `Active host set to: ${trimmed}`);
+                      }
+                    }}
+                  >
+                    <Text style={styles.smallActionBtnText}>Set Active</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.smallActionBtn, { flex: 1, backgroundColor: '#334155' }]}
+                    onPress={() => {
+                      setCustomHostInput(LOCAL_LAN_HOST);
+                      setServerHost(LOCAL_LAN_HOST);
+                      Alert.alert("Local WiFi IP Set", `Switched to host: ${LOCAL_LAN_HOST}`);
+                    }}
+                  >
+                    <Text style={styles.smallActionBtnText}>WiFi IP (Device)</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
           </View>
 
           {/* APP USAGE GUIDE TAB */}
@@ -1164,6 +1288,20 @@ const styles = StyleSheet.create({
   },
   authHintLight: {
     color: '#94a3b8',
+  },
+
+  smallActionBtn: {
+    backgroundColor: '#4f46e5',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  smallActionBtnText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 
   // App Usage Guide Accordion

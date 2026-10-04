@@ -3,9 +3,15 @@ import os
 import json
 import datetime
 
-DB_FILE = os.path.join(os.path.dirname(__file__), 'nust_system.db')
-USERS_JSON_FILE = os.path.join(os.path.dirname(__file__), 'users_db.json')
-SMS_JSON_FILE = os.path.join(os.path.dirname(__file__), 'sms_logs.json')
+# Serverless / Read-only filesystem support (e.g. Vercel Lambda)
+if os.environ.get('VERCEL') or not os.access(os.path.dirname(__file__), os.W_OK):
+    DB_FILE = os.path.join('/tmp', 'nust_system.db')
+    USERS_JSON_FILE = os.path.join('/tmp', 'users_db.json')
+    SMS_JSON_FILE = os.path.join('/tmp', 'sms_logs.json')
+else:
+    DB_FILE = os.path.join(os.path.dirname(__file__), 'nust_system.db')
+    USERS_JSON_FILE = os.path.join(os.path.dirname(__file__), 'users_db.json')
+    SMS_JSON_FILE = os.path.join(os.path.dirname(__file__), 'sms_logs.json')
 
 DEFAULT_USERS = [
     { "username": "agritex_officer", "password": "nust_maize_2026", "name": "Primary Officer", "role": "Agritex Officer", "phone": "+263771234567", "ward": "All Wards" },
