@@ -203,78 +203,100 @@ function filterUsersTable() {
 
 async function postUserWithFallback(urlPath, method, payload) {
     const urls = [
-        USERS_API_URL + (urlPath || ''),
         `https://gyroscopic-cristiano-unpanicky.ngrok-free.dev/api/users${urlPath || ''}`,
-        `http://localhost:5000/api/users${urlPath || ''}`,
         `http://127.0.0.1:5000/api/users${urlPath || ''}`,
+        `http://localhost:5000/api/users${urlPath || ''}`,
+        USERS_API_URL + (urlPath || ''),
         `http://${window.location.hostname || 'localhost'}:5000/api/users${urlPath || ''}`
     ].filter((v, i, a) => a.indexOf(v) === i);
 
+    let lastError = null;
     for (const url of urls) {
         try {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 3000);
             const res = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload),
+                signal: controller.signal
             });
+            clearTimeout(timer);
             if (res.ok) {
                 const data = await res.json();
                 if (data.status === 'success') return data;
+            } else {
+                const errData = await res.json().catch(() => ({}));
+                lastError = errData.message || `Server returned ${res.status}`;
             }
         } catch(e) {
-            // Try next candidate
+            lastError = e.message;
         }
     }
-    throw new Error("Could not reach backend API servers");
+    throw new Error(lastError || "Could not reach backend API servers");
 }
 
-function renderUsers() {
-    fetch(USERS_API_URL)
-        .then(res => {
-            if (!res.ok) throw new Error("API offline");
-            return res.json();
-        })
-        .then(async data => {
-            if (data.status === "success" && Array.isArray(data.users)) {
-                // Check if any offline-created users in localStorage need auto-syncing to backend database
-                const localRaw = localStorage.getItem(STORAGE_KEY);
-                let localUsers = [];
-                try { localUsers = localRaw ? JSON.parse(localRaw) : []; } catch(e) {}
-                
-                const dbUsernames = new Set(data.users.map(u => (u.username || '').toLowerCase()));
-                const unsynced = localUsers.filter(u => u.username && !dbUsernames.has(u.username.toLowerCase()));
+async function renderUsers() {
+    const candidateUrls = [
+        'https://gyroscopic-cristiano-unpanicky.ngrok-free.dev/api/users',
+        'http://127.0.0.1:5000/api/users',
+        'http://localhost:5000/api/users',
+        USERS_API_URL
+    ].filter((v, i, a) => a.indexOf(v) === i);
 
-                if (unsynced.length > 0) {
-                    console.log(`[Admin Auto-Sync] Syncing ${unsynced.length} offline account(s) to SQLite database...`);
-                    for (const u of unsynced) {
-                        try {
-                            await postUserWithFallback('', 'POST', u);
-                            data.users.push(u);
-                        } catch(e) {
-                            console.warn("Could not sync user:", u.username, e);
-                        }
-                    }
+    let usersData = null;
+    for (const url of candidateUrls) {
+        try {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 2500);
+            const res = await fetch(url, { signal: controller.signal });
+            clearTimeout(timer);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.status === 'success' && Array.isArray(data.users)) {
+                    usersData = data.users;
+                    break;
                 }
-
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(data.users));
-                drawUsersTable(data.users);
-            } else {
-                throw new Error("Invalid response");
             }
-        })
-        .catch(err => {
-            console.warn("Backend offline. Loading credentials directory from LocalStorage fallback:", err);
-            const local = localStorage.getItem(STORAGE_KEY);
-            let users = defaultUsers;
-            if (local) {
+        } catch(e) {}
+    }
+
+    if (usersData) {
+        // Auto-sync any unsynced offline users to backend
+        const localRaw = localStorage.getItem(STORAGE_KEY);
+        let localUsers = [];
+        try { localUsers = localRaw ? JSON.parse(localRaw) : []; } catch(e) {}
+        
+        const dbUsernames = new Set(usersData.map(u => (u.username || '').toLowerCase()));
+        const unsynced = localUsers.filter(u => u.username && !dbUsernames.has(u.username.toLowerCase()));
+
+        if (unsynced.length > 0) {
+            console.log(`[Admin Auto-Sync] Syncing ${unsynced.length} offline account(s) to SQLite database...`);
+            for (const u of unsynced) {
                 try {
-                    users = JSON.parse(local) || defaultUsers;
+                    await postUserWithFallback('', 'POST', u);
+                    usersData.push(u);
                 } catch(e) {
-                    users = defaultUsers;
+                    console.warn("Could not sync user:", u.username, e);
                 }
             }
-            drawUsersTable(users);
-        });
+        }
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(usersData));
+        drawUsersTable(usersData);
+    } else {
+        console.warn("Backend offline. Loading credentials directory from LocalStorage fallback.");
+        const local = localStorage.getItem(STORAGE_KEY);
+        let users = defaultUsers;
+        if (local) {
+            try {
+                users = JSON.parse(local) || defaultUsers;
+            } catch(e) {
+                users = defaultUsers;
+            }
+        }
+        drawUsersTable(users);
+    }
 }
 
 async function createUser() {
@@ -310,41 +332,26 @@ async function createUser() {
             finishEditForm(succ, "User updated successfully in database!");
             renderUsers();
         } catch(errObj) {
-            const local = localStorage.getItem(STORAGE_KEY);
-            let users = local ? JSON.parse(local) : defaultUsers;
-            users = users.map(u => u.username === editUsername ? { ...u, password, name, role, phone, ward } : u);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
-            finishEditForm(succ, "User updated in local storage (Offline)");
-            drawUsersTable(users);
+            err.innerText = `❌ Update Failed: ${errObj.message}. Please verify the central database is reachable.`;
+            err.style.display = "block";
         }
     } else {
         try {
             await postUserWithFallback('', 'POST', { username, password, name, role, phone, ward });
-            // Also update localStorage immediately
+            // Also update localStorage cache immediately
             const local = localStorage.getItem(STORAGE_KEY);
             let users = local ? JSON.parse(local) : defaultUsers;
             users = users.filter(u => u.username !== username);
             users.push({ username, password, name, role, phone, ward });
             localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
 
-            succ.innerText = "User registered successfully in database!";
+            succ.innerText = `User '${username}' registered successfully in central database!`;
             succ.style.display = "block";
             clearForm();
             renderUsers();
         } catch(errObj) {
-            const local = localStorage.getItem(STORAGE_KEY);
-            let users = local ? JSON.parse(local) : defaultUsers;
-            if (users.find(u => u.username === username)) {
-                err.innerText = `Username '${username}' already exists.`;
-                err.style.display = "block";
-                return;
-            }
-            users.push({ username, password, name, role, phone, ward });
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
-            succ.innerText = "User registered locally (Will auto-sync to backend when online)";
-            succ.style.display = "block";
-            clearForm();
-            drawUsersTable(users);
+            err.innerText = `❌ Registration Failed: ${errObj.message}. Account was not created in database.`;
+            err.style.display = "block";
         }
     }
 }
