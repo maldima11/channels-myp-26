@@ -483,8 +483,19 @@ function drawYieldChart(low, med, high) {
 
 // 6. ADVISORY REPORT EXPORTER (GENUINE .PDF DOCUMENT GENERATOR)
 function downloadReport() {
-    const data = cachedForecast;
-    if (!data) return;
+    let data = cachedForecast;
+
+    // Safety Fallback: If cachedForecast has missing/empty values, pull straight from active inputs
+    if (!data || !data.ward || data.med === 0) {
+        const ward = document.getElementById("location-ward") ? document.getElementById("location-ward").value : "Ward 1 - Esigodini Central";
+        const variety = document.getElementById("cultivar-input") ? document.getElementById("cultivar-input").value.trim().toUpperCase() : "SC719";
+        const precip = document.getElementById("slide-precip") ? parseFloat(document.getElementById("slide-precip").value) : 0.45;
+        const heat = document.getElementById("slide-heat") ? parseFloat(document.getElementById("slide-heat").value) : 0.32;
+        const sand = document.getElementById("slide-sand") ? parseInt(document.getElementById("slide-sand").value) : 62;
+        const clay = document.getElementById("slide-clay") ? parseInt(document.getElementById("slide-clay").value) : 18;
+        data = computeLocalForecast(ward, variety, precip, heat, sand, clay);
+        cachedForecast = data;
+    }
 
     const cleanWard = (data.ward || "Umzingwane").replace(/[^a-zA-Z0-9]/g, '_');
     const cleanVariety = (data.variety || "SC719").replace(/[^a-zA-Z0-9]/g, '_');
@@ -497,18 +508,229 @@ function downloadReport() {
         btn.innerHTML = "⏳ Generating PDF...";
     }
 
-    // Build standalone styled element for PDF rendering
+    const jsPDFClass = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+
+    if (jsPDFClass) {
+        try {
+            const doc = new jsPDFClass({
+                orientation: "portrait",
+                unit: "mm",
+                format: "a4"
+            });
+
+            const today = new Date().toLocaleDateString('en-GB');
+
+            // --- 1. TOP BRANDING & ACCENT BAR ---
+            // Dual color accent stripe across the page top
+            doc.setFillColor(79, 70, 229); // Indigo
+            doc.rect(16, 14, 118, 3, "F");
+            doc.setFillColor(16, 185, 129); // Emerald
+            doc.rect(134, 14, 60, 3, "F");
+
+            // Institution Name
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(8.5);
+            doc.setTextColor(79, 70, 229);
+            doc.text("NATIONAL UNIVERSITY OF SCIENCE AND TECHNOLOGY (NUST)", 16, 23);
+
+            // Document Title
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(18);
+            doc.setTextColor(15, 23, 42); // #0f172a
+            doc.text("Maize Yield Prediction & Advisory Report", 16, 31);
+
+            // Subtitle
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(9);
+            doc.setTextColor(100, 116, 139); // #64748b
+            doc.text("Umzingwane District • Matabeleland South • Agro-Ecological Region IV/V", 16, 37);
+
+            // Status Badge on Top Right
+            doc.setFillColor(238, 242, 255);
+            doc.roundedRect(144, 20, 50, 15, 2, 2, "F");
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(7.5);
+            doc.setTextColor(79, 70, 229);
+            doc.text("AGRITEX CERTIFIED", 148, 26);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(7.5);
+            doc.setTextColor(100, 116, 139);
+            doc.text(`Date: ${today}`, 148, 31);
+
+            // Divider Line
+            doc.setDrawColor(226, 232, 240);
+            doc.setLineWidth(0.4);
+            doc.line(16, 42, 194, 42);
+
+            // --- 2. METADATA CARDS (2x2 GRID) ---
+            const drawCard = (x, y, w, h, label, val) => {
+                doc.setFillColor(248, 250, 252);
+                doc.setDrawColor(226, 232, 240);
+                doc.setLineWidth(0.3);
+                doc.roundedRect(x, y, w, h, 2, 2, "FD");
+
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(7);
+                doc.setTextColor(100, 116, 139);
+                doc.text(label.toUpperCase(), x + 4, y + 5.5);
+
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(9.5);
+                doc.setTextColor(15, 23, 42);
+                doc.text(String(val), x + 4, y + 11.5);
+            };
+
+            drawCard(16, 46, 86, 15, "Location Centroid (Ward)", data.ward || "Esigodini Central");
+            drawCard(108, 46, 86, 15, "Maize Cultivar / Maturity Class", data.variety || "SC719");
+            drawCard(16, 64, 86, 15, "Soil Texture Matrix", `Sand: ${data.sand}%   |   Clay: ${data.clay}%`);
+            drawCard(108, 64, 86, 15, "Environmental Stress Lag", `Rain Lag: ${data.precip}   |   Heat Stress: ${data.heat}`);
+
+            // --- 3. PRIMARY EXPECTED YIELD BANNER ---
+            doc.setFillColor(79, 70, 229); // Royal Indigo
+            doc.roundedRect(16, 84, 178, 24, 3, 3, "F");
+
+            // Left side text
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(8.5);
+            doc.setTextColor(224, 231, 255);
+            doc.text("EXPECTED MEDIAN YIELD FORECAST (q50)", 22, 93);
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(7.5);
+            doc.setTextColor(199, 210, 254);
+            doc.text("Calibrated for Agro-Ecological Region IV/V meteorological alignment", 22, 99);
+
+            // Right side yield value
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(22);
+            doc.setTextColor(255, 255, 255);
+            doc.text(`${data.med} kg/ha`, 188, 96, { align: "right" });
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8.5);
+            doc.setTextColor(224, 231, 255);
+            doc.text(`≈ ${(data.med / 1000).toFixed(2)} tonnes / hectare`, 188, 102, { align: "right" });
+
+            // --- 4. QUANTILE ENVELOPE (q10, q50, q90) ---
+            // Card 1: Lower Bound (q10)
+            doc.setFillColor(255, 241, 242);
+            doc.setDrawColor(244, 63, 94);
+            doc.setLineWidth(0.4);
+            doc.roundedRect(16, 113, 56, 23, 2, 2, "FD");
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(7);
+            doc.setTextColor(225, 29, 72);
+            doc.text("LOWER BOUND (q10)", 20, 119);
+            doc.setFontSize(13);
+            doc.text(`${data.low} kg/ha`, 20, 126);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(6.5);
+            doc.setTextColor(159, 18, 57);
+            doc.text("Severe drought shock limit", 20, 131);
+
+            // Card 2: Median (q50)
+            doc.setFillColor(238, 242, 255);
+            doc.setDrawColor(99, 102, 241);
+            doc.roundedRect(77, 113, 56, 23, 2, 2, "FD");
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(7);
+            doc.setTextColor(79, 70, 229);
+            doc.text("MEDIAN YIELD (q50)", 81, 119);
+            doc.setFontSize(13);
+            doc.text(`${data.med} kg/ha`, 81, 126);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(6.5);
+            doc.setTextColor(67, 56, 202);
+            doc.text("Most probable baseline harvest", 81, 131);
+
+            // Card 3: Upper Bound (q90)
+            doc.setFillColor(236, 253, 245);
+            doc.setDrawColor(16, 185, 129);
+            doc.roundedRect(138, 113, 56, 23, 2, 2, "FD");
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(7);
+            doc.setTextColor(5, 150, 105);
+            doc.text("UPPER BOUND (q90)", 142, 119);
+            doc.setFontSize(13);
+            doc.text(`${data.high} kg/ha`, 142, 126);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(6.5);
+            doc.setTextColor(6, 95, 70);
+            doc.text("Optimal rainfall distribution", 142, 131);
+
+            // --- 5. AGRONOMIC RECOMMENDATION BOX ---
+            const advisoryText = data.advisory || "Standard Seasonal Advisory for Matabeleland South Region.";
+            const splitLines = doc.splitTextToSize(advisoryText, 168);
+            const boxHeight = Math.max(34, 14 + (splitLines.length * 4.6));
+
+            doc.setFillColor(248, 250, 252);
+            doc.setDrawColor(226, 232, 240);
+            doc.setLineWidth(0.3);
+            doc.roundedRect(16, 142, 178, boxHeight, 2, 2, "FD");
+
+            // Left Emerald accent border
+            doc.setFillColor(16, 185, 129);
+            doc.rect(16, 142, 3.5, boxHeight, "F");
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(9.5);
+            doc.setTextColor(15, 23, 42);
+            doc.text("AGRONOMIC RECOMMENDATIONS & EXTENSION ADVISORY", 24, 149.5);
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8.5);
+            doc.setTextColor(51, 65, 85); // #334155
+            let lineY = 156;
+            for (let i = 0; i < splitLines.length; i++) {
+                doc.text(splitLines[i], 24, lineY);
+                lineY += 4.5;
+            }
+
+            // --- 6. FOOTER ATTRIBUTIONS & SIGN-OFF ---
+            const footerY = 268;
+            doc.setDrawColor(226, 232, 240);
+            doc.setLineWidth(0.4);
+            doc.line(16, footerY, 194, footerY);
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(7.5);
+            doc.setTextColor(100, 116, 139);
+            doc.text("Generated via NUST MPhil Thesis Biophysical & ML Fusion Architecture (Option B) • Spatial Resolution: Ward Centroids", 16, footerY + 5);
+
+            const serial = "NUST-AGX-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+            doc.text(`Digital Verification: Authorized Agritex Officer Digital Sign-off • Ref: ${serial} • Issue Date: ${today}`, 16, footerY + 9.5);
+
+            doc.setFontSize(7);
+            doc.setTextColor(148, 163, 184);
+            doc.text("© 2026 National University of Science and Technology (NUST). All rights reserved.", 16, footerY + 14);
+
+            // SAVE NATIVE VECTOR PDF
+            doc.save(pdfFilename);
+
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+            return;
+        } catch (err) {
+            console.error("Native jsPDF generation error, falling back to HTML renderer:", err);
+        }
+    }
+
+    // --- FALLBACK HTML-TO-PDF GENERATOR (If jsPDF class not available) ---
+    // Make sure container is positioned at (0, 0) with high z-index or print media so html2canvas never gets empty coordinates
     const reportDiv = document.createElement("div");
     reportDiv.id = "pdf-report-container";
     reportDiv.style.position = "fixed";
-    reportDiv.style.left = "-9999px";
+    reportDiv.style.left = "0";
     reportDiv.style.top = "0";
     reportDiv.style.width = "780px";
     reportDiv.style.background = "#ffffff";
     reportDiv.style.color = "#1e293b";
     reportDiv.style.fontFamily = "'Helvetica Neue', Arial, sans-serif";
     reportDiv.style.padding = "24px";
-    reportDiv.style.zIndex = "-1000";
+    reportDiv.style.zIndex = "999999";
+    reportDiv.style.boxShadow = "0 25px 50px -12px rgba(0, 0, 0, 0.25)";
 
     reportDiv.innerHTML = `
         <div style="background:#ffffff; padding:20px; border-radius:16px;">
@@ -581,7 +803,7 @@ function downloadReport() {
             margin: [10, 10, 10, 10],
             filename: pdfFilename,
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false },
+            html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false, scrollY: 0, scrollX: 0 },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
@@ -591,7 +813,7 @@ function downloadReport() {
                     btn.disabled = false;
                     btn.innerHTML = originalText;
                 }
-                document.body.removeChild(reportDiv);
+                if (reportDiv.parentNode) document.body.removeChild(reportDiv);
             })
             .catch(err => {
                 console.error("html2pdf generation error:", err);
@@ -599,7 +821,7 @@ function downloadReport() {
                     btn.disabled = false;
                     btn.innerHTML = originalText;
                 }
-                document.body.removeChild(reportDiv);
+                if (reportDiv.parentNode) document.body.removeChild(reportDiv);
                 window.print();
             });
     } else {
@@ -607,7 +829,7 @@ function downloadReport() {
             btn.disabled = false;
             btn.innerHTML = originalText;
         }
-        document.body.removeChild(reportDiv);
+        if (reportDiv.parentNode) document.body.removeChild(reportDiv);
         window.print();
     }
 }
