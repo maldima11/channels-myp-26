@@ -1,5 +1,6 @@
 const isVercelDeployment = window.location.hostname.endsWith('vercel.app');
-const BASE_API_URL = isVercelDeployment ? '' : 'http://127.0.0.1:5000';
+const activeHostName = (window.location.hostname === 'localhost') ? 'localhost' : (window.location.hostname || '127.0.0.1');
+const BASE_API_URL = isVercelDeployment ? '' : `http://${activeHostName}:5000`;
 const API_URL = `${BASE_API_URL}/api/predict`;
 const USERS_API_URL = `${BASE_API_URL}/api/users`;
 const USER_KEY = 'nust_authorized_users';
@@ -247,7 +248,10 @@ function applyWardDefaults() {
     }
 }
 
-// Sliders UI binder
+let sliderDebounceTimer = null;
+let activeForecastAbort = null;
+
+// Sliders UI binder with 150ms debounce to prevent connection queue collisions
 function updateSlider(type) {
     const slider = document.getElementById(`slide-${type}`);
     const val = document.getElementById(`val-${type}`);
@@ -256,7 +260,23 @@ function updateSlider(type) {
     } else {
         val.innerText = slider.value;
     }
-    runForecast();
+
+    // Update gauges visually in real-time
+    if (type === 'precip') {
+        const waterDeficit = Math.round((1.0 - parseFloat(slider.value)) * 100);
+        document.getElementById("waterText").innerText = `${waterDeficit}%`;
+        drawGauge("waterGauge", waterDeficit, "#10b981");
+    } else if (type === 'heat') {
+        const heatStress = Math.round(parseFloat(slider.value) * 100);
+        document.getElementById("heatText").innerText = `${heatStress}%`;
+        drawGauge("heatGauge", heatStress, "#f43f5e");
+    }
+
+    // Debounce backend prediction calls so slider dragging never floods Flask
+    clearTimeout(sliderDebounceTimer);
+    sliderDebounceTimer = setTimeout(() => {
+        runForecast();
+    }, 120);
 }
 
 // 3. CACHED FORECAST DATA FOR REPORT DOWNLOADS
@@ -282,11 +302,18 @@ function runForecast() {
     const sand = parseInt(document.getElementById("slide-sand").value);
     const clay = parseInt(document.getElementById("slide-clay").value);
 
+    // Cancel any previous in-flight request to prevent race conditions & flickering
+    if (activeForecastAbort) {
+        activeForecastAbort.abort();
+    }
+    activeForecastAbort = new AbortController();
+
     // Call REST endpoint
     fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ward, variety, precip, heat, sand, clay })
+        body: JSON.stringify({ ward, variety, precip, heat, sand, clay }),
+        signal: activeForecastAbort.signal
     })
     .then(res => {
         if (!res.ok) {
@@ -295,11 +322,17 @@ function runForecast() {
         return res.json();
     })
     .then(data => {
-        updateDashboardUI(data.forecast);
+        if (data && data.forecast) {
+            updateDashboardUI(data.forecast);
+        }
     })
     .catch(err => {
+        // If aborted by user input, ignore completely (do NOT trigger offline fallback)
+        if (err.name === 'AbortError') {
+            return;
+        }
         console.warn("Backend REST API offline or blocked. Executing browser-side biophysical math fallback:", err.message);
-        // Fallback calculations to guarantee standalone file preview
+        // Fallback calculations to guarantee standalone preview
         const localForecast = computeLocalForecast(ward, variety, precip, heat, sand, clay);
         updateDashboardUI(localForecast);
     });
