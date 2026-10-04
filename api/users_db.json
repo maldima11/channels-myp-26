@@ -68,5 +68,25 @@
         "phone": "+263777889900",
         "ward": "Ward 15 (Esigodini Centroid)",
         "created_at": "2026-10-04 22:26:25"
+    },
+    {
+        "id": 9,
+        "username": "jane_farmer",
+        "password": "pass12345",
+        "name": "Jane Nswazi",
+        "role": "Farmer",
+        "phone": "+263771096542",
+        "ward": "Ward 8 (Shale)",
+        "created_at": "2026-10-04 23:08:18"
+    },
+    {
+        "id": 31,
+        "username": "esi_farmer",
+        "password": "pass12345",
+        "name": "Esi Farmer",
+        "role": "Farmer",
+        "phone": "+263771234890",
+        "ward": "Ward 15 (Esigodini Centroid)",
+        "created_at": "2026-10-04 23:26:45"
     }
 ]

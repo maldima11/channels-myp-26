@@ -74,20 +74,18 @@ export default function App() {
   const [showGuide, setShowGuide] = useState(false);
   const [showGlossary, setShowGlossary] = useState(false);
 
-  // Network & Server Connectivity States
+  // Network & Server Connectivity (silently managed in background)
   const [serverHost, setServerHost] = useState(DEFAULT_HOST);
   const [knownUsers, setKnownUsers] = useState(SEED_USERS);
-  const [showServerConfig, setShowServerConfig] = useState(false);
-  const [customHostInput, setCustomHostInput] = useState(DEFAULT_HOST);
 
-  // In-app Farmer Registration States
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  // Friendly In-app Authentication Mode: 'login' | 'signup'
+  const [authMode, setAuthMode] = useState('login');
   const [regUsername, setRegUsername] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regName, setRegName] = useState('');
   const [regPhone, setRegPhone] = useState('+26377');
   const [regWard, setRegWard] = useState('Ward 15 (Esigodini Centroid)');
-  const [regLoading, setRegLoading] = useState(false);
+  const [showRegWardPicker, setShowRegWardPicker] = useState(false);
 
   // Modals
   const [showWardModal, setShowWardModal] = useState(false);
@@ -161,20 +159,25 @@ export default function App() {
     }
   };
 
-  // In-app Farmer Registration Handler for Agritex Field Officers
-  const handleRegisterFarmer = async () => {
+  // In-app Farmer Registration & Instant Automatic Login
+  const handleSignUp = async () => {
+    const cleanName = regName.trim();
     const cleanUser = regUsername.trim().toLowerCase();
     const cleanPass = regPassword.trim();
-    const cleanName = regName.trim();
     const cleanPhone = regPhone.trim() || '+263770000000';
     const cleanWard = regWard || 'Ward 15 (Esigodini Centroid)';
 
-    if (!cleanUser || !cleanPass || !cleanName) {
-      Alert.alert("Incomplete Form", "Please provide a username, password, and full name.");
+    if (!cleanName) {
+      setLoginError('Please enter your full name.');
+      return;
+    }
+    if (!cleanUser || !cleanPass) {
+      setLoginError('Please choose a username and password.');
       return;
     }
 
-    setRegLoading(true);
+    setLoading(true);
+    setLoginError('');
 
     const candidateHosts = [
       serverHost,
@@ -185,6 +188,8 @@ export default function App() {
     ].filter((val, idx, self) => val && self.indexOf(val) === idx);
 
     let savedToDatabase = false;
+    let successfulHost = serverHost;
+
     for (const host of candidateHosts) {
       try {
         const controller = new AbortController();
@@ -209,6 +214,8 @@ export default function App() {
           const data = await res.json();
           if (data.status === 'success') {
             savedToDatabase = true;
+            successfulHost = host;
+            setServerHost(host);
             break;
           }
         }
@@ -226,25 +233,23 @@ export default function App() {
       ward: cleanWard
     };
 
-    // Store in knownUsers immediately so user can log in with zero delay
+    // Store in knownUsers immediately so user stays accessible
     setKnownUsers(prev => {
       const filtered = prev.filter(u => (u.username || '').toLowerCase() !== cleanUser);
       return [newProfile, ...filtered];
     });
 
-    setRegLoading(false);
-    setShowRegisterModal(false);
-    setUsername(cleanUser);
-    setPassword(cleanPass);
-    setRegUsername('');
-    setRegPassword('');
-    setRegName('');
+    setLoading(false);
 
-    Alert.alert(
-      "Farmer Registered Successfully",
-      `Account '${cleanUser}' has been created and is ready to sign in!`,
-      [{ text: "Sign In Now", onPress: () => {} }]
-    );
+    // Auto-login the farmer immediately into the forecasting dashboard!
+    setIsLoggedIn(true);
+    setUserProfile(newProfile);
+    setWard(cleanWard);
+    if (WARD_DEFAULTS[cleanWard]) {
+      handleWardSelect(cleanWard, successfulHost);
+    } else {
+      runForecast(variety, cleanWard, precip, heat, sand, clay, successfulHost);
+    }
   };
 
   // 1. GENERAL MULTI-ROLE AUTHENTICATION HANDLER
@@ -546,7 +551,7 @@ Security Signature: Authorized Agritex Officer System Log Verification
 
         <ScrollView contentContainerStyle={styles.authScrollContent} keyboardShouldPersistTaps="handled">
           
-          {/* LOGIN CARD */}
+          {/* DUAL AUTHENTICATION CARD (SIGN IN / FARMER SIGN UP) */}
           <View style={[styles.authCard, isLightTheme && styles.authCardLight]}>
             <View style={styles.authHeaderBadge}>
               <Text style={styles.authHeaderBadgeText}>NUST MPHIL PIPELINE</Text>
@@ -556,142 +561,192 @@ Security Signature: Authorized Agritex Officer System Log Verification
             <Text style={[styles.authSubtitle, isLightTheme && styles.authSubtitleLight]}>
               Umzingwane District Yield Forecasting System
             </Text>
-            
-            <Text style={[styles.label, isLightTheme && styles.labelLight]}>Username</Text>
-            <TextInput
-              style={[styles.authInput, isLightTheme && styles.authInputLight]}
-              value={username}
-              onChangeText={setUsername}
-              placeholder="Enter assigned username"
-              placeholderTextColor={isLightTheme ? "#94a3b8" : "#64748b"}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
 
-            <Text style={[styles.label, isLightTheme && styles.labelLight]}>Password</Text>
-            <View style={styles.passwordWrapper}>
-              <TextInput
-                style={[styles.authInput, { flex: 1, marginBottom: 0, paddingRight: 60 }, isLightTheme && styles.authInputLight]}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!isPasswordVisible}
-                placeholder="Enter password"
-                placeholderTextColor={isLightTheme ? "#94a3b8" : "#64748b"}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              <TouchableOpacity 
-                style={styles.passwordToggle} 
-                onPress={() => setIsPasswordVisible(prev => !prev)}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            {/* Visual Tab Switcher: Sign In vs Sign Up */}
+            <View style={[styles.authTabContainer, isLightTheme && styles.authTabContainerLight]}>
+              <TouchableOpacity
+                style={[
+                  styles.authTabBtn,
+                  authMode === 'login' && (isLightTheme ? styles.authTabBtnActiveLight : styles.authTabBtnActive)
+                ]}
+                onPress={() => { setAuthMode('login'); setLoginError(''); }}
+                activeOpacity={0.8}
               >
-                <Text style={styles.passwordToggleText}>
-                  {isPasswordVisible ? 'Hide' : 'Show'}
+                <Text style={[
+                  styles.authTabText,
+                  isLightTheme && styles.authTabTextLight,
+                  authMode === 'login' && (isLightTheme ? styles.authTabTextActiveLight : styles.authTabTextActive)
+                ]}>
+                  🔑 Sign In
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.authTabBtn,
+                  authMode === 'signup' && (isLightTheme ? styles.authTabBtnActiveLight : styles.authTabBtnActive)
+                ]}
+                onPress={() => { setAuthMode('signup'); setLoginError(''); }}
+                activeOpacity={0.8}
+              >
+                <Text style={[
+                  styles.authTabText,
+                  isLightTheme && styles.authTabTextLight,
+                  authMode === 'signup' && (isLightTheme ? styles.authTabTextActiveLight : styles.authTabTextActive)
+                ]}>
+                  🌾 New Farmer Sign Up
                 </Text>
               </TouchableOpacity>
             </View>
 
-            {loginError ? <Text style={styles.errorText}>{loginError}</Text> : null}
-
-            <TouchableOpacity style={styles.loginBtn} onPress={handleLogin} disabled={loading}>
-              {loading ? (
-                <ActivityIndicator color="#ffffff" />
-              ) : (
-                <Text style={styles.loginBtnText}>Sign In to Portal</Text>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.registerLinkBtn, isLightTheme && styles.registerLinkBtnLight]} 
-              onPress={() => setShowRegisterModal(true)}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.registerLinkText, isLightTheme && styles.registerLinkTextLight]}>
-                ➕ Register New Farmer Account
-              </Text>
-            </TouchableOpacity>
-
-            <Text style={[styles.authHint, isLightTheme && styles.authHintLight]}>
-              Farmers can be registered on-the-spot or by the District Administrator.
-            </Text>
-          </View>
-
-          {/* API SERVER & NETWORK SETTINGS */}
-          <View style={[styles.guideCard, isLightTheme && styles.guideCardLight, { marginBottom: 12 }]}>
-            <TouchableOpacity 
-              style={styles.guideHeader} 
-              onPress={() => setShowServerConfig(prev => !prev)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.guideHeaderLeft}>
-                <Text style={styles.guideIcon}>🌐</Text>
-                <Text style={[styles.guideTitle, isLightTheme && styles.guideTitleLight]}>API Server Connection</Text>
-              </View>
-              <Text style={[styles.guideArrow, isLightTheme && styles.guideArrowLight]}>
-                {showServerConfig ? '▲ Close' : `▼ ${serverHost.replace(/^https?:\/\//, '')}`}
-              </Text>
-            </TouchableOpacity>
-
-            {showServerConfig && (
-              <View style={styles.guideBody}>
-                <Text style={[styles.guideIntro, isLightTheme && styles.guideIntroLight]}>
-                  Connect physical devices or emulators to the central NUST backend:
-                </Text>
+            {/* TAB 1: EXISTING USER LOGIN */}
+            {authMode === 'login' ? (
+              <View style={{ width: '100%' }}>
+                <Text style={[styles.label, isLightTheme && styles.labelLight]}>Username</Text>
                 <TextInput
-                  style={[styles.authInput, { fontSize: 13, paddingVertical: 10, marginBottom: 8 }, isLightTheme && styles.authInputLight]}
-                  value={customHostInput}
-                  onChangeText={setCustomHostInput}
-                  placeholder="e.g. https://...ngrok-free.dev or http://10.10.93.252:5000"
+                  style={[styles.authInput, isLightTheme && styles.authInputLight]}
+                  value={username}
+                  onChangeText={setUsername}
+                  placeholder="Enter your username (e.g. esi_farmer)"
                   placeholderTextColor={isLightTheme ? "#94a3b8" : "#64748b"}
                   autoCapitalize="none"
                   autoCorrect={false}
                 />
-                <View style={{ flexDirection: 'row', gap: 6, marginBottom: 6 }}>
-                  <TouchableOpacity
-                    style={[styles.smallActionBtn, { flex: 1 }]}
-                    onPress={() => {
-                      const trimmed = customHostInput.trim();
-                      if (trimmed) {
-                        setServerHost(trimmed);
-                        Alert.alert("Server Configured", `Active host set to: ${trimmed}`);
-                      }
-                    }}
+
+                <Text style={[styles.label, isLightTheme && styles.labelLight]}>Password</Text>
+                <View style={styles.passwordWrapper}>
+                  <TextInput
+                    style={[styles.authInput, { flex: 1, marginBottom: 0, paddingRight: 60 }, isLightTheme && styles.authInputLight]}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!isPasswordVisible}
+                    placeholder="Enter password"
+                    placeholderTextColor={isLightTheme ? "#94a3b8" : "#64748b"}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  <TouchableOpacity 
+                    style={styles.passwordToggle} 
+                    onPress={() => setIsPasswordVisible(prev => !prev)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   >
-                    <Text style={styles.smallActionBtnText}>Set Active</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.smallActionBtn, { flex: 1, backgroundColor: '#059669' }]}
-                    onPress={() => {
-                      setCustomHostInput(NGROK_PUBLIC_HOST);
-                      setServerHost(NGROK_PUBLIC_HOST);
-                      Alert.alert("Cloud Endpoint Set", `Switched to public cloud:\n${NGROK_PUBLIC_HOST}`);
-                    }}
-                  >
-                    <Text style={styles.smallActionBtnText}>🌐 Cloud</Text>
-                  </TouchableOpacity>
-                </View>
-                <View style={{ flexDirection: 'row', gap: 6 }}>
-                  <TouchableOpacity
-                    style={[styles.smallActionBtn, { flex: 1, backgroundColor: '#334155' }]}
-                    onPress={() => {
-                      setCustomHostInput(LOCAL_LAN_HOST);
-                      setServerHost(LOCAL_LAN_HOST);
-                      Alert.alert("Local WiFi IP Set", `Switched to host: ${LOCAL_LAN_HOST}`);
-                    }}
-                  >
-                    <Text style={styles.smallActionBtnText}>📶 WiFi IP</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.smallActionBtn, { flex: 1, backgroundColor: '#475569' }]}
-                    onPress={() => {
-                      setCustomHostInput(EMULATOR_HOST);
-                      setServerHost(EMULATOR_HOST);
-                      Alert.alert("Emulator Host Set", `Switched to host: ${EMULATOR_HOST}`);
-                    }}
-                  >
-                    <Text style={styles.smallActionBtnText}>💻 Emulator</Text>
+                    <Text style={styles.passwordToggleText}>
+                      {isPasswordVisible ? 'Hide' : 'Show'}
+                    </Text>
                   </TouchableOpacity>
                 </View>
+
+                {loginError ? <Text style={styles.errorText}>{loginError}</Text> : null}
+
+                <TouchableOpacity style={styles.loginBtn} onPress={handleLogin} disabled={loading}>
+                  {loading ? (
+                    <ActivityIndicator color="#ffffff" />
+                  ) : (
+                    <Text style={styles.loginBtnText}>🔑 Sign In to Portal</Text>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[styles.registerLinkBtn, isLightTheme && styles.registerLinkBtnLight]} 
+                  onPress={() => { setAuthMode('signup'); setLoginError(''); }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.registerLinkText, isLightTheme && styles.registerLinkTextLight]}>
+                    🌾 New Farmer? Tap here to Sign Up
+                  </Text>
+                </TouchableOpacity>
+
+                <Text style={[styles.authHint, isLightTheme && styles.authHintLight]}>
+                  For smallholders and extension officers across Umzingwane.
+                </Text>
+              </View>
+            ) : (
+              /* TAB 2: FARMER SELF-REGISTRATION */
+              <View style={{ width: '100%' }}>
+                <Text style={[styles.authFormSubtitle, isLightTheme && styles.authFormSubtitleLight]}>
+                  Sign up once to access personalized maize yield forecasts and agronomic advisories for your ward.
+                </Text>
+
+                <Text style={[styles.label, isLightTheme && styles.labelLight]}>Full Name / Ibizo</Text>
+                <TextInput
+                  style={[styles.authInput, isLightTheme && styles.authInputLight]}
+                  value={regName}
+                  onChangeText={setRegName}
+                  placeholder="e.g. Nomusa Moyo"
+                  placeholderTextColor={isLightTheme ? "#94a3b8" : "#64748b"}
+                />
+
+                <Text style={[styles.label, isLightTheme && styles.labelLight]}>Mobile Phone Number</Text>
+                <TextInput
+                  style={[styles.authInput, isLightTheme && styles.authInputLight]}
+                  value={regPhone}
+                  onChangeText={setRegPhone}
+                  placeholder="e.g. +263771234567 or 0771234567"
+                  placeholderTextColor={isLightTheme ? "#94a3b8" : "#64748b"}
+                  keyboardType="phone-pad"
+                />
+
+                <Text style={[styles.label, isLightTheme && styles.labelLight]}>Farming Ward (Location)</Text>
+                <TouchableOpacity
+                  style={[styles.wardPickerBtn, isLightTheme && styles.wardPickerBtnLight]}
+                  onPress={() => setShowRegWardPicker(true)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.wardPickerBtnText, isLightTheme && styles.wardPickerBtnTextLight]} numberOfLines={1}>
+                    📍 {regWard}
+                  </Text>
+                  <Text style={styles.wardPickerBtnArrow}>▼ Change</Text>
+                </TouchableOpacity>
+
+                <Text style={[styles.label, isLightTheme && styles.labelLight]}>Choose Username (Login ID)</Text>
+                <TextInput
+                  style={[styles.authInput, isLightTheme && styles.authInputLight]}
+                  value={regUsername}
+                  onChangeText={setRegUsername}
+                  placeholder="e.g. nomusa_moyo"
+                  placeholderTextColor={isLightTheme ? "#94a3b8" : "#64748b"}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+
+                <Text style={[styles.label, isLightTheme && styles.labelLight]}>Choose Password</Text>
+                <TextInput
+                  style={[styles.authInput, isLightTheme && styles.authInputLight]}
+                  value={regPassword}
+                  onChangeText={setRegPassword}
+                  placeholder="Choose your password"
+                  placeholderTextColor={isLightTheme ? "#94a3b8" : "#64748b"}
+                  secureTextEntry
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+
+                {loginError ? <Text style={styles.errorText}>{loginError}</Text> : null}
+
+                <TouchableOpacity 
+                  style={[styles.loginBtn, { backgroundColor: '#059669' }]} 
+                  onPress={handleSignUp} 
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#ffffff" />
+                  ) : (
+                    <Text style={styles.loginBtnText}>🌱 Sign Up & Open Dashboard</Text>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[styles.registerLinkBtn, isLightTheme && styles.registerLinkBtnLight]} 
+                  onPress={() => { setAuthMode('login'); setLoginError(''); }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.registerLinkText, isLightTheme && styles.registerLinkTextLight]}>
+                    🔑 Already have an account? Sign In
+                  </Text>
+                </TouchableOpacity>
+
+                <Text style={[styles.authHint, isLightTheme && styles.authHintLight]}>
+                  Instant registration connects directly to the central district database.
+                </Text>
               </View>
             )}
           </View>
@@ -797,6 +852,58 @@ Security Signature: Authorized Agritex Officer System Log Verification
           </Text>
 
         </ScrollView>
+
+        {/* REGISTRATION WARD PICKER MODAL */}
+        <Modal
+          visible={showRegWardPicker}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowRegWardPicker(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, isLightTheme && styles.modalContentLight, { maxHeight: '80%' }]}>
+              <Text style={[styles.modalTitle, isLightTheme && styles.modalTitleLight]}>
+                📍 Select Your Ward
+              </Text>
+              <Text style={[styles.modalSubtitle, isLightTheme && styles.modalSubtitleLight]}>
+                Choose the Umzingwane ward where your crop is planted:
+              </Text>
+
+              <ScrollView style={styles.modalScroll}>
+                {Object.keys(WARD_DEFAULTS).map((wardName) => (
+                  <TouchableOpacity
+                    key={wardName}
+                    style={[
+                      styles.modalItem,
+                      isLightTheme && styles.modalItemLight,
+                      regWard === wardName && styles.modalItemActive
+                    ]}
+                    onPress={() => {
+                      setRegWard(wardName);
+                      setShowRegWardPicker(false);
+                    }}
+                  >
+                    <Text style={[
+                      styles.modalItemText,
+                      isLightTheme && styles.modalItemTextLight,
+                      regWard === wardName && { color: '#10b981', fontWeight: 'bold' }
+                    ]}>
+                      {wardName}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              <TouchableOpacity 
+                style={styles.modalCloseBtn} 
+                onPress={() => setShowRegWardPicker(false)}
+              >
+                <Text style={styles.modalCloseBtnText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
       </SafeAreaView>
     );
   }
@@ -1227,103 +1334,6 @@ Security Signature: Authorized Agritex Officer System Log Verification
         </View>
       </Modal>
 
-      {/* 3. FARMER REGISTRATION MODAL */}
-      <Modal
-        visible={showRegisterModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowRegisterModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, isLightTheme && styles.modalContentLight, { maxHeight: '90%' }]}>
-            <Text style={[styles.modalTitle, isLightTheme && styles.modalTitleLight]}>
-              🌾 Register New Farmer
-            </Text>
-            <Text style={[styles.modalSubtitle, isLightTheme && styles.modalSubtitleLight]}>
-              Create an account for instant mobile & field use
-            </Text>
-
-            <ScrollView style={styles.modalScroll} keyboardShouldPersistTaps="handled">
-              <Text style={[styles.label, isLightTheme && styles.labelLight]}>Full Name</Text>
-              <TextInput
-                style={[styles.authInput, isLightTheme && styles.authInputLight]}
-                value={regName}
-                onChangeText={setRegName}
-                placeholder="e.g. Esi Moyo"
-                placeholderTextColor={isLightTheme ? "#94a3b8" : "#64748b"}
-              />
-
-              <Text style={[styles.label, isLightTheme && styles.labelLight]}>Username (Login ID)</Text>
-              <TextInput
-                style={[styles.authInput, isLightTheme && styles.authInputLight]}
-                value={regUsername}
-                onChangeText={setRegUsername}
-                placeholder="e.g. esi_farmer"
-                placeholderTextColor={isLightTheme ? "#94a3b8" : "#64748b"}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-
-              <Text style={[styles.label, isLightTheme && styles.labelLight]}>Password</Text>
-              <TextInput
-                style={[styles.authInput, isLightTheme && styles.authInputLight]}
-                value={regPassword}
-                onChangeText={setRegPassword}
-                placeholder="Choose a password"
-                placeholderTextColor={isLightTheme ? "#94a3b8" : "#64748b"}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-
-              <Text style={[styles.label, isLightTheme && styles.labelLight]}>Phone Number (SMS Advisories)</Text>
-              <TextInput
-                style={[styles.authInput, isLightTheme && styles.authInputLight]}
-                value={regPhone}
-                onChangeText={setRegPhone}
-                placeholder="e.g. +263771234567"
-                placeholderTextColor={isLightTheme ? "#94a3b8" : "#64748b"}
-                keyboardType="phone-pad"
-              />
-
-              <Text style={[styles.label, isLightTheme && styles.labelLight]}>Assigned Ward</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
-                {Object.keys(WARD_DEFAULTS).map((wardName) => (
-                  <TouchableOpacity
-                    key={wardName}
-                    style={[
-                      styles.smallActionBtn,
-                      { marginRight: 8, backgroundColor: regWard === wardName ? '#4f46e5' : 'rgba(255,255,255,0.06)' }
-                    ]}
-                    onPress={() => setRegWard(wardName)}
-                  >
-                    <Text style={[styles.smallActionBtnText, { fontSize: 11 }]}>{wardName}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </ScrollView>
-
-            <TouchableOpacity 
-              style={[styles.loginBtn, { marginBottom: 10 }]} 
-              onPress={handleRegisterFarmer}
-              disabled={regLoading}
-            >
-              {regLoading ? (
-                <ActivityIndicator color="#ffffff" />
-              ) : (
-                <Text style={styles.loginBtnText}>Create Farmer Account</Text>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.modalCloseBtn} 
-              onPress={() => setShowRegisterModal(false)}
-            >
-              <Text style={styles.modalCloseBtnText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
     </SafeAreaView>
   );
 }
@@ -1485,6 +1495,91 @@ const styles = StyleSheet.create({
   },
   authSubtitleLight: {
     color: '#64748b',
+  },
+  authTabContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 20,
+  },
+  authTabContainerLight: {
+    backgroundColor: '#e2e8f0',
+  },
+  authTabBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 9,
+  },
+  authTabBtnActive: {
+    backgroundColor: '#4f46e5',
+  },
+  authTabBtnActiveLight: {
+    backgroundColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  authTabText: {
+    color: '#94a3b8',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  authTabTextLight: {
+    color: '#64748b',
+  },
+  authTabTextActive: {
+    color: '#ffffff',
+    fontWeight: '700',
+  },
+  authTabTextActiveLight: {
+    color: '#4f46e5',
+  },
+  authFormSubtitle: {
+    fontSize: 12,
+    color: '#94a3b8',
+    marginBottom: 16,
+    lineHeight: 18,
+    textAlign: 'center',
+  },
+  authFormSubtitleLight: {
+    color: '#64748b',
+  },
+  wardPickerBtn: {
+    width: '100%',
+    height: 48,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  wardPickerBtnLight: {
+    backgroundColor: '#f1f5f9',
+    borderColor: '#cbd5e1',
+  },
+  wardPickerBtnText: {
+    color: '#f8fafc',
+    fontSize: 13,
+    fontWeight: '600',
+    flex: 1,
+  },
+  wardPickerBtnTextLight: {
+    color: '#0f172a',
+  },
+  wardPickerBtnArrow: {
+    color: '#6366f1',
+    fontSize: 12,
+    fontWeight: '700',
+    marginLeft: 8,
   },
   authInput: {
     width: '100%',
