@@ -17,6 +17,8 @@ DEFAULT_USERS = [
     { "username": "agritex_officer", "password": "nust_maize_2026", "name": "Primary Officer", "role": "Agritex Officer", "phone": "+263771234567", "ward": "All Wards" },
     { "username": "johen_doe", "password": "12345", "name": "Johen Doe", "role": "Farmer", "phone": "+263772345678", "ward": "Ward 12 (Ntabazinduna)" },
     { "username": "farmer", "password": "farmer2026", "name": "Local Farmer", "role": "Farmer", "phone": "+263773456789", "ward": "Ward 15 (Esigodini Centroid)" },
+    { "username": "maldima_farmer", "password": "farmerpass123", "name": "Stephen Maldima", "role": "Farmer", "phone": "+263775551234", "ward": "Ward 1 (Nswazi North)" },
+    { "username": "umzingwane_grower", "password": "harvest2026", "name": "Nomusa Khumalo", "role": "Farmer", "phone": "+263776112233", "ward": "Ward 15 (Esigodini Centroid)" },
     { "username": "admin", "password": "admin123", "name": "System Admin", "role": "Administrator", "phone": "+263774567890", "ward": "All Wards" }
 ]
 
@@ -81,9 +83,12 @@ def init_db():
     if count == 0:
         # Load from existing users_db.json if available, else DEFAULT_USERS
         seed_users = DEFAULT_USERS
-        if os.path.exists(USERS_JSON_FILE):
+        pkg_json = os.path.join(os.path.dirname(__file__), 'users_db.json')
+        source_json = USERS_JSON_FILE if os.path.exists(USERS_JSON_FILE) else pkg_json
+
+        if os.path.exists(source_json):
             try:
-                with open(USERS_JSON_FILE, 'r', encoding='utf-8') as f:
+                with open(source_json, 'r', encoding='utf-8') as f:
                     file_users = json.load(f)
                     if isinstance(file_users, list) and len(file_users) > 0:
                         seed_users = file_users

@@ -53,7 +53,16 @@ except Exception as e:
     print(f"Notice: Trained XGBoost models could not be loaded ({e}). Using high-fidelity biophysical emulator fallback.")
 
 # Central User Account Database configuration & SQLite engine
-import database
+import sys
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+if CURRENT_DIR not in sys.path:
+    sys.path.insert(0, CURRENT_DIR)
+
+try:
+    import database
+except ImportError:
+    from api import database
+
 try:
     database.init_db()
     print("NUST Central SQLite Database initialized successfully.")
