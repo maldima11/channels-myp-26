@@ -73,47 +73,73 @@ function showWelcomeScreen() {
     document.getElementById("login-warning").style.display = "none";
 }
 
-// 1. SYSTEM SECURITY ACCESS (WITH ADMIN PORTAL INTEGRATION)
+const AUTH_LOGIN_API_URL = `${BASE_API_URL}/api/auth/login`;
+
+// 1. SYSTEM SECURITY ACCESS (CENTRAL DATABASE AUTHENTICATION)
 function attemptLogin() {
     const user = document.getElementById("username").value.trim().toLowerCase();
     const pass = document.getElementById("password").value.trim();
-    
-    // Sync cache first, then validate
-    syncUsersFromBackend(() => {
-        const matchedUser = cachedUsers.find(u => u.username === user && u.password === pass);
+    const warning = document.getElementById("login-warning");
+    warning.style.display = "none";
+
+    if (!user || !pass) {
+        warning.innerText = "Please enter both username and password.";
+        warning.style.display = "block";
+        return;
+    }
+
+    // Try central database authentication first
+    fetch(AUTH_LOGIN_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: user, password: pass, role: selectedRole })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === "success" && data.user) {
+            handleSuccessfulLogin(data.user);
+        } else {
+            warning.innerText = data.message || "Invalid Username or Password. Please try again.";
+            warning.style.display = "block";
+        }
+    })
+    .catch(err => {
+        console.warn("Central Auth API offline. Verifying against local database cache:", err.message);
+        const local = localStorage.getItem(USER_KEY);
+        const users = local ? JSON.parse(local) : defaultUsers;
+        const matchedUser = users.find(u => u.username.toLowerCase() === user && u.password === pass);
 
         if (matchedUser) {
-            // Role enforcement: check if user matches the selected portal role
             if (matchedUser.role !== selectedRole) {
-                document.getElementById("login-warning").innerText = `Access denied. Account is registered as a '${matchedUser.role}'.`;
-                document.getElementById("login-warning").style.display = "block";
+                warning.innerText = `Access denied. Account is registered as a '${matchedUser.role}'.`;
+                warning.style.display = "block";
                 return;
             }
-
-            // Save active session
-            sessionStorage.setItem('nust_active_user', JSON.stringify(matchedUser));
-
-            document.getElementById("logged-user-name").innerText = `${matchedUser.name} (${matchedUser.role})`;
-            
-            // Gated navigation: only show Admin button if logged-in user is an Agritex Officer
-            const adminBtn = document.getElementById("admin-redirect-btn");
-            if (matchedUser.role === 'Agritex Officer') {
-                adminBtn.style.display = "inline-block";
-            } else {
-                adminBtn.style.display = "none";
-            }
-
-            const gate = document.getElementById("login-gate");
-            gate.style.opacity = "0";
-            setTimeout(() => {
-                gate.style.display = "none";
-                runForecast(); // Render gauges and chart upon entry
-            }, 500);
+            handleSuccessfulLogin(matchedUser);
         } else {
-            document.getElementById("login-warning").innerText = "Invalid Username or Password. Please try again.";
-            document.getElementById("login-warning").style.display = "block";
+            warning.innerText = "Invalid Username or Password. Please try again.";
+            warning.style.display = "block";
         }
     });
+}
+
+function handleSuccessfulLogin(userObj) {
+    sessionStorage.setItem('nust_active_user', JSON.stringify(userObj));
+    document.getElementById("logged-user-name").innerText = `${userObj.name} (${userObj.role})`;
+    
+    const adminBtn = document.getElementById("admin-redirect-btn");
+    if (userObj.role === 'Agritex Officer' || userObj.role === 'Administrator') {
+        adminBtn.style.display = "inline-block";
+    } else {
+        adminBtn.style.display = "none";
+    }
+
+    const gate = document.getElementById("login-gate");
+    gate.style.opacity = "0";
+    setTimeout(() => {
+        gate.style.display = "none";
+        runForecast();
+    }, 500);
 }
 
 // Logout controller
@@ -204,8 +230,9 @@ const WARD_DEFAULTS = {
 };
 
 function applyWardDefaults() {
-    const ward = document.getElementById("location-ward").value;
-    const defaults = WARD_DEFAULTS[ward];
+    const rawWard = document.getElementById("location-ward").value;
+    const cleanWard = rawWard.split(" (")[0];
+    const defaults = WARD_DEFAULTS[cleanWard] || WARD_DEFAULTS[rawWard];
     if (defaults) {
         // Update slider inputs
         document.getElementById("slide-precip").value = defaults.precip;
@@ -454,227 +481,134 @@ function drawYieldChart(low, med, high) {
     });
 }
 
-// 6. ADVISORY REPORT EXPORTER (PRESENTABLE PDF PRINT FORMAT)
+// 6. ADVISORY REPORT EXPORTER (GENUINE .PDF DOCUMENT GENERATOR)
 function downloadReport() {
     const data = cachedForecast;
     if (!data) return;
 
-    const reportContent = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NUST Maize Yield Advisory Report - ${data.ward} - ${data.variety}</title>
-    <style>
-        * { box-sizing: border-box; }
-        body {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            background-color: #f1f5f9;
-            color: #1e293b;
-            padding: 40px;
-            margin: 0;
-        }
-        .report-card {
-            background: #ffffff;
-            border-radius: 20px;
-            padding: 40px;
-            max-width: 800px;
-            margin: 0 auto;
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
-            border: 1px solid #e2e8f0;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #6366f1;
-            padding-bottom: 24px;
-            margin-bottom: 30px;
-        }
-        .title {
-            font-size: 24px;
-            font-weight: 700;
-            color: #1e1b4b;
-        }
-        .logo-txt {
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #6366f1;
-            font-weight: 700;
-        }
-        .meta-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        .meta-item {
-            background: #f8fafc;
-            padding: 16px;
-            border-radius: 12px;
-            border: 1px solid #f1f5f9;
-        }
-        .meta-label {
-            font-size: 12px;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
-        }
-        .meta-value {
-            font-size: 16px;
-            font-weight: 600;
-            color: #0f172a;
-        }
-        .yield-box {
-            background: linear-gradient(135deg, #4f46e5, #6366f1);
-            color: #ffffff;
-            padding: 24px;
-            border-radius: 16px;
-            margin-bottom: 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .yield-title {
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            opacity: 0.9;
-        }
-        .yield-value {
-            font-size: 32px;
-            font-weight: 700;
-        }
-        .envelope-container {
-            display: flex;
-            justify-content: space-between;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        .envelope-card {
-            flex: 1;
-            text-align: center;
-            padding: 16px;
-            border-radius: 12px;
-            border: 1.5px dashed #cbd5e1;
-        }
-        .envelope-card.low { border-color: #f43f5e; color: #f43f5e; background: #fff1f2; }
-        .envelope-card.med { border-color: #6366f1; color: #6366f1; background: #eef2ff; }
-        .envelope-card.high { border-color: #10b981; color: #10b981; background: #ecfdf5; }
-        .envelope-label {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #64748b;
-            margin-bottom: 4px;
-        }
-        .envelope-val {
-            font-size: 20px;
-            font-weight: 700;
-        }
-        .advisory-box {
-            background: #fafafa;
-            border-left: 4px solid #10b981;
-            padding: 24px;
-            border-radius: 0 12px 12px 0;
-            font-size: 14px;
-            line-height: 1.6;
-            margin-bottom: 30px;
-        }
-        .footer {
-            text-align: center;
-            font-size: 11px;
-            color: #94a3b8;
-            margin-top: 40px;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 20px;
-        }
-        @media print {
-            body { padding: 0; background: none; }
-            .report-card { border: none; box-shadow: none; padding: 0; }
-        }
-    </style>
-</head>
-<body>
-    <div class="report-card">
-        <div class="header">
-            <div>
-                <div class="title">Maize Yield Prediction Report</div>
-                <div style="font-size: 13px; color: #64748b; margin-top: 4px;">Umzingwane District, Matabeleland South</div>
-            </div>
-            <div class="logo-txt">NUST MPhil Pipeline</div>
-        </div>
+    const cleanWard = (data.ward || "Umzingwane").replace(/[^a-zA-Z0-9]/g, '_');
+    const cleanVariety = (data.variety || "SC719").replace(/[^a-zA-Z0-9]/g, '_');
+    const pdfFilename = `NUST_Yield_Report_${cleanWard}_${cleanVariety}.pdf`;
 
-        <div class="meta-grid">
-            <div class="meta-item">
-                <div class="meta-label">Location Centroid</div>
-                <div class="meta-value">${data.ward}</div>
-            </div>
-            <div class="meta-item">
-                <div class="meta-label">Maize Cultivar</div>
-                <div class="meta-value">${data.variety}</div>
-            </div>
-            <div class="meta-item">
-                <div class="meta-label">Soil Textures</div>
-                <div class="meta-value">Sand: ${data.sand}% | Clay: ${data.clay}%</div>
-            </div>
-            <div class="meta-item">
-                <div class="meta-label">Precipitation (Scaled Lag 30d)</div>
-                <div class="meta-value">${data.precip}</div>
-            </div>
-        </div>
+    const btn = document.querySelector(".download-btn");
+    const originalText = btn ? btn.innerHTML : "Download Report";
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = "⏳ Generating PDF...";
+    }
 
-        <div class="yield-box">
-            <div>
-                <div class="yield-title">Expected Median Yield</div>
-                <div style="font-size: 12px; opacity: 0.8;">Standard meteorological alignment (q50)</div>
-            </div>
-            <div class="yield-value">${data.med} kg/ha</div>
-        </div>
+    // Build standalone styled element for PDF rendering
+    const reportDiv = document.createElement("div");
+    reportDiv.id = "pdf-report-container";
+    reportDiv.style.position = "fixed";
+    reportDiv.style.left = "-9999px";
+    reportDiv.style.top = "0";
+    reportDiv.style.width = "780px";
+    reportDiv.style.background = "#ffffff";
+    reportDiv.style.color = "#1e293b";
+    reportDiv.style.fontFamily = "'Helvetica Neue', Arial, sans-serif";
+    reportDiv.style.padding = "24px";
+    reportDiv.style.zIndex = "-1000";
 
-        <div class="envelope-container">
-            <div class="envelope-card low">
-                <div class="envelope-label">Lower Bound (q10)</div>
-                <div class="envelope-val">${data.low} kg/ha</div>
+    reportDiv.innerHTML = `
+        <div style="background:#ffffff; padding:20px; border-radius:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #6366f1; padding-bottom:16px; margin-bottom:20px;">
+                <div>
+                    <h1 style="font-size:22px; margin:0; color:#1e1b4b; font-weight:700;">Maize Yield Prediction Report</h1>
+                    <div style="font-size:12px; color:#64748b; margin-top:4px;">Umzingwane District, Matabeleland South &bull; NUST MPhil Pipeline</div>
+                </div>
+                <div style="font-size:13px; font-weight:700; color:#6366f1; text-transform:uppercase; letter-spacing:1px;">NUST Yield Advisory</div>
             </div>
-            <div class="envelope-card med">
-                <div class="envelope-label">Median Yield (q50)</div>
-                <div class="envelope-val">${data.med} kg/ha</div>
-            </div>
-            <div class="envelope-card high">
-                <div class="envelope-label">Upper Bound (q90)</div>
-                <div class="envelope-val">${data.high} kg/ha</div>
-            </div>
-        </div>
 
-        <div class="advisory-box">
-            <h3 style="margin-top: 0; color: #0f172a; margin-bottom: 12px;">Agronomic Recommendation</h3>
-            <div>${data.advisory ? data.advisory.replace(/\n/g, '<br>') : 'Standard Season Advisory'}</div>
-        </div>
+            <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:14px; margin-bottom:20px;">
+                <div style="background:#f8fafc; padding:12px 16px; border-radius:10px; border:1px solid #e2e8f0;">
+                    <div style="font-size:11px; text-transform:uppercase; color:#64748b; font-weight:600;">Location Centroid</div>
+                    <div style="font-size:15px; font-weight:700; color:#0f172a; margin-top:2px;">${data.ward}</div>
+                </div>
+                <div style="background:#f8fafc; padding:12px 16px; border-radius:10px; border:1px solid #e2e8f0;">
+                    <div style="font-size:11px; text-transform:uppercase; color:#64748b; font-weight:600;">Maize Cultivar</div>
+                    <div style="font-size:15px; font-weight:700; color:#0f172a; margin-top:2px;">${data.variety}</div>
+                </div>
+                <div style="background:#f8fafc; padding:12px 16px; border-radius:10px; border:1px solid #e2e8f0;">
+                    <div style="font-size:11px; text-transform:uppercase; color:#64748b; font-weight:600;">Soil Texture Composition</div>
+                    <div style="font-size:15px; font-weight:700; color:#0f172a; margin-top:2px;">Sand: ${data.sand}% &bull; Clay: ${data.clay}%</div>
+                </div>
+                <div style="background:#f8fafc; padding:12px 16px; border-radius:10px; border:1px solid #e2e8f0;">
+                    <div style="font-size:11px; text-transform:uppercase; color:#64748b; font-weight:600;">Precipitation Stress Lag</div>
+                    <div style="font-size:15px; font-weight:700; color:#0f172a; margin-top:2px;">${data.precip} (Scaled Lag 30d)</div>
+                </div>
+            </div>
 
-        <div class="footer">
-            <p>Generated via NUST MPhil Thesis Hybrid Model Fusion Pipeline (Option B) | Scale: kg/ha</p>
-            <p>Security Signature: Authorized Agritex Officer System Log Verification</p>
+            <div style="background:linear-gradient(135deg, #4f46e5, #6366f1); color:#ffffff; padding:18px 24px; border-radius:12px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <div style="font-size:12px; text-transform:uppercase; letter-spacing:0.8px; opacity:0.9;">Expected Median Yield Forecast</div>
+                    <div style="font-size:11px; opacity:0.75; margin-top:2px;">Standard meteorological alignment (q50)</div>
+                </div>
+                <div style="font-size:28px; font-weight:700;">${data.med} kg/ha</div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:20px;">
+                <div style="flex:1; text-align:center; padding:12px; border-radius:10px; border:1.5px dashed #f43f5e; background:#fff1f2; color:#e11d48;">
+                    <div style="font-size:10px; text-transform:uppercase; font-weight:600;">Lower Bound (q10)</div>
+                    <div style="font-size:18px; font-weight:700; margin-top:2px;">${data.low} kg/ha</div>
+                </div>
+                <div style="flex:1; text-align:center; padding:12px; border-radius:10px; border:1.5px dashed #6366f1; background:#eef2ff; color:#4f46e5;">
+                    <div style="font-size:10px; text-transform:uppercase; font-weight:600;">Median Yield (q50)</div>
+                    <div style="font-size:18px; font-weight:700; margin-top:2px;">${data.med} kg/ha</div>
+                </div>
+                <div style="flex:1; text-align:center; padding:12px; border-radius:10px; border:1.5px dashed #10b981; background:#ecfdf5; color:#059669;">
+                    <div style="font-size:10px; text-transform:uppercase; font-weight:600;">Upper Bound (q90)</div>
+                    <div style="font-size:18px; font-weight:700; margin-top:2px;">${data.high} kg/ha</div>
+                </div>
+            </div>
+
+            <div style="background:#f8fafc; border-left:4px solid #10b981; padding:16px; border-radius:0 10px 10px 0; margin-bottom:20px; font-size:13px; line-height:1.6; color:#334155;">
+                <div style="font-weight:700; color:#0f172a; margin-bottom:6px; font-size:14px;">Agronomic Recommendation</div>
+                <div>${data.advisory ? data.advisory.replace(/\n/g, '<br>') : 'Standard Season Advisory for Matabeleland South.'}</div>
+            </div>
+
+            <div style="text-align:center; font-size:10.5px; color:#94a3b8; border-top:1px solid #e2e8f0; padding-top:14px; margin-top:24px;">
+                <p style="margin:2px 0;">Generated via NUST MPhil Thesis Hybrid Model Fusion Pipeline (Option B) | Scale: kg/ha</p>
+                <p style="margin:2px 0;">Security Verification: Authorized Agritex Officer Digital System Sign-off &bull; Date: ${new Date().toLocaleDateString('en-GB')}</p>
+            </div>
         </div>
-    </div>
-    <script>
-        window.onload = function() {
-            setTimeout(function() {
-                window.print();
-            }, 300);
+    `;
+
+    document.body.appendChild(reportDiv);
+
+    if (window.html2pdf) {
+        const opt = {
+            margin: [10, 10, 10, 10],
+            filename: pdfFilename,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
-    </script>
-</body>
-</html>`;
 
-    const printWin = window.open('', '_blank');
-    if (printWin) {
-        printWin.document.write(reportContent);
-        printWin.document.close();
+        window.html2pdf().set(opt).from(reportDiv).save()
+            .then(() => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+                document.body.removeChild(reportDiv);
+            })
+            .catch(err => {
+                console.error("html2pdf generation error:", err);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+                document.body.removeChild(reportDiv);
+                window.print();
+            });
     } else {
-        alert("Please allow popups to export the PDF report.");
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+        document.body.removeChild(reportDiv);
+        window.print();
     }
 }
 

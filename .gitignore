@@ -26,6 +26,8 @@ api/__pycache__/
 **/__pycache__/
 *.pyc
 *.pyo
+*.db
+*.sqlite3
 
 # System & IDE junk
 .DS_Store

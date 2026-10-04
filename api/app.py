@@ -35,7 +35,14 @@ try:
 except Exception as e:
     print(f"Notice: Trained XGBoost models could not be loaded ({e}). Using high-fidelity biophysical emulator fallback.")
 
-# Central User Account Database configuration
+# Central User Account Database configuration & SQLite engine
+import database
+try:
+    database.init_db()
+    print("NUST Central SQLite Database initialized successfully.")
+except Exception as db_err:
+    print(f"Notice: SQLite Database init warning ({db_err}). Falling back to JSON stores.")
+
 USERS_DB_FILE = os.path.join(os.path.dirname(__file__), 'users_db.json')
 SMS_LOGS_FILE = os.path.join(os.path.dirname(__file__), 'sms_logs.json')
 
@@ -47,13 +54,18 @@ DEFAULT_USERS = [
 ]
 
 def load_users():
+    try:
+        users = database.get_all_users()
+        if users and len(users) > 0:
+            return users
+    except Exception:
+        pass
     if not os.path.exists(USERS_DB_FILE):
         save_users(DEFAULT_USERS)
         return DEFAULT_USERS
     try:
         with open(USERS_DB_FILE, 'r', encoding='utf-8') as f:
             data = json.load(f)
-            # Ensure backwards compatibility for phone & ward fields
             for u in data:
                 if 'phone' not in u:
                     u['phone'] = '+263770000000'
@@ -72,6 +84,12 @@ def save_users(users):
         return False
 
 def load_sms_logs():
+    try:
+        db_logs = database.get_sms_logs_db()
+        if db_logs and len(db_logs) > 0:
+            return db_logs
+    except Exception:
+        pass
     if not os.path.exists(SMS_LOGS_FILE):
         return []
     try:
@@ -81,6 +99,10 @@ def load_sms_logs():
         return []
 
 def save_sms_log(log_entry):
+    try:
+        database.save_sms_log_db(log_entry)
+    except Exception:
+        pass
     logs = load_sms_logs()
     logs.insert(0, log_entry)  # Newest first
     logs = logs[:200]  # Keep last 200 logs
@@ -104,6 +126,48 @@ def make_cors_response(data, status_code=200):
     response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
     response.headers.add("Access-Control-Allow-Methods", "POST,GET,DELETE,PUT,OPTIONS")
     return response, status_code
+
+# -------------------------------------------------------------
+# DATABASE AUTHENTICATION & SESSION LOGGING ROUTES
+# -------------------------------------------------------------
+@app.route('/api/auth/login', methods=['POST', 'OPTIONS'])
+def auth_login():
+    if request.method == 'OPTIONS':
+        return make_cors_response({"status": "ok"})
+    try:
+        req_data = request.get_json() or {}
+        username = str(req_data.get("username", "")).strip()
+        password = str(req_data.get("password", "")).strip()
+        role = req_data.get("role")
+        ip_addr = request.remote_addr or '127.0.0.1'
+
+        if not username or not password:
+            return make_cors_response({"status": "error", "message": "Username and password are required"}, 400)
+
+        success, auth_user, status_msg = database.verify_and_log_login(username, password, role, ip_addr)
+        if success and auth_user:
+            return make_cors_response({
+                "status": "success",
+                "message": "Authentication successful",
+                "user": auth_user
+            })
+        else:
+            return make_cors_response({
+                "status": "error",
+                "message": f"Authentication rejected: {status_msg}"
+            }, 401)
+    except Exception as e:
+        return make_cors_response({"status": "error", "message": str(e)}, 500)
+
+@app.route('/api/auth/logs', methods=['GET', 'OPTIONS'])
+def auth_logs():
+    if request.method == 'OPTIONS':
+        return make_cors_response({"status": "ok"})
+    try:
+        logs = database.get_login_logs(limit=100)
+        return make_cors_response({"status": "success", "logs": logs, "total": len(logs)})
+    except Exception as e:
+        return make_cors_response({"status": "error", "message": str(e)}, 500)
 
 # -------------------------------------------------------------
 # USER MANAGEMENT ROUTES
@@ -130,20 +194,11 @@ def manage_users():
             if not username or not password or not name or not role:
                 return make_cors_response({"status": "error", "message": "Missing required fields"}, 400)
                 
-            users = load_users()
-            if any(u['username'] == username for u in users):
-                return make_cors_response({"status": "error", "message": f"Username '{username}' already exists"}, 400)
-                
-            users.append({
-                "username": username,
-                "password": password,
-                "name": name,
-                "role": role,
-                "phone": phone,
-                "ward": ward
-            })
-            save_users(users)
-            return make_cors_response({"status": "success", "message": "User registered successfully"})
+            success, msg = database.create_user(username, password, name, role, phone, ward)
+            if success:
+                return make_cors_response({"status": "success", "message": msg})
+            else:
+                return make_cors_response({"status": "error", "message": msg}, 400)
         except Exception as e:
             return make_cors_response({"status": "error", "message": str(e)}, 500)
 
@@ -154,18 +209,11 @@ def delete_user(username):
         
     try:
         username = username.strip().lower()
-        if username == "agritex_officer":
-            return make_cors_response({"status": "error", "message": "Cannot delete primary fallback officer"}, 400)
-            
-        users = load_users()
-        initial_len = len(users)
-        users = [u for u in users if u['username'] != username]
-        
-        if len(users) == initial_len:
-            return make_cors_response({"status": "error", "message": "User not found"}, 404)
-            
-        save_users(users)
-        return make_cors_response({"status": "success", "message": "User deleted successfully"})
+        success, msg = database.delete_user(username)
+        if success:
+            return make_cors_response({"status": "success", "message": msg})
+        else:
+            return make_cors_response({"status": "error", "message": msg}, 400)
     except Exception as e:
         return make_cors_response({"status": "error", "message": str(e)}, 500)
 
@@ -177,35 +225,14 @@ def update_user(username):
     try:
         username = username.strip().lower()
         req_data = request.get_json() or {}
-        password = str(req_data.get("password", "")).strip()
-        name = str(req_data.get("name", "")).strip()
-        role = str(req_data.get("role", "")).strip()
-        phone = str(req_data.get("phone", "+263770000000")).strip()
-        ward = str(req_data.get("ward", "All Wards")).strip()
-        
-        if not password or not name or not role:
-            return make_cors_response({"status": "error", "message": "Missing required fields"}, 400)
-            
-        users = load_users()
-        user_found = False
-        
-        for u in users:
-            if u['username'] == username:
-                u['password'] = password
-                u['name'] = name
-                u['role'] = role
-                u['phone'] = phone
-                u['ward'] = ward
-                user_found = True
-                break
-                
-        if not user_found:
-            return make_cors_response({"status": "error", "message": f"User '{username}' not found"}, 404)
-            
-        save_users(users)
-        return make_cors_response({"status": "success", "message": "User updated successfully"})
+        success, msg = database.update_user(username, req_data)
+        if success:
+            return make_cors_response({"status": "success", "message": msg})
+        else:
+            return make_cors_response({"status": "error", "message": msg}, 400)
     except Exception as e:
         return make_cors_response({"status": "error", "message": str(e)}, 500)
+
 
 # -------------------------------------------------------------
 # SMS ADVISORY GATEWAY ENGINE (AFRICA'S TALKING / TWILIO / MOCK)
@@ -472,7 +499,8 @@ def predict():
         req_data = request.get_json() or {}
         
         # Extract inputs
-        ward = req_data.get("ward", "Ward 12")
+        raw_ward = str(req_data.get("ward", "Ward 12")).strip()
+        ward = raw_ward.split(" (")[0] if raw_ward else "Ward 12"
         variety = str(req_data.get("variety", "")).strip().upper()
         precip = float(req_data.get("precip", 0.5))
         heat = float(req_data.get("heat", 0.5))

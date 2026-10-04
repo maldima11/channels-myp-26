@@ -271,9 +271,9 @@
                     <div id="sms-status-msg" class="status-msg"></div>
                 </div>
 
-                <!-- COLUMN 2: LIVE PHONE PREVIEW & LOGS -->
-                <div class="glass-panel directory-card">
-                    <div class="panel-title-row">
+                <!-- COLUMN 2: LIVE PHONE PREVIEW -->
+                <div class="glass-panel preview-card" style="display: flex; flex-direction: column; align-items: center;">
+                    <div class="panel-title-row" style="width: 100%;">
                         <div class="panel-title">
                             <span class="bullet-accent">■</span> Recipient Mobile Preview
                         </div>
@@ -281,7 +281,7 @@
                     </div>
 
                     <!-- PHONE MOCKUP -->
-                    <div class="phone-mockup-wrapper">
+                    <div class="phone-mockup-wrapper" style="width: 100%;">
                         <div class="phone-mockup">
                             <div class="phone-header">
                                 <span class="phone-time">12:30</span>
@@ -296,32 +296,36 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <!-- RECENT SMS DISPATCH LOGS -->
-                    <div class="panel-title-row" style="margin-top: 24px;">
-                        <div class="panel-title" style="font-size: 15px;">
-                            <span class="bullet-accent">■</span> Recent SMS Broadcast Logs
-                        </div>
-                        <button class="btn-text-action" onclick="clearSmsLogs()">Clear History</button>
+            <!-- ROW 3: FULL WIDTH RECENT SMS BROADCAST LOGS -->
+            <div class="glass-panel sms-logs-fullwidth" style="margin-top: 30px;">
+                <div class="panel-title-row">
+                    <div class="panel-title">
+                        <span class="bullet-accent">■</span> Recent SMS Broadcast Logs & Audit Trail
                     </div>
-
-                    <div class="table-container" style="max-height: 240px;">
-                        <table class="user-table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Ward</th>
-                                    <th>Sent</th>
-                                    <th>Message Sample</th>
-                                    <th>Gateway</th>
-                                </tr>
-                            </thead>
-                            <tbody id="sms-logs-body">
-                                <!-- Populated dynamically -->
-                            </tbody>
-                        </table>
+                    <div style="display: flex; gap: 14px; align-items: center;">
+                        <button class="btn-text-action" onclick="loadSmsLogs()">🔄 Refresh</button>
+                        <button class="btn-text-action" onclick="clearSmsLogs()" style="color: var(--accent-rose);">🗑️ Clear History</button>
                     </div>
+                </div>
 
+                <div class="table-container">
+                    <table class="user-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 160px;">Date & Time</th>
+                                <th style="width: 180px;">Target Ward</th>
+                                <th style="width: 140px;">Recipients</th>
+                                <th>Advisory Message Sample</th>
+                                <th style="width: 140px;">Gateway Used</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sms-logs-body">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

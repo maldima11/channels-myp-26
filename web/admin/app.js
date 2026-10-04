@@ -691,14 +691,14 @@ function renderSmsLogsTable(logs) {
         return;
     }
 
-    logs.slice(0, 10).forEach(log => {
+    logs.slice(0, 20).forEach(log => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-            <td style="font-size: 12px; white-space: nowrap;">${log.timestamp}</td>
+            <td style="font-size: 12px; white-space: nowrap; color: var(--text-muted);">${log.timestamp}</td>
             <td><span style="font-weight: 600; color: #818cf8;">${log.target_ward}</span></td>
-            <td><span style="color: #34d399; font-weight: bold;">${log.recipient_count} Farmers</span></td>
-            <td style="font-size: 12px; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${log.message_sample}">${log.message_sample}</td>
-            <td><span style="font-size: 11px; color: var(--text-muted);">${log.gateway}</span></td>
+            <td><span style="color: #34d399; font-weight: 700;">${log.recipient_count} Recipient(s)</span></td>
+            <td style="font-size: 13px; line-height: 1.4; color: var(--text-main); word-break: break-word;">${log.message_sample}</td>
+            <td><span style="font-size: 11px; padding: 4px 8px; border-radius: 6px; background: rgba(255,255,255,0.05); color: var(--text-muted); white-space: nowrap;">${log.gateway}</span></td>
         `;
         tbody.appendChild(tr);
     });
