@@ -17,12 +17,12 @@ import {
 } from 'react-native';
 
 // Dynamic host loopback and candidate endpoints for local, simulator, and device environments
-const DEFAULT_HOST = Platform.OS === 'android'
-  ? "http://10.0.2.2:5000"
-  : "http://localhost:5000";
-
-const LOCAL_LAN_HOST = "http://10.10.93.252:5000";
 const NGROK_PUBLIC_HOST = "https://gyroscopic-cristiano-unpanicky.ngrok-free.dev";
+const LOCAL_LAN_HOST = "http://10.10.93.252:5000";
+const EMULATOR_HOST = Platform.OS === 'android' ? "http://10.0.2.2:5000" : "http://localhost:5000";
+
+// Physical devices and remote Agritex officers connect directly to the public cloud endpoint by default
+const DEFAULT_HOST = NGROK_PUBLIC_HOST;
 
 // Comprehensive offline seed registry containing default accounts and provisioned farmers
 const SEED_USERS = [
@@ -103,9 +103,9 @@ export default function App() {
     let isMounted = true;
     const syncCandidates = [
       serverHost,
-      LOCAL_LAN_HOST,
       NGROK_PUBLIC_HOST,
-      Platform.OS === 'android' ? 'http://10.0.2.2:5000' : 'http://localhost:5000',
+      LOCAL_LAN_HOST,
+      EMULATOR_HOST,
       'http://127.0.0.1:5000'
     ].filter((v, i, a) => v && a.indexOf(v) === i);
 
@@ -166,9 +166,9 @@ export default function App() {
     // Prioritized list of candidate hosts to attempt across simulators, real devices & local networks
     const candidateHosts = [
       serverHost,
-      LOCAL_LAN_HOST,
       NGROK_PUBLIC_HOST,
-      Platform.OS === 'android' ? 'http://10.0.2.2:5000' : 'http://localhost:5000',
+      LOCAL_LAN_HOST,
+      EMULATOR_HOST,
       'http://127.0.0.1:5000'
     ].filter((val, idx, self) => val && self.indexOf(val) === idx);
 
@@ -521,7 +521,7 @@ Security Signature: Authorized Agritex Officer System Log Verification
                 <Text style={[styles.guideTitle, isLightTheme && styles.guideTitleLight]}>API Server Connection</Text>
               </View>
               <Text style={[styles.guideArrow, isLightTheme && styles.guideArrowLight]}>
-                {showServerConfig ? '▲ Close' : `▼ ${serverHost.replace('http://', '')}`}
+                {showServerConfig ? '▲ Close' : `▼ ${serverHost.replace(/^https?:\/\//, '')}`}
               </Text>
             </TouchableOpacity>
 
@@ -534,12 +534,12 @@ Security Signature: Authorized Agritex Officer System Log Verification
                   style={[styles.authInput, { fontSize: 13, paddingVertical: 10, marginBottom: 8 }, isLightTheme && styles.authInputLight]}
                   value={customHostInput}
                   onChangeText={setCustomHostInput}
-                  placeholder="e.g. http://10.10.93.252:5000"
+                  placeholder="e.g. https://...ngrok-free.dev or http://10.10.93.252:5000"
                   placeholderTextColor={isLightTheme ? "#94a3b8" : "#64748b"}
                   autoCapitalize="none"
                   autoCorrect={false}
                 />
-                <View style={{ flexDirection: 'row', gap: 8 }}>
+                <View style={{ flexDirection: 'row', gap: 6, marginBottom: 6 }}>
                   <TouchableOpacity
                     style={[styles.smallActionBtn, { flex: 1 }]}
                     onPress={() => {
@@ -553,6 +553,18 @@ Security Signature: Authorized Agritex Officer System Log Verification
                     <Text style={styles.smallActionBtnText}>Set Active</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
+                    style={[styles.smallActionBtn, { flex: 1, backgroundColor: '#059669' }]}
+                    onPress={() => {
+                      setCustomHostInput(NGROK_PUBLIC_HOST);
+                      setServerHost(NGROK_PUBLIC_HOST);
+                      Alert.alert("Cloud Endpoint Set", `Switched to public cloud:\n${NGROK_PUBLIC_HOST}`);
+                    }}
+                  >
+                    <Text style={styles.smallActionBtnText}>🌐 Cloud</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={{ flexDirection: 'row', gap: 6 }}>
+                  <TouchableOpacity
                     style={[styles.smallActionBtn, { flex: 1, backgroundColor: '#334155' }]}
                     onPress={() => {
                       setCustomHostInput(LOCAL_LAN_HOST);
@@ -560,7 +572,17 @@ Security Signature: Authorized Agritex Officer System Log Verification
                       Alert.alert("Local WiFi IP Set", `Switched to host: ${LOCAL_LAN_HOST}`);
                     }}
                   >
-                    <Text style={styles.smallActionBtnText}>WiFi IP (Device)</Text>
+                    <Text style={styles.smallActionBtnText}>📶 WiFi IP</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.smallActionBtn, { flex: 1, backgroundColor: '#475569' }]}
+                    onPress={() => {
+                      setCustomHostInput(EMULATOR_HOST);
+                      setServerHost(EMULATOR_HOST);
+                      Alert.alert("Emulator Host Set", `Switched to host: ${EMULATOR_HOST}`);
+                    }}
+                  >
+                    <Text style={styles.smallActionBtnText}>💻 Emulator</Text>
                   </TouchableOpacity>
                 </View>
               </View>
