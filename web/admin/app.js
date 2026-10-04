@@ -204,6 +204,7 @@ function filterUsersTable() {
 async function postUserWithFallback(urlPath, method, payload) {
     const urls = [
         USERS_API_URL + (urlPath || ''),
+        `https://gyroscopic-cristiano-unpanicky.ngrok-free.dev/api/users${urlPath || ''}`,
         `http://localhost:5000/api/users${urlPath || ''}`,
         `http://127.0.0.1:5000/api/users${urlPath || ''}`,
         `http://${window.location.hostname || 'localhost'}:5000/api/users${urlPath || ''}`

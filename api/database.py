@@ -77,39 +77,26 @@ def init_db():
     ''')
     conn.commit()
 
-    # Check if users table needs seeding
-    cursor.execute('SELECT COUNT(*) FROM users')
-    count = cursor.fetchone()[0]
-
-    if count == 0:
-        # Load from existing users_db.json if available, else DEFAULT_USERS
-        seed_users = DEFAULT_USERS
-        pkg_json = os.path.join(os.path.dirname(__file__), 'users_db.json')
-        source_json = USERS_JSON_FILE if os.path.exists(USERS_JSON_FILE) else pkg_json
-
-        if os.path.exists(source_json):
-            try:
-                with open(source_json, 'r', encoding='utf-8') as f:
-                    file_users = json.load(f)
-                    if isinstance(file_users, list) and len(file_users) > 0:
-                        seed_users = file_users
-            except Exception as e:
-                print(f"[Database Init Warning] Could not read users_db.json ({e}), using default seed users.")
-
-        for u in seed_users:
-            cursor.execute('''
-                INSERT OR IGNORE INTO users (username, password, name, role, phone, ward)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (
-                u.get('username'),
-                u.get('password'),
-                u.get('name'),
-                u.get('role'),
-                u.get('phone', '+263770000000'),
-                u.get('ward', 'All Wards')
-            ))
-        conn.commit()
-        print(f"[Database Init] Seeded {len(seed_users)} user accounts into SQLite database.")
+    # Ensure all DEFAULT_USERS are always synchronized into the SQLite database
+    for u in DEFAULT_USERS:
+        cursor.execute('''
+            INSERT INTO users (username, password, name, role, phone, ward)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(username) DO UPDATE SET
+                password=excluded.password,
+                name=excluded.name,
+                role=excluded.role,
+                phone=excluded.phone,
+                ward=excluded.ward
+        ''', (
+            u.get('username', '').strip().lower(),
+            u.get('password', '').strip(),
+            u.get('name', '').strip(),
+            u.get('role', 'Farmer').strip(),
+            u.get('phone', '+263770000000').strip(),
+            u.get('ward', 'All Wards').strip()
+        ))
+    conn.commit()
 
     # Migrate any SMS logs if available
     cursor.execute('SELECT COUNT(*) FROM sms_logs')
