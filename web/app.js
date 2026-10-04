@@ -11,6 +11,8 @@ const defaultUsers = [
     { username: 'maldima_farmer', password: 'farmerpass123', name: 'Stephen Maldima', role: 'Farmer', ward: 'Ward 1 (Nswazi North)' },
     { username: 'umzingwane_grower', password: 'harvest2026', name: 'Nomusa Khumalo', role: 'Farmer', ward: 'Ward 15 (Esigodini Centroid)' },
     { username: 'zipper', password: 'farmer234', name: 'Zipper Farmer', role: 'Farmer', ward: 'Ward 15 (Esigodini Centroid)' },
+    { username: 'jane_farmer', password: 'pass12345', name: 'Jane Nswazi', role: 'Farmer', ward: 'Ward 8 (Shale)' },
+    { username: 'esi_farmer', password: 'pass12345', name: 'Esi Farmer', role: 'Farmer', ward: 'Ward 15 (Esigodini Centroid)' },
     { username: 'admin', password: 'admin123', name: 'System Admin', role: 'Administrator' }
 ];
 

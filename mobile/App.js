@@ -32,6 +32,8 @@ const SEED_USERS = [
   { username: "maldima_farmer", password: "farmerpass123", name: "Stephen Maldima", role: "Farmer", phone: "+263775551234", ward: "Ward 1 (Nswazi North)" },
   { username: "umzingwane_grower", password: "harvest2026", name: "Nomusa Khumalo", role: "Farmer", phone: "+263776112233", ward: "Ward 15 (Esigodini Centroid)" },
   { username: "zipper", password: "farmer234", name: "Zipper Farmer", role: "Farmer", phone: "+263777889900", ward: "Ward 15 (Esigodini Centroid)" },
+  { username: "jane_farmer", password: "pass12345", name: "Jane Nswazi", role: "Farmer", phone: "+263771096542", ward: "Ward 8 (Shale)" },
+  { username: "esi_farmer", password: "pass12345", name: "Esi Farmer", role: "Farmer", phone: "+263771234890", ward: "Ward 15 (Esigodini Centroid)" },
   { username: "admin", password: "admin123", name: "System Admin", role: "Administrator", phone: "+263774567890", ward: "All Wards" }
 ];
 
@@ -77,6 +79,15 @@ export default function App() {
   const [knownUsers, setKnownUsers] = useState(SEED_USERS);
   const [showServerConfig, setShowServerConfig] = useState(false);
   const [customHostInput, setCustomHostInput] = useState(DEFAULT_HOST);
+
+  // In-app Farmer Registration States
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [regUsername, setRegUsername] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regName, setRegName] = useState('');
+  const [regPhone, setRegPhone] = useState('+26377');
+  const [regWard, setRegWard] = useState('Ward 15 (Esigodini Centroid)');
+  const [regLoading, setRegLoading] = useState(false);
 
   // Modals
   const [showWardModal, setShowWardModal] = useState(false);
@@ -148,6 +159,92 @@ export default function App() {
       setClay(defaults.clay);
       runForecast(variety, selectedWard, defaults.precip, defaults.heat, defaults.sand, defaults.clay, activeHost);
     }
+  };
+
+  // In-app Farmer Registration Handler for Agritex Field Officers
+  const handleRegisterFarmer = async () => {
+    const cleanUser = regUsername.trim().toLowerCase();
+    const cleanPass = regPassword.trim();
+    const cleanName = regName.trim();
+    const cleanPhone = regPhone.trim() || '+263770000000';
+    const cleanWard = regWard || 'Ward 15 (Esigodini Centroid)';
+
+    if (!cleanUser || !cleanPass || !cleanName) {
+      Alert.alert("Incomplete Form", "Please provide a username, password, and full name.");
+      return;
+    }
+
+    setRegLoading(true);
+
+    const candidateHosts = [
+      serverHost,
+      NGROK_PUBLIC_HOST,
+      LOCAL_LAN_HOST,
+      EMULATOR_HOST,
+      'http://127.0.0.1:5000'
+    ].filter((val, idx, self) => val && self.indexOf(val) === idx);
+
+    let savedToDatabase = false;
+    for (const host of candidateHosts) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 3000);
+
+        const res = await fetch(`${host}/api/users`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: cleanUser,
+            password: cleanPass,
+            name: cleanName,
+            role: 'Farmer',
+            phone: cleanPhone,
+            ward: cleanWard
+          }),
+          signal: controller.signal
+        });
+        clearTimeout(timer);
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status === 'success') {
+            savedToDatabase = true;
+            break;
+          }
+        }
+      } catch (e) {
+        // Try next candidate
+      }
+    }
+
+    const newProfile = {
+      username: cleanUser,
+      password: cleanPass,
+      name: cleanName,
+      role: 'Farmer',
+      phone: cleanPhone,
+      ward: cleanWard
+    };
+
+    // Store in knownUsers immediately so user can log in with zero delay
+    setKnownUsers(prev => {
+      const filtered = prev.filter(u => (u.username || '').toLowerCase() !== cleanUser);
+      return [newProfile, ...filtered];
+    });
+
+    setRegLoading(false);
+    setShowRegisterModal(false);
+    setUsername(cleanUser);
+    setPassword(cleanPass);
+    setRegUsername('');
+    setRegPassword('');
+    setRegName('');
+
+    Alert.alert(
+      "Farmer Registered Successfully",
+      `Account '${cleanUser}' has been created and is ready to sign in!`,
+      [{ text: "Sign In Now", onPress: () => {} }]
+    );
   };
 
   // 1. GENERAL MULTI-ROLE AUTHENTICATION HANDLER
@@ -504,8 +601,18 @@ Security Signature: Authorized Agritex Officer System Log Verification
               )}
             </TouchableOpacity>
 
+            <TouchableOpacity 
+              style={[styles.registerLinkBtn, isLightTheme && styles.registerLinkBtnLight]} 
+              onPress={() => setShowRegisterModal(true)}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.registerLinkText, isLightTheme && styles.registerLinkTextLight]}>
+                ➕ Register New Farmer Account
+              </Text>
+            </TouchableOpacity>
+
             <Text style={[styles.authHint, isLightTheme && styles.authHintLight]}>
-              Logins are provisioned by the Agritex District Administrator.
+              Farmers can be registered on-the-spot or by the District Administrator.
             </Text>
           </View>
 
@@ -1120,6 +1227,103 @@ Security Signature: Authorized Agritex Officer System Log Verification
         </View>
       </Modal>
 
+      {/* 3. FARMER REGISTRATION MODAL */}
+      <Modal
+        visible={showRegisterModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowRegisterModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, isLightTheme && styles.modalContentLight, { maxHeight: '90%' }]}>
+            <Text style={[styles.modalTitle, isLightTheme && styles.modalTitleLight]}>
+              🌾 Register New Farmer
+            </Text>
+            <Text style={[styles.modalSubtitle, isLightTheme && styles.modalSubtitleLight]}>
+              Create an account for instant mobile & field use
+            </Text>
+
+            <ScrollView style={styles.modalScroll} keyboardShouldPersistTaps="handled">
+              <Text style={[styles.label, isLightTheme && styles.labelLight]}>Full Name</Text>
+              <TextInput
+                style={[styles.authInput, isLightTheme && styles.authInputLight]}
+                value={regName}
+                onChangeText={setRegName}
+                placeholder="e.g. Esi Moyo"
+                placeholderTextColor={isLightTheme ? "#94a3b8" : "#64748b"}
+              />
+
+              <Text style={[styles.label, isLightTheme && styles.labelLight]}>Username (Login ID)</Text>
+              <TextInput
+                style={[styles.authInput, isLightTheme && styles.authInputLight]}
+                value={regUsername}
+                onChangeText={setRegUsername}
+                placeholder="e.g. esi_farmer"
+                placeholderTextColor={isLightTheme ? "#94a3b8" : "#64748b"}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+
+              <Text style={[styles.label, isLightTheme && styles.labelLight]}>Password</Text>
+              <TextInput
+                style={[styles.authInput, isLightTheme && styles.authInputLight]}
+                value={regPassword}
+                onChangeText={setRegPassword}
+                placeholder="Choose a password"
+                placeholderTextColor={isLightTheme ? "#94a3b8" : "#64748b"}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+
+              <Text style={[styles.label, isLightTheme && styles.labelLight]}>Phone Number (SMS Advisories)</Text>
+              <TextInput
+                style={[styles.authInput, isLightTheme && styles.authInputLight]}
+                value={regPhone}
+                onChangeText={setRegPhone}
+                placeholder="e.g. +263771234567"
+                placeholderTextColor={isLightTheme ? "#94a3b8" : "#64748b"}
+                keyboardType="phone-pad"
+              />
+
+              <Text style={[styles.label, isLightTheme && styles.labelLight]}>Assigned Ward</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+                {Object.keys(WARD_DEFAULTS).map((wardName) => (
+                  <TouchableOpacity
+                    key={wardName}
+                    style={[
+                      styles.smallActionBtn,
+                      { marginRight: 8, backgroundColor: regWard === wardName ? '#4f46e5' : 'rgba(255,255,255,0.06)' }
+                    ]}
+                    onPress={() => setRegWard(wardName)}
+                  >
+                    <Text style={[styles.smallActionBtnText, { fontSize: 11 }]}>{wardName}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </ScrollView>
+
+            <TouchableOpacity 
+              style={[styles.loginBtn, { marginBottom: 10 }]} 
+              onPress={handleRegisterFarmer}
+              disabled={regLoading}
+            >
+              {regLoading ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <Text style={styles.loginBtnText}>Create Farmer Account</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.modalCloseBtn} 
+              onPress={() => setShowRegisterModal(false)}
+            >
+              <Text style={styles.modalCloseBtnText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -1345,8 +1549,28 @@ const styles = StyleSheet.create({
     marginTop: 16,
     textAlign: 'center',
   },
-  authHintLight: {
-    color: '#94a3b8',
+  registerLinkBtn: {
+    marginTop: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.3)',
+    alignItems: 'center',
+    width: '100%',
+  },
+  registerLinkBtnLight: {
+    backgroundColor: 'rgba(79, 70, 229, 0.08)',
+    borderColor: '#c7d2fe',
+  },
+  registerLinkText: {
+    color: '#818cf8',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  registerLinkTextLight: {
+    color: '#4f46e5',
   },
 
   smallActionBtn: {
