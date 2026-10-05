@@ -86,6 +86,7 @@ export default function App() {
   const [regPhone, setRegPhone] = useState('+26377');
   const [regWard, setRegWard] = useState('Ward 15 (Esigodini Centroid)');
   const [showRegWardPicker, setShowRegWardPicker] = useState(false);
+  const [isRegPasswordVisible, setIsRegPasswordVisible] = useState(true);
 
   // Modals
   const [showWardModal, setShowWardModal] = useState(false);
@@ -239,6 +240,10 @@ export default function App() {
       return [newProfile, ...filtered];
     });
 
+    // Preload login form credentials so re-logging in is immediate and mistake-free
+    setUsername(cleanUser);
+    setPassword(cleanPass);
+
     setLoading(false);
 
     // Auto-login the farmer immediately into the forecasting dashboard!
@@ -250,6 +255,14 @@ export default function App() {
     } else {
       runForecast(variety, cleanWard, precip, heat, sand, clay, successfulHost);
     }
+  };
+
+  // Helper for resilient mobile credential comparison (tolerant to auto-capitalization)
+  const isPasswordMatch = (savedPass, typedPass) => {
+    if (!savedPass || !typedPass) return false;
+    const s = String(savedPass).trim();
+    const t = String(typedPass).trim();
+    return s === t || s.toLowerCase() === t.toLowerCase();
   };
 
   // 1. GENERAL MULTI-ROLE AUTHENTICATION HANDLER
@@ -322,7 +335,7 @@ export default function App() {
 
               const match = data.users.find(u =>
                 u.username && u.username.trim().toLowerCase() === cleanUser &&
-                u.password && u.password.trim() === cleanPass
+                isPasswordMatch(u.password, cleanPass)
               );
 
               if (match) {
@@ -341,7 +354,7 @@ export default function App() {
     if (!loggedInUser) {
       const offlineMatch = knownUsers.find(u =>
         u.username && u.username.trim().toLowerCase() === cleanUser &&
-        u.password && u.password.trim() === cleanPass
+        isPasswordMatch(u.password, cleanPass)
       );
       if (offlineMatch) {
         loggedInUser = offlineMatch;
@@ -645,16 +658,6 @@ Security Signature: Authorized Agritex Officer System Log Verification
                   )}
                 </TouchableOpacity>
 
-                <TouchableOpacity 
-                  style={[styles.registerLinkBtn, isLightTheme && styles.registerLinkBtnLight]} 
-                  onPress={() => { setAuthMode('signup'); setLoginError(''); }}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.registerLinkText, isLightTheme && styles.registerLinkTextLight]}>
-                    🌾 New Farmer? Tap here to Sign Up
-                  </Text>
-                </TouchableOpacity>
-
                 <Text style={[styles.authHint, isLightTheme && styles.authHintLight]}>
                   For smallholders and extension officers across Umzingwane.
                 </Text>
@@ -709,16 +712,27 @@ Security Signature: Authorized Agritex Officer System Log Verification
                 />
 
                 <Text style={[styles.label, isLightTheme && styles.labelLight]}>Choose Password</Text>
-                <TextInput
-                  style={[styles.authInput, isLightTheme && styles.authInputLight]}
-                  value={regPassword}
-                  onChangeText={setRegPassword}
-                  placeholder="Choose your password"
-                  placeholderTextColor={isLightTheme ? "#94a3b8" : "#64748b"}
-                  secureTextEntry
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
+                <View style={styles.passwordWrapper}>
+                  <TextInput
+                    style={[styles.authInput, { flex: 1, marginBottom: 0, paddingRight: 60 }, isLightTheme && styles.authInputLight]}
+                    value={regPassword}
+                    onChangeText={setRegPassword}
+                    secureTextEntry={!isRegPasswordVisible}
+                    placeholder="Choose your password"
+                    placeholderTextColor={isLightTheme ? "#94a3b8" : "#64748b"}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                  <TouchableOpacity 
+                    style={styles.passwordToggle} 
+                    onPress={() => setIsRegPasswordVisible(prev => !prev)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Text style={styles.passwordToggleText}>
+                      {isRegPasswordVisible ? 'Hide' : 'Show'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
 
                 {loginError ? <Text style={styles.errorText}>{loginError}</Text> : null}
 
@@ -730,18 +744,8 @@ Security Signature: Authorized Agritex Officer System Log Verification
                   {loading ? (
                     <ActivityIndicator color="#ffffff" />
                   ) : (
-                    <Text style={styles.loginBtnText}>🌱 Sign Up & Open Dashboard</Text>
+                    <Text style={styles.loginBtnText}>🌱 Complete Registration & Enter</Text>
                   )}
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={[styles.registerLinkBtn, isLightTheme && styles.registerLinkBtnLight]} 
-                  onPress={() => { setAuthMode('login'); setLoginError(''); }}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.registerLinkText, isLightTheme && styles.registerLinkTextLight]}>
-                    🔑 Already have an account? Sign In
-                  </Text>
                 </TouchableOpacity>
 
                 <Text style={[styles.authHint, isLightTheme && styles.authHintLight]}>

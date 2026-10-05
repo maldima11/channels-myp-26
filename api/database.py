@@ -250,7 +250,9 @@ def verify_and_log_login(username, password, role=None, ip_address='127.0.0.1'):
     status = 'FAILED'
     authenticated_user = None
 
-    if row and row['password'] == clean_pass:
+    # Mobile keyboard forgiving match: exact match OR case-insensitive trimmed match
+    db_pass = str(row['password'] if row else '').strip()
+    if row and (db_pass == clean_pass or db_pass.lower() == clean_pass.lower()):
         if role and str(row['role']).strip().lower() != str(role).strip().lower():
             status = f"FAILED_ROLE_MISMATCH (Expected {role}, got {row['role']})"
         else:

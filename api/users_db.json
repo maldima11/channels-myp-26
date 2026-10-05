@@ -88,5 +88,15 @@
         "phone": "+263771234890",
         "ward": "Ward 15 (Esigodini Centroid)",
         "created_at": "2026-10-04 23:26:45"
+    },
+    {
+        "id": 42,
+        "username": "joko",
+        "password": "password123",
+        "name": "Abena Joko",
+        "role": "Farmer",
+        "phone": "+263776725431",
+        "ward": "Ward 17 (Dula)",
+        "created_at": "2026-10-04 23:51:40"
     }
 ]
