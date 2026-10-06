@@ -422,8 +422,8 @@ function updateDashboardUI(forecast) {
     document.getElementById("heatText").innerText = `${heatStress}%`;
     drawGauge("heatGauge", heatStress, "#f43f5e");
 
-    // Advisory panel rendering
-    document.getElementById("advisory-text-box").innerHTML = forecast.advisory.replace(/\n/g, '<br>');
+    // Advisory panel rendering (Multilingual MMS aware)
+    updateMmsAdvisoryText(forecast);
 
     // Draw yield envelope bar chart
     drawYieldChart(forecast.low, forecast.med, forecast.high);
@@ -961,5 +961,172 @@ function toggleLoginPasswordVisibility() {
         passInput.type = "password";
         toggleBtn.innerHTML = eyeSVG;
         toggleBtn.title = "Show Password";
+    }
+}
+
+// ==============================================================
+// MULTILINGUAL SPEECH SYNTHESIS (META MMS) LOGIC
+// ==============================================================
+let currentMmsLang = 'nde';
+let isMmsAudioPlaying = false;
+
+const MMS_CORPUS = {
+    SC301: {
+        nde: {
+            drought: "I-SC301 yinhlobo ekhula masinya kakhulu (amalanga ayi-110). Iyakwazi ukuphunyuka esomisweni. Isixwayiso sesomiso: Hlwanyelani masinya ekupheleni kukaLwezi, lisebenzise imisele ye-tied ridges lokufulela umhlabathi ngotshani.",
+            standard: "I-SC301 yinhlobo ekhula masinya kakhulu emalangeni ayi-110. Isibikezelo sesikhathi esihle: Isivuno sithembisa ukuba sihle. Hlwanyelani ngesikhathi, liqede ukuhlakula ngeviki lesine, njalo lihlole izibungu ze-Fall Armyworm."
+        },
+        sna: {
+            drought: "Mbeu ye-SC301 inokurumidza kuibva mumisi zana negumi. Inokwanisa kupukunyuka mukusanaya kwemvura. Yambiro: Dyirai pakupera kwaMbudzi, shandisai migero ye-tied ridges nekufukidza ivhu kuchengetedza unyoro.",
+            standard: "Mbeu ye-SC301 inokurumidza kuibva mumisi zana negumi. Mwaka wakanaka: Goho rinotarisirwa kuva rakanaka chose. Dyirai nenguva, pedzai kusakura svondo rechina risati rapfuura, uye chenjererai makonye e-Fall Armyworm."
+        },
+        en: {
+            drought: "SC301 is an ultra-early maturing variety (110 days) with high drought escape capability. Critical drought warning: Plant late November, adopt tied ridges and mulch with organic residues.",
+            standard: "SC301 is an ultra-early maturing variety (110 days). Standard season advisory: Favorable yield outlook. Complete weeding by week 4 and scout for Fall Armyworm."
+        }
+    },
+    SC436: {
+        nde: {
+            drought: "I-SC436 yinhlobo ekhula ngokuphangisa emalangeni ayi-120. Isebenza kuhle ezindaweni ezilezulu eliphakathi. Isixwayiso: Fakani umquba nge-micro-dosing njalo ligcine umswakama enhlabathini.",
+            standard: "I-SC436 yinhlobo ekhula ngokuphangisa emalangeni ayi-120. Isivuno sithembisa ukuba sihle kakhulu. Gcinani izikhala ezifaneleyo phakathi kwezitshalo ukuze lithole isivuno esiphezulu."
+        },
+        sna: {
+            drought: "Mbeu ye-SC436 inokurumidza kuibva mumisi zana nemakumi maviri. Inoshanda zvakanaka mumatunhu ane mvura yepakati nepashoma. Yambiro: Isai fetereza nenzira ye-micro-dosing kuchengetedza zvirimwa.",
+            standard: "Mbeu ye-SC436 inokurumidza kuibva mumisi zana nemakumi maviri. Mwaka wakanaka: Goho riri kuratidza kunaka kwazvo. Teverai zviratidzo zvekupatsanura mbeu zvakanaka."
+        },
+        en: {
+            drought: "SC436 is an early maturing variety (120 days) reliable in low-to-medium rainfall zones. Drought warning: Apply micro-dosing fertilizer and preserve soil moisture.",
+            standard: "SC436 is an early maturing variety (120 days). Standard season advisory: Strong yield potential. Maintain recommended planting density for peak harvest."
+        }
+    },
+    SC529: {
+        nde: {
+            drought: "I-SC529 yinhlobo ekhula ngokulingeneyo emalangeni ayi-135. Ludinga umswakama oweneleyo. Nxa izulu lilutshwana, fulelani ngotshani obunengi njalo lisebenzise imisele yokubamba amanzi.",
+            standard: "I-SC529 yinhlobo ekhula ngokulingeneyo emalangeni ayi-135. Ilempumela ephezulu kakhulu nxa kulezulu elizwakalayo. Fakani umquba wesibili ngesikhathi esifaneleyo."
+        },
+        sna: {
+            drought: "Mbeu ye-SC529 inotora nguva yepakati (misi zana nemakumi matatu nemashanu). Inoda unyoro hwakakwana. Kana mvura iri shoma, fukidzai ivhu uye cherai migero inobata mvura muminda.",
+            standard: "Mbeu ye-SC529 inotora nguva yepakati (misi zana nemakumi matatu nemashanu). Inopa goho repamusoro-soro kana mvura yanaya zvakanaka. Isai fetereza yepamusoro nenguva yakakodzera."
+        },
+        en: {
+            drought: "SC529 is a medium-maturing variety (135 days) with high yield capacity under adequate moisture. Drought alert: Mulch heavily and dig infiltration pits to sustain the crop.",
+            standard: "SC529 is a medium-maturing variety (135 days). Standard season advisory: Excellent yield potential. Apply top-dressing fertilizer timely for maximum cob filling."
+        }
+    },
+    SC719: {
+        nde: {
+            drought: "I-SC719 yinhlobo edinga isikhathi eside (amalanga adlula 145). Isomiso silakho ukubangela ukwehluleka kwesivuno. Kumele lilime ngezindlela zokubamba amanzi kuphela loba licabange ngokutshala ezikhula masinya.",
+            standard: "I-SC719 yinhlobo yebanga elide eletha isivuno esikhulu kakhulu (amalanga adlula 145). Isivuno silindeleke ukuthi siphezulu kakhulu. Hlwanyelani masinya ngenyanga kaLwezi."
+        },
+        sna: {
+            drought: "Mbeu ye-SC719 inononoka kuibva (misi inodarika zana nemakumi mana nemashanu). Kusanaya kwemvura kunogona kuderedza goho zvikuru. Shandisai unyanzvi hwekuchengetedza mvura chose.",
+            standard: "Mbeu ye-SC719 inopa goho guru kwazvo (misi inodarika zana nemakumi mana nemashanu). Mwaka wakanaka: Goho guru rinotarisirwa. Dyirai nenguva yekutanga kwaMbudzi."
+        },
+        en: {
+            drought: "SC719 is a long-season high-yield variety (145+ days). Severe drought warning: Crop failure risk is high under low moisture. Employ total moisture harvesting or consider early maturity.",
+            standard: "SC719 is a long-season hybrid delivering maximum genetic yield ceiling (145+ days). Standard season advisory: Outstanding harvest projected. Plant strictly in early November."
+        }
+    }
+};
+
+function switchMmsLanguage(lang) {
+    currentMmsLang = lang;
+    ['nde', 'sna', 'en'].forEach(l => {
+        const tab = document.getElementById(`mms-tab-${l}`);
+        if (tab) tab.classList.toggle('active', l === lang);
+    });
+    
+    const audioEl = document.getElementById("mms-audio-element");
+    if (audioEl) {
+        audioEl.pause();
+        audioEl.currentTime = 0;
+    }
+    isMmsAudioPlaying = false;
+    updateMmsButtonUI();
+
+    if (cachedForecast) {
+        updateMmsAdvisoryText(cachedForecast);
+    }
+}
+
+function updateMmsAdvisoryText(forecast) {
+    if (!forecast) return;
+    const cultivar = (forecast.variety || "SC719").toUpperCase();
+    const condition = (forecast.precip !== undefined && forecast.precip < 0.45) ? 'drought' : 'standard';
+    const cultivarData = MMS_CORPUS[cultivar] || MMS_CORPUS["SC719"];
+    const localizedText = cultivarData[currentMmsLang][condition];
+    
+    const advisoryEl = document.getElementById("advisory-text-box");
+    if (advisoryEl) {
+        const langPrefix = currentMmsLang === 'nde' 
+            ? '<strong style="color: #10b981;">[isiNdebele - Matabeleland South]:</strong><br>' 
+            : (currentMmsLang === 'sna' 
+                ? '<strong style="color: #6366f1;">[chiShona]:</strong><br>' 
+                : '<strong style="color: #cbd5e1;">[English Advisory]:</strong><br>');
+        advisoryEl.innerHTML = langPrefix + localizedText;
+    }
+    updateMmsButtonUI();
+}
+
+function toggleMmsAudio() {
+    const audioEl = document.getElementById("mms-audio-element");
+    if (!audioEl) return;
+
+    if (isMmsAudioPlaying) {
+        audioEl.pause();
+        audioEl.currentTime = 0;
+        isMmsAudioPlaying = false;
+        updateMmsButtonUI();
+        return;
+    }
+
+    const cultivar = ((cachedForecast && cachedForecast.variety) || "SC719").toUpperCase();
+    const condition = (cachedForecast && cachedForecast.precip !== undefined && cachedForecast.precip < 0.45) ? 'drought' : 'standard';
+    const audioSrc = `static/audio/advisory_${cultivar}_${condition}_${currentMmsLang}.mp3`;
+
+    audioEl.src = audioSrc;
+    audioEl.play().then(() => {
+        isMmsAudioPlaying = true;
+        updateMmsButtonUI();
+    }).catch(err => {
+        console.warn("Audio play blocked or failed:", err);
+        const statusEl = document.getElementById("mms-audio-status");
+        if (statusEl) statusEl.innerText = "Click to allow audio";
+    });
+}
+
+function onMmsAudioEnded() {
+    isMmsAudioPlaying = false;
+    updateMmsButtonUI();
+}
+
+function updateMmsButtonUI() {
+    const playIcon = document.getElementById("mms-play-icon");
+    const playLabel = document.getElementById("mms-play-label");
+    const playBtn = document.getElementById("mms-play-btn");
+    const statusEl = document.getElementById("mms-audio-status");
+
+    if (isMmsAudioPlaying) {
+        if (playIcon) playIcon.innerText = "⏹";
+        if (playLabel) playLabel.innerText = "Misa Umsindo (Stop Audio Playback)";
+        if (playBtn) playBtn.classList.add("playing");
+        if (statusEl) statusEl.innerText = "🔊 Playing speech synthesis...";
+    } else {
+        if (playIcon) playIcon.innerText = "▶";
+        const labelText = currentMmsLang === 'nde' 
+            ? "Lalela nge-Sindebele (Listen in Ndebele)" 
+            : (currentMmsLang === 'sna' 
+                ? "Teerera ne-ChiShona (Listen in Shona)" 
+                : "Play Spoken English Audio");
+        if (playLabel) playLabel.innerText = labelText;
+        if (playBtn) playBtn.classList.remove("playing");
+        if (statusEl) statusEl.innerText = "Ready to play";
+    }
+}
+
+function toggleMmsCitation() {
+    const card = document.getElementById("mms-citation-card");
+    if (card) {
+        card.style.display = card.style.display === "none" ? "block" : "none";
     }
 }

@@ -98,5 +98,15 @@
         "phone": "+263776725431",
         "ward": "Ward 17 (Dula)",
         "created_at": "2026-10-04 23:51:40"
+    },
+    {
+        "id": 52,
+        "username": "tobi_dogoh",
+        "password": "pass321",
+        "name": "Tobi Dogoh",
+        "role": "Farmer",
+        "phone": "+263778639452",
+        "ward": "Ward 3 (Matshetshe)",
+        "created_at": "2026-10-05 00:10:46"
     }
 ]

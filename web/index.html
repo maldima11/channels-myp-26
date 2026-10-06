@@ -242,7 +242,57 @@
                 </button>
             </div>
             <div id="advisory-text-box" class="advisory-text">Connecting to NUST yield prediction API...</div>
-    </div>
+
+            <!-- MULTILINGUAL AUDIO ADVISORY (META MMS) -->
+            <div class="mms-audio-container">
+                <div class="mms-audio-header">
+                    <div class="mms-title-group">
+                        <span class="mms-icon">🔊</span>
+                        <div>
+                            <div class="mms-title">Indigenous Language Audio Recommendation</div>
+                            <div class="mms-subtitle">Meta Massive Multilingual Speech (MMS) Neural Synthesis</div>
+                        </div>
+                    </div>
+                    <button class="mms-citation-btn" onclick="toggleMmsCitation()">
+                        🎓 Thesis Citation
+                    </button>
+                </div>
+
+                <!-- Language Tabs -->
+                <div class="mms-lang-tabs">
+                    <button id="mms-tab-nde" class="mms-lang-tab active" onclick="switchMmsLanguage('nde')">
+                        🇿🇼 isiNdebele
+                    </button>
+                    <button id="mms-tab-sna" class="mms-lang-tab" onclick="switchMmsLanguage('sna')">
+                        🇿🇼 chiShona
+                    </button>
+                    <button id="mms-tab-en" class="mms-lang-tab" onclick="switchMmsLanguage('en')">
+                        🇬🇧 English
+                    </button>
+                </div>
+
+                <!-- Vernacular Audio Playback Controls -->
+                <div class="mms-player-bar">
+                    <button id="mms-play-btn" class="mms-play-button" onclick="toggleMmsAudio()">
+                        <span id="mms-play-icon">▶</span>
+                        <span id="mms-play-label">Lalela nge-Sindebele (Listen in Ndebele)</span>
+                    </button>
+                    <audio id="mms-audio-element" preload="none" onended="onMmsAudioEnded()"></audio>
+                    <div id="mms-audio-status" class="mms-status-indicator">Ready to play</div>
+                </div>
+
+                <!-- Thesis Reference Card -->
+                <div id="mms-citation-card" class="mms-citation-card" style="display: none;">
+                    <div class="citation-head">📚 Research Paper Reference (MMS Architecture):</div>
+                    <div class="citation-paper">"Scaling Speech Technology to 1,000+ Languages"</div>
+                    <div class="citation-meta">Vineel Pratap, Andros Tjandra, Bowen Shi, Paden Tomasello, Arun Babu, et al. (Meta AI), <em>IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI)</em> / arXiv:2305.13516 (2024).</div>
+                    <div class="citation-detail">
+                        • <strong>Models Used:</strong> <code>facebook/mms-tts-nde</code> (Ndebele) & <code>facebook/mms-tts-sna</code> (Shona).<br>
+                        • <strong>Agronomic Accessibility:</strong> Eliminates literacy bottlenecks for smallholder farmers in Umzingwane District by synthesizing localized crop guidance into spoken vernacular.
+                    </div>
+                </div>
+            </div>
+        </div>
 
     <!-- 3.5 GLOBAL FOOTER -->
     <footer class="global-footer">

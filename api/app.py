@@ -1,10 +1,11 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 import json
 import os
 import datetime
 import urllib.request
 import urllib.parse
 import base64
+import mms_tts
 
 app = Flask(__name__)
 
@@ -260,8 +261,41 @@ def update_user(username):
     except Exception as e:
         return make_cors_response({"status": "error", "message": str(e)}, 500)
 
-
 # -------------------------------------------------------------
+# MULTILINGUAL SPEECH SYNTHESIS (MMS TTS) ROUTES (SHONA & NDEBELE)
+# -------------------------------------------------------------
+@app.route('/static/audio/<path:filename>', methods=['GET'])
+def serve_audio(filename):
+    audio_dir = os.path.join(os.path.dirname(__file__), 'static', 'audio')
+    return send_from_directory(audio_dir, filename, mimetype='audio/mpeg')
+
+@app.route('/api/tts/advisory', methods=['GET', 'POST', 'OPTIONS'])
+def tts_advisory():
+    if request.method == 'OPTIONS':
+        return make_cors_response({"status": "ok"})
+    try:
+        if request.method == 'POST':
+            data = request.get_json() or {}
+        else:
+            data = request.args
+            
+        cultivar = str(data.get('cultivar', 'SC719')).strip().upper()
+        precip = float(data.get('precip', 0.40))
+        lang = str(data.get('lang', 'nde')).strip().lower()
+        
+        payload = mms_tts.get_advisory_payload(cultivar, precip, lang)
+        return make_cors_response(payload)
+    except Exception as e:
+        return make_cors_response({"status": "error", "message": str(e)}, 500)
+
+@app.route('/api/tts/citation', methods=['GET', 'OPTIONS'])
+def tts_citation():
+    if request.method == 'OPTIONS':
+        return make_cors_response({"status": "ok"})
+    return make_cors_response({
+        "status": "success",
+        "citation": mms_tts.RESEARCH_CITATION
+    })
 # SMS ADVISORY GATEWAY ENGINE (AFRICA'S TALKING / TWILIO / MOCK)
 # -------------------------------------------------------------
 def dispatch_sms_message(to_phone, message_text):
@@ -671,6 +705,10 @@ def predict():
                 f"- Ensure complete weeding by week 4 and check for Fall Armyworm sightings."
             )
 
+        # Multilingual Meta MMS Speech Advisory payloads & audio links
+        mms_payload_nde = mms_tts.get_advisory_payload(variety, precip, 'nde')
+        mms_payload_sna = mms_tts.get_advisory_payload(variety, precip, 'sna')
+
         return make_cors_response({
             "status": "success",
             "forecast": {
@@ -684,6 +722,11 @@ def predict():
                 "sand": sand,
                 "clay": clay,
                 "advisory": advisory,
+                "mms_audio": {
+                    "nde": mms_payload_nde,
+                    "sna": mms_payload_sna,
+                    "citation": mms_tts.RESEARCH_CITATION
+                },
                 "engine": "XGBoost Quantile Model (Option B - Flask API Connected)" if models_loaded else "Biophysical Emulation (Flask API Connected)"
             }
         })

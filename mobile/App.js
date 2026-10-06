@@ -13,8 +13,12 @@ import {
   StatusBar,
   Dimensions,
   Platform,
-  Share
+  Share,
+  NativeModules,
+  DeviceEventEmitter
 } from 'react-native';
+
+const { AudioPlayerModule } = NativeModules;
 
 // Dynamic host loopback and candidate endpoints for local, simulator, and device environments
 const NGROK_PUBLIC_HOST = "https://gyroscopic-cristiano-unpanicky.ngrok-free.dev";
@@ -63,6 +67,66 @@ const WARD_DEFAULTS = {
   "Ward 20 (Mulungwane)":         { base: "Ward 20", precip: 0.48, heat: 0.35, sand: 66, clay: 20 }
 };
 
+// MULTILINGUAL SPEECH (MMS) ADVISORY CORPUS (Meta MMS VITS Models: nde, sna, en)
+const MMS_ADVISORY_TEXTS = {
+  SC301: {
+    nde: {
+      drought: "I-SC301 yinhlobo ekhula masinya kakhulu (amalanga ayi-110). Iyakwazi ukuphunyuka esomisweni. Isixwayiso sesomiso: Hlwanyelani masinya ekupheleni kukaLwezi, lisebenzise imisele ye-tied ridges lokufulela umhlabathi ngotshani.",
+      standard: "I-SC301 yinhlobo ekhula masinya kakhulu emalangeni ayi-110. Isibikezelo sesikhathi esihle: Isivuno sithembisa ukuba sihle. Hlwanyelani ngesikhathi, liqede ukuhlakula ngeviki lesine, njalo lihlole izibungu ze-Fall Armyworm."
+    },
+    sna: {
+      drought: "Mbeu ye-SC301 inokurumidza kuibva mumisi zana negumi. Inokwanisa kupukunyuka mukusanaya kwemvura. Yambiro: Dyirai pakupera kwaMbudzi, shandisai migero ye-tied ridges nekufukidza ivhu kuchengetedza unyoro.",
+      standard: "Mbeu ye-SC301 inokurumidza kuibva mumisi zana negumi. Mwaka wakanaka: Goho rinotarisirwa kuva rakanaka chose. Dyirai nenguva, pedzai kusakura svondo rechina risati rapfuura, uye chenjererai makonye e-Fall Armyworm."
+    },
+    en: {
+      drought: "SC301 is an ultra-early maturing variety (110 days) with high drought escape capability. Critical drought warning: Plant late November, adopt tied ridges and mulch with organic residues.",
+      standard: "SC301 is an ultra-early maturing variety (110 days). Standard season advisory: Favorable yield outlook. Complete weeding by week 4 and scout for Fall Armyworm."
+    }
+  },
+  SC436: {
+    nde: {
+      drought: "I-SC436 yinhlobo ekhula ngokuphangisa emalangeni ayi-120. Isebenza kuhle ezindaweni ezilezulu eliphakathi. Isixwayiso: Fakani umquba nge-micro-dosing njalo ligcine umswakama enhlabathini.",
+      standard: "I-SC436 yinhlobo ekhula ngokuphangisa emalangeni ayi-120. Isivuno sithembisa ukuba sihle kakhulu. Gcinani izikhala ezifaneleyo phakathi kwezitshalo ukuze lithole isivuno esiphezulu."
+    },
+    sna: {
+      drought: "Mbeu ye-SC436 inokurumidza kuibva mumisi zana nemakumi maviri. Inoshanda zvakanaka mumatunhu ane mvura yepakati nepashoma. Yambiro: Isai fetereza nenzira ye-micro-dosing kuchengetedza zvirimwa.",
+      standard: "Mbeu ye-SC436 inokurumidza kuibva mumisi zana nemakumi maviri. Mwaka wakanaka: Goho riri kuratidza kunaka kwazvo. Teverai zviratidzo zvekupatsanura mbeu zvakanaka."
+    },
+    en: {
+      drought: "SC436 is an early maturing variety (120 days) reliable in low-to-medium rainfall zones. Drought warning: Apply micro-dosing fertilizer and preserve soil moisture.",
+      standard: "SC436 is an early maturing variety (120 days). Standard season advisory: Strong yield potential. Maintain recommended planting density for peak harvest."
+    }
+  },
+  SC529: {
+    nde: {
+      drought: "I-SC529 yinhlobo ekhula ngokulingeneyo emalangeni ayi-135. Ludinga umswakama oweneleyo. Nxa izulu lilutshwana, fulelani ngotshani obunengi njalo lisebenzise imisele yokubamba amanzi.",
+      standard: "I-SC529 yinhlobo ekhula ngokulingeneyo emalangeni ayi-135. Ilempumela ephezulu kakhulu nxa kulezulu elizwakalayo. Fakani umquba wesibili ngesikhathi esifaneleyo."
+    },
+    sna: {
+      drought: "Mbeu ye-SC529 inotora nguva yepakati (misi zana nemakumi matatu nemashanu). Inoda unyoro hwakakwana. Kana mvura iri shoma, fukidzai ivhu uye cherai migero inobata mvura muminda.",
+      standard: "Mbeu ye-SC529 inotora nguva yepakati (misi zana nemakumi matatu nemashanu). Inopa goho repamusoro-soro kana mvura yanaya zvakanaka. Isai fetereza yepamusoro nenguva yakakodzera."
+    },
+    en: {
+      drought: "SC529 is a medium-maturing variety (135 days) with high yield capacity under adequate moisture. Drought alert: Mulch heavily and dig infiltration pits to sustain the crop.",
+      standard: "SC529 is a medium-maturing variety (135 days). Standard season advisory: Excellent yield potential. Apply top-dressing fertilizer timely for maximum cob filling."
+    }
+  },
+  SC719: {
+    nde: {
+      drought: "I-SC719 yinhlobo edinga isikhathi eside (amalanga adlula 145). Isomiso silakho ukubangela ukwehluleka kwesivuno. Kumele lilime ngezindlela zokubamba amanzi kuphela loba licabange ngokutshala ezikhula masinya.",
+      standard: "I-SC719 yinhlobo yebanga elide eletha isivuno esikhulu kakhulu (amalanga adlula 145). Isivuno silindeleke ukuthi siphezulu kakhulu. Hlwanyelani masinya ngenyanga kaLwezi."
+    },
+    sna: {
+      drought: "Mbeu ye-SC719 inononoka kuibva (misi inodarika zana nemakumi mana nemashanu). Kusanaya kwemvura kunogona kuderedza goho zvikuru. Shandisai unyanzvi hwekuchengetedza mvura chose.",
+      standard: "Mbeu ye-SC719 inopa goho guru kwazvo (misi inodarika zana nemakumi mana nemashanu). Mwaka wakanaka: Goho guru rinotarisirwa. Dyirai nenguva yekutanga kwaMbudzi."
+    },
+    en: {
+      drought: "SC719 is a long-season high-yield variety (145+ days). Severe drought warning: Crop failure risk is high under low moisture. Employ total moisture harvesting or consider early maturity.",
+      standard: "SC719 is a long-season hybrid delivering maximum genetic yield ceiling (145+ days). Standard season advisory: Outstanding harvest projected. Plant strictly in early November."
+    }
+  }
+};
+
 export default function App() {
   // General Authentication States (starts empty for general users)
   const [username, setUsername] = useState('');
@@ -73,6 +137,11 @@ export default function App() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [showGlossary, setShowGlossary] = useState(false);
+
+  // Multilingual Speech (MMS) Audio Playback States
+  const [audioLang, setAudioLang] = useState('nde'); // Default to isiNdebele (Umzingwane)
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [showCitationModal, setShowCitationModal] = useState(false);
 
   // Network & Server Connectivity (silently managed in background)
   const [serverHost, setServerHost] = useState(DEFAULT_HOST);
@@ -146,6 +215,88 @@ export default function App() {
 
     return () => { isMounted = false; };
   }, []);
+
+  // Native Audio Event Listeners (Meta MMS Player)
+  useEffect(() => {
+    let subStart, subEnd, subErr;
+    if (DeviceEventEmitter) {
+      subStart = DeviceEventEmitter.addListener('onAudioPlaybackStarted', () => {
+        setIsPlayingAudio(true);
+      });
+      subEnd = DeviceEventEmitter.addListener('onAudioPlaybackEnded', () => {
+        setIsPlayingAudio(false);
+      });
+      subErr = DeviceEventEmitter.addListener('onAudioPlaybackError', (err) => {
+        setIsPlayingAudio(false);
+      });
+    }
+    return () => {
+      subStart && subStart.remove();
+      subEnd && subEnd.remove();
+      subErr && subErr.remove();
+      if (AudioPlayerModule && AudioPlayerModule.stop) {
+        AudioPlayerModule.stop().catch(() => {});
+      }
+    };
+  }, []);
+
+  // Helper to fetch current localized advisory text
+  const getCurrentAdvisoryText = (lang = audioLang) => {
+    const cultivarData = MMS_ADVISORY_TEXTS[variety] || MMS_ADVISORY_TEXTS["SC719"];
+    const condition = precip < 0.45 ? 'drought' : 'standard';
+    const langData = cultivarData[lang] || cultivarData['nde'];
+    return langData[condition] || forecast?.advisory || "Standard agronomic advisory for Umzingwane.";
+  };
+
+  // Multilingual Speech (MMS) Audio Playback Toggle
+  const handleToggleAudio = async (selectedLang) => {
+    const targetLang = selectedLang || audioLang;
+    if (isPlayingAudio && audioLang === targetLang) {
+      if (AudioPlayerModule && AudioPlayerModule.stop) {
+        try {
+          await AudioPlayerModule.stop();
+        } catch (e) {}
+      }
+      setIsPlayingAudio(false);
+      return;
+    }
+
+    setAudioLang(targetLang);
+    setIsPlayingAudio(true);
+
+    const condition = precip < 0.45 ? 'drought' : 'standard';
+    const rawResName = `advisory_${variety.toLowerCase()}_${condition}_${targetLang}`;
+    const streamingUrl = `${serverHost}/static/audio/advisory_${variety}_${condition}_${targetLang}.mp3`;
+
+    if (AudioPlayerModule && AudioPlayerModule.play) {
+      try {
+        await AudioPlayerModule.play(rawResName);
+      } catch (err) {
+        try {
+          await AudioPlayerModule.play(streamingUrl);
+        } catch (netErr) {
+          setIsPlayingAudio(false);
+          Alert.alert("Audio Playback", `Cannot start audio: ${netErr.message || "Player offline"}`);
+        }
+      }
+    } else {
+      // Web fallback
+      try {
+        if (typeof window !== 'undefined' && window.Audio) {
+          if (window._currentAudio) {
+            window._currentAudio.pause();
+          }
+          const audio = new window.Audio(streamingUrl);
+          window._currentAudio = audio;
+          audio.onended = () => setIsPlayingAudio(false);
+          audio.onerror = () => setIsPlayingAudio(false);
+          await audio.play();
+        }
+      } catch (e) {
+        setIsPlayingAudio(false);
+      }
+    }
+  };
 
   // Ward selector defaults loader
   const handleWardSelect = (selectedWard, activeHost = serverHost) => {
@@ -379,6 +530,10 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    if (AudioPlayerModule && AudioPlayerModule.stop) {
+      AudioPlayerModule.stop().catch(() => {});
+    }
+    setIsPlayingAudio(false);
     setIsLoggedIn(false);
     setPassword('');
     setUserProfile(null);
@@ -1173,6 +1328,130 @@ Security Signature: Authorized Agritex Officer System Log Verification
               <Text style={[styles.advisoryBody, isLightTheme && styles.advisoryBodyLight]}>
                 {forecast.advisory}
               </Text>
+            </View>
+
+            {/* MULTILINGUAL AUDIO ADVISORY PLAYBACK PANEL (META MMS POWERED) */}
+            <View style={[styles.mmsAudioCard, isLightTheme && styles.mmsAudioCardLight]}>
+              <View style={styles.mmsHeaderRow}>
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={{ fontSize: 18 }}>🔊</Text>
+                    <Text style={[styles.mmsCardTitle, isLightTheme && styles.mmsCardTitleLight]}>
+                      Audio Advisory Playback
+                    </Text>
+                  </View>
+                  <Text style={[styles.mmsCardSub, isLightTheme && styles.mmsCardSubLight]}>
+                    Massive Multilingual Speech (MMS) Synthesis
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={[styles.mmsCitationBadge, isLightTheme && styles.mmsCitationBadgeLight]}
+                  onPress={() => setShowCitationModal(prev => !prev)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.mmsCitationBadgeText}>🎓 Thesis Ref</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Language Pill Selector */}
+              <View style={[styles.mmsLangTabs, isLightTheme && styles.mmsLangTabsLight]}>
+                <TouchableOpacity
+                  style={[styles.mmsLangTab, audioLang === 'nde' && styles.mmsLangTabActive]}
+                  onPress={() => {
+                    if (isPlayingAudio) handleToggleAudio('nde');
+                    else setAudioLang('nde');
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.mmsLangTabText, audioLang === 'nde' && styles.mmsLangTabTextActive]}>
+                    🇿🇼 isiNdebele
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.mmsLangTab, audioLang === 'sna' && styles.mmsLangTabActive]}
+                  onPress={() => {
+                    if (isPlayingAudio) handleToggleAudio('sna');
+                    else setAudioLang('sna');
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.mmsLangTabText, audioLang === 'sna' && styles.mmsLangTabTextActive]}>
+                    🇿🇼 chiShona
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.mmsLangTab, audioLang === 'en' && styles.mmsLangTabActive]}
+                  onPress={() => {
+                    if (isPlayingAudio) handleToggleAudio('en');
+                    else setAudioLang('en');
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.mmsLangTabText, audioLang === 'en' && styles.mmsLangTabTextActive]}>
+                    🇬🇧 English
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Vernacular Spoken Text Box */}
+              <View style={[styles.mmsTextBox, isLightTheme && styles.mmsTextBoxLight]}>
+                <Text style={[styles.mmsTextLangLabel, isLightTheme && styles.mmsTextLangLabelLight]}>
+                  {audioLang === 'nde' ? 'Iseluleko nge-Sindebele (Matabeleland South):' : (audioLang === 'sna' ? 'Kurudziro ne-ChiShona:' : 'English Advisory Translation:')}
+                </Text>
+                <Text style={[styles.mmsTextContent, isLightTheme && styles.mmsTextContentLight]}>
+                  {getCurrentAdvisoryText()}
+                </Text>
+              </View>
+
+              {/* Audio Playback Controller Button */}
+              <TouchableOpacity
+                style={[
+                  styles.mmsPlayBtn,
+                  isPlayingAudio ? styles.mmsPlayBtnActive : (audioLang === 'nde' ? styles.mmsPlayBtnNde : styles.mmsPlayBtnSna)
+                ]}
+                onPress={() => handleToggleAudio(audioLang)}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.mmsPlayIcon}>
+                  {isPlayingAudio ? '⏹️' : '🔊'}
+                </Text>
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={styles.mmsPlayBtnTitle}>
+                    {isPlayingAudio 
+                      ? 'Misa Umsindo (Stop Audio Playback)' 
+                      : (audioLang === 'nde' 
+                          ? 'Lalela nge-Sindebele (Listen in Ndebele)' 
+                          : (audioLang === 'sna' 
+                              ? 'Teerera ne-ChiShona (Listen in Shona)' 
+                              : 'Play Spoken English Audio'))}
+                  </Text>
+                  <Text style={styles.mmsPlayBtnSub}>
+                    {isPlayingAudio ? 'Audio active • Tap to pause' : 'Meta MMS VITS Synthesis • Tap to play'}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+
+              {/* Collapsible Thesis Reference Card */}
+              {showCitationModal && (
+                <View style={[styles.mmsCitationCard, isLightTheme && styles.mmsCitationCardLight]}>
+                  <Text style={[styles.mmsCitationTitle, isLightTheme && styles.mmsCitationTitleLight]}>
+                    📚 Research Paper Citation (Meta MMS)
+                  </Text>
+                  <Text style={[styles.mmsCitationPaper, isLightTheme && styles.mmsCitationPaperLight]}>
+                    "Scaling Speech Technology to 1,000+ Languages"
+                  </Text>
+                  <Text style={styles.mmsCitationMeta}>
+                    Vineel Pratap, Andros Tjandra, Bowen Shi, Paden Tomasello, Arun Babu, Sayani Kundu, et al. (Meta AI).
+                    {"\n"}IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI) / arXiv:2305.13516 (2024).
+                  </Text>
+                  <View style={styles.mmsCitationDivider} />
+                  <Text style={[styles.mmsCitationBody, isLightTheme && styles.mmsCitationBodyLight]}>
+                    • <Text style={{ fontWeight: 'bold' }}>TTS Architecture:</Text> VITS end-to-end variational acoustic synthesis.
+                    {"\n"}• <Text style={{ fontWeight: 'bold' }}>Model Weights:</Text> facebook/mms-tts-nde (Northern Ndebele) & facebook/mms-tts-sna (Shona).
+                    {"\n"}• <Text style={{ fontWeight: 'bold' }}>Agronomic Impact:</Text> Overcomes literacy barriers for smallholder farmers in Umzingwane District by vocalizing biophysical yield recommendations.
+                  </Text>
+                </View>
+              )}
             </View>
 
             {/* INDICATOR GLOSSARY ACCORDION */}
@@ -2362,5 +2641,201 @@ const styles = StyleSheet.create({
     color: '#f43f5e',
     fontWeight: 'bold',
     fontSize: 13,
+  },
+
+  // MMS Multilingual Speech & Audio Player Styles
+  mmsAudioCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderColor: 'rgba(99, 102, 241, 0.3)',
+    borderWidth: 1.5,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  mmsAudioCardLight: {
+    backgroundColor: '#ffffff',
+    borderColor: '#c7d2fe',
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  mmsHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  mmsCardTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#f8fafc',
+  },
+  mmsCardTitleLight: {
+    color: '#0f172a',
+  },
+  mmsCardSub: {
+    fontSize: 11,
+    color: '#818cf8',
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  mmsCardSubLight: {
+    color: '#4f46e5',
+  },
+  mmsCitationBadge: {
+    backgroundColor: 'rgba(99, 102, 241, 0.15)',
+    borderColor: 'rgba(99, 102, 241, 0.35)',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+  },
+  mmsCitationBadgeLight: {
+    backgroundColor: '#ede9fe',
+    borderColor: '#c4b5fd',
+  },
+  mmsCitationBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#a5b4fc',
+  },
+  mmsLangTabs: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 12,
+  },
+  mmsLangTabsLight: {},
+  mmsLangTab: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  mmsLangTabActive: {
+    backgroundColor: '#4f46e5',
+    borderColor: '#6366f1',
+  },
+  mmsLangTabText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#94a3b8',
+  },
+  mmsLangTabTextActive: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+  },
+  mmsTextBox: {
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 14,
+    borderLeftWidth: 3,
+    borderLeftColor: '#10b981',
+  },
+  mmsTextBoxLight: {
+    backgroundColor: '#f8fafc',
+    borderLeftColor: '#059669',
+  },
+  mmsTextLangLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#10b981',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  mmsTextLangLabelLight: {
+    color: '#059669',
+  },
+  mmsTextContent: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: '#e2e8f0',
+  },
+  mmsTextContentLight: {
+    color: '#334155',
+  },
+  mmsPlayBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+  },
+  mmsPlayBtnNde: {
+    backgroundColor: '#059669',
+  },
+  mmsPlayBtnSna: {
+    backgroundColor: '#4f46e5',
+  },
+  mmsPlayBtnActive: {
+    backgroundColor: '#e11d48',
+  },
+  mmsPlayIcon: {
+    fontSize: 22,
+  },
+  mmsPlayBtnTitle: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  mmsPlayBtnSub: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 10.5,
+    marginTop: 2,
+  },
+  mmsCitationCard: {
+    marginTop: 14,
+    padding: 12,
+    backgroundColor: 'rgba(99, 102, 241, 0.08)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.25)',
+  },
+  mmsCitationCardLight: {
+    backgroundColor: '#f5f3ff',
+    borderColor: '#ddd6fe',
+  },
+  mmsCitationTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#a5b4fc',
+    marginBottom: 4,
+  },
+  mmsCitationTitleLight: {
+    color: '#6d28d9',
+  },
+  mmsCitationPaper: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    fontWeight: '600',
+    color: '#f8fafc',
+  },
+  mmsCitationPaperLight: {
+    color: '#1e1b4b',
+  },
+  mmsCitationMeta: {
+    fontSize: 11,
+    color: '#94a3b8',
+    marginTop: 2,
+    lineHeight: 15,
+  },
+  mmsCitationDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    marginVertical: 8,
+  },
+  mmsCitationBody: {
+    fontSize: 11,
+    lineHeight: 16,
+    color: '#cbd5e1',
+  },
+  mmsCitationBodyLight: {
+    color: '#475569',
   },
 });
