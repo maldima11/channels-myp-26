@@ -422,7 +422,13 @@ function updateDashboardUI(forecast) {
     document.getElementById("heatText").innerText = `${heatStress}%`;
     drawGauge("heatGauge", heatStress, "#f43f5e");
 
-    // Advisory panel rendering (Multilingual MMS aware)
+    // Recommendation advisory panel rendering
+    const advEl = document.getElementById("advisory-text-box");
+    if (advEl && forecast.advisory) {
+        advEl.innerText = forecast.advisory;
+    }
+
+    // Audio Advisory panel rendering (Separate section)
     updateMmsAdvisoryText(forecast);
 
     // Draw yield envelope bar chart
@@ -1029,6 +1035,9 @@ const MMS_CORPUS = {
     }
 };
 
+let currentMmsPlaybackRate = 1.0;
+const MMS_RATES = [1.0, 1.25, 0.8];
+
 function switchMmsLanguage(lang) {
     currentMmsLang = lang;
     ['nde', 'sna', 'en'].forEach(l => {
@@ -1042,6 +1051,7 @@ function switchMmsLanguage(lang) {
         audioEl.currentTime = 0;
     }
     isMmsAudioPlaying = false;
+    updateMmsAudioSource();
     updateMmsButtonUI();
 
     if (cachedForecast) {
@@ -1056,61 +1066,164 @@ function updateMmsAdvisoryText(forecast) {
     const cultivarData = MMS_CORPUS[cultivar] || MMS_CORPUS["SC719"];
     const localizedText = cultivarData[currentMmsLang][condition];
     
-    const advisoryEl = document.getElementById("advisory-text-box");
-    if (advisoryEl) {
+    const transcriptEl = document.getElementById("mms-spoken-transcript");
+    if (transcriptEl) {
         const langPrefix = currentMmsLang === 'nde' 
             ? '<strong style="color: #10b981;">[isiNdebele - Matabeleland South]:</strong><br>' 
             : (currentMmsLang === 'sna' 
                 ? '<strong style="color: #6366f1;">[chiShona]:</strong><br>' 
-                : '<strong style="color: #cbd5e1;">[English Advisory]:</strong><br>');
-        advisoryEl.innerHTML = langPrefix + localizedText;
+                : '<strong style="color: #cbd5e1;">[English Spoken Advisory]:</strong><br>');
+        transcriptEl.innerHTML = langPrefix + localizedText;
     }
+    updateMmsAudioSource();
     updateMmsButtonUI();
+}
+
+function updateMmsAudioSource() {
+    const audioEl = document.getElementById("mms-audio-element");
+    if (!audioEl) return;
+    const cultivar = ((cachedForecast && cachedForecast.variety) || "SC719").toUpperCase();
+    const condition = (cachedForecast && cachedForecast.precip !== undefined && cachedForecast.precip < 0.45) ? 'drought' : 'standard';
+    const expectedSrc = `static/audio/advisory_${cultivar}_${condition}_${currentMmsLang}.mp3`;
+    
+    // Only update src if it changed
+    if (!audioEl.src.endsWith(expectedSrc)) {
+        audioEl.src = expectedSrc;
+        audioEl.load();
+    }
+
+    const trackTag = document.getElementById("mms-track-tag");
+    if (trackTag) {
+        const langLabel = currentMmsLang === 'nde' ? 'isiNdebele' : (currentMmsLang === 'sna' ? 'chiShona' : 'English');
+        const condLabel = condition === 'drought' ? '⚠️ Drought Alert' : '🌱 Standard Season';
+        trackTag.innerText = `${cultivar} • ${condLabel} • ${langLabel}`;
+    }
 }
 
 function toggleMmsAudio() {
     const audioEl = document.getElementById("mms-audio-element");
     if (!audioEl) return;
 
-    if (isMmsAudioPlaying) {
-        audioEl.pause();
-        audioEl.currentTime = 0;
-        isMmsAudioPlaying = false;
-        updateMmsButtonUI();
-        return;
+    if (!audioEl.src || audioEl.src === window.location.href) {
+        updateMmsAudioSource();
     }
 
-    const cultivar = ((cachedForecast && cachedForecast.variety) || "SC719").toUpperCase();
-    const condition = (cachedForecast && cachedForecast.precip !== undefined && cachedForecast.precip < 0.45) ? 'drought' : 'standard';
-    const audioSrc = `static/audio/advisory_${cultivar}_${condition}_${currentMmsLang}.mp3`;
+    if (isMmsAudioPlaying) {
+        audioEl.pause();
+    } else {
+        audioEl.playbackRate = currentMmsPlaybackRate;
+        audioEl.play().catch(err => {
+            console.warn("Audio play blocked or failed:", err);
+            const statusText = document.getElementById("mms-status-text");
+            if (statusText) statusText.innerText = "Click to allow audio playback";
+        });
+    }
+}
 
-    audioEl.src = audioSrc;
-    audioEl.play().then(() => {
-        isMmsAudioPlaying = true;
-        updateMmsButtonUI();
-    }).catch(err => {
-        console.warn("Audio play blocked or failed:", err);
-        const statusEl = document.getElementById("mms-audio-status");
-        if (statusEl) statusEl.innerText = "Click to allow audio";
-    });
+function seekMmsAudio(deltaSeconds) {
+    const audioEl = document.getElementById("mms-audio-element");
+    if (!audioEl) return;
+    if (!audioEl.src || audioEl.src === window.location.href) {
+        updateMmsAudioSource();
+    }
+    const newTime = Math.max(0, Math.min((audioEl.currentTime || 0) + deltaSeconds, audioEl.duration || 60));
+    audioEl.currentTime = newTime;
+    onMmsTimeUpdate();
+}
+
+function replayMmsAudio() {
+    const audioEl = document.getElementById("mms-audio-element");
+    if (!audioEl) return;
+    updateMmsAudioSource();
+    audioEl.currentTime = 0;
+    audioEl.playbackRate = currentMmsPlaybackRate;
+    audioEl.play().catch(() => {});
+}
+
+function cycleMmsPlaybackRate() {
+    const audioEl = document.getElementById("mms-audio-element");
+    const nextIdx = (MMS_RATES.indexOf(currentMmsPlaybackRate) + 1) % MMS_RATES.length;
+    currentMmsPlaybackRate = MMS_RATES[nextIdx];
+    if (audioEl) audioEl.playbackRate = currentMmsPlaybackRate;
+    const speedLabel = document.getElementById("mms-speed-label");
+    if (speedLabel) speedLabel.innerText = `${currentMmsPlaybackRate.toFixed(1)}x`;
+}
+
+function onMmsScrubberClick(event) {
+    const audioEl = document.getElementById("mms-audio-element");
+    const scrubber = document.getElementById("mms-scrubber");
+    if (!audioEl || !scrubber || !audioEl.duration) return;
+
+    const rect = scrubber.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const ratio = Math.max(0, Math.min(clickX / rect.width, 1));
+    audioEl.currentTime = ratio * audioEl.duration;
+    onMmsTimeUpdate();
+}
+
+function onMmsTimeUpdate() {
+    const audioEl = document.getElementById("mms-audio-element");
+    if (!audioEl) return;
+
+    const curTime = audioEl.currentTime || 0;
+    const duration = audioEl.duration || 0;
+
+    const curLabel = document.getElementById("mms-time-current");
+    const totalLabel = document.getElementById("mms-time-total");
+    const fill = document.getElementById("mms-scrubber-fill");
+
+    if (curLabel) curLabel.innerText = formatMmsTime(curTime);
+    if (totalLabel && duration) totalLabel.innerText = formatMmsTime(duration);
+
+    if (fill && duration > 0) {
+        const percent = (curTime / duration) * 100;
+        fill.style.width = `${percent}%`;
+    }
+}
+
+function onMmsMetadataLoaded() {
+    const audioEl = document.getElementById("mms-audio-element");
+    if (!audioEl) return;
+    const totalLabel = document.getElementById("mms-time-total");
+    if (totalLabel && audioEl.duration) {
+        totalLabel.innerText = formatMmsTime(audioEl.duration);
+    }
+}
+
+function onMmsAudioPlayState(isPlaying) {
+    isMmsAudioPlaying = isPlaying;
+    updateMmsButtonUI();
 }
 
 function onMmsAudioEnded() {
     isMmsAudioPlaying = false;
     updateMmsButtonUI();
+    const fill = document.getElementById("mms-scrubber-fill");
+    if (fill) fill.style.width = "0%";
+    const curLabel = document.getElementById("mms-time-current");
+    if (curLabel) curLabel.innerText = "0:00";
+}
+
+function formatMmsTime(seconds) {
+    if (isNaN(seconds) || seconds < 0) return "0:00";
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 }
 
 function updateMmsButtonUI() {
     const playIcon = document.getElementById("mms-play-icon");
     const playLabel = document.getElementById("mms-play-label");
     const playBtn = document.getElementById("mms-play-btn");
-    const statusEl = document.getElementById("mms-audio-status");
+    const statusContainer = document.getElementById("mms-audio-status");
+    const statusText = document.getElementById("mms-status-text");
 
     if (isMmsAudioPlaying) {
-        if (playIcon) playIcon.innerText = "⏹";
-        if (playLabel) playLabel.innerText = "Misa Umsindo (Stop Audio Playback)";
+        if (playIcon) playIcon.innerText = "⏸";
+        if (playLabel) playLabel.innerText = "Misa (Pause Spoken Audio)";
         if (playBtn) playBtn.classList.add("playing");
-        if (statusEl) statusEl.innerText = "🔊 Playing speech synthesis...";
+        if (statusContainer) statusContainer.classList.add("active");
+        if (statusText) statusText.innerText = "Playing voice synthesis...";
     } else {
         if (playIcon) playIcon.innerText = "▶";
         const labelText = currentMmsLang === 'nde' 
@@ -1120,13 +1233,7 @@ function updateMmsButtonUI() {
                 : "Play Spoken English Audio");
         if (playLabel) playLabel.innerText = labelText;
         if (playBtn) playBtn.classList.remove("playing");
-        if (statusEl) statusEl.innerText = "Ready to play";
-    }
-}
-
-function toggleMmsCitation() {
-    const card = document.getElementById("mms-citation-card");
-    if (card) {
-        card.style.display = card.style.display === "none" ? "block" : "none";
+        if (statusContainer) statusContainer.classList.remove("active");
+        if (statusText) statusText.innerText = "Ready to play";
     }
 }

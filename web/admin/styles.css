@@ -810,4 +810,203 @@ body.light-theme .sub-tab-btn.active {
     color: #4338ca;
 }
 
+/* ========================================================
+   ADMIN VERNACULAR AUDIO & MMS VOICE PREVIEW STYLING
+   ======================================================== */
+.admin-audio-card {
+    width: 100%;
+    margin-top: 24px;
+    padding: 20px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(16, 185, 129, 0.08));
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+body.light-theme .admin-audio-card {
+    background: #ffffff;
+    border-color: #e2e8f0;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.admin-audio-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.admin-audio-title {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-audio-badge {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #34d399;
+    font-weight: 600;
+}
+
+.admin-audio-selectors {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.admin-audio-script {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #e2e8f0;
+    margin-bottom: 14px;
+    min-height: 54px;
+}
+
+body.light-theme .admin-audio-script {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #1e293b;
+}
+
+.admin-audio-deck {
+    background: rgba(11, 15, 25, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+body.light-theme .admin-audio-deck {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.admin-audio-transport {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.admin-audio-btn-primary {
+    flex: 2;
+    min-width: 160px;
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #059669, #10b981);
+    border: none;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.admin-audio-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.45);
+}
+
+.admin-audio-btn-primary.playing {
+    background: linear-gradient(135deg, #e11d48, #f43f5e);
+    box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3);
+}
+
+.admin-audio-btn-sec {
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--glass-border);
+    color: var(--text-main);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+body.light-theme .admin-audio-btn-sec {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    color: #1e293b;
+}
+
+.admin-audio-btn-sec:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: #6366f1;
+    transform: translateY(-1px);
+}
+
+.admin-audio-timeline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-audio-time-label {
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+    min-width: 30px;
+}
+
+.admin-audio-scrubber-track {
+    flex: 1;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+body.light-theme .admin-audio-scrubber-track {
+    background: #cbd5e1;
+}
+
+.admin-audio-scrubber-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #6366f1);
+    border-radius: 4px;
+    transition: width 0.1s linear;
+}
+
+.admin-native-audio-wrapper {
+    margin-top: 4px;
+}
+
+.admin-native-audio-wrapper audio {
+    width: 100%;
+    height: 36px;
+    border-radius: 8px;
+    outline: none;
+    filter: invert(0.9) hue-rotate(180deg);
+}
+
+body.light-theme .admin-native-audio-wrapper audio {
+    filter: none;
+}
+
+
 

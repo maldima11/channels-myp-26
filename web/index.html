@@ -232,8 +232,8 @@
             </div>
         </div>
 
-        <!-- ADVISORY REPORT & DOWNLOAD -->
-        <div class="advisory-panel">
+        <!-- 1. FARMING ADVISORY & AGRONOMIC RECOMMENDATION -->
+        <div class="advisory-panel glass-panel">
             <div class="advisory-header">
                 <span class="advisory-title">Farming Advisory and Agronomic Recommendation</span>
                 <button class="download-btn" onclick="downloadReport()">
@@ -242,54 +242,90 @@
                 </button>
             </div>
             <div id="advisory-text-box" class="advisory-text">Connecting to NUST yield prediction API...</div>
+        </div>
 
-            <!-- MULTILINGUAL AUDIO ADVISORY (META MMS) -->
-            <div class="mms-audio-container">
-                <div class="mms-audio-header">
-                    <div class="mms-title-group">
-                        <span class="mms-icon">🔊</span>
-                        <div>
-                            <div class="mms-title">Indigenous Language Audio Recommendation</div>
-                            <div class="mms-subtitle">Meta Massive Multilingual Speech (MMS) Neural Synthesis</div>
-                        </div>
+        <!-- 2. SEPARATE SECTION: AUDIO ADVISORY PLAYBACK (MATCHING MOBILE APP) -->
+        <div class="audio-advisory-panel glass-panel">
+            <div class="audio-advisory-header">
+                <div class="mms-title-group">
+                    <span class="mms-icon">🔊</span>
+                    <div>
+                        <div class="mms-title">Audio Advisory Playback</div>
+                        <div class="mms-subtitle">Massive Multilingual Speech (MMS) Synthesis</div>
                     </div>
-                    <button class="mms-citation-btn" onclick="toggleMmsCitation()">
-                        🎓 Thesis Citation
-                    </button>
                 </div>
+            </div>
 
-                <!-- Language Tabs -->
-                <div class="mms-lang-tabs">
-                    <button id="mms-tab-nde" class="mms-lang-tab active" onclick="switchMmsLanguage('nde')">
-                        🇿🇼 isiNdebele
-                    </button>
-                    <button id="mms-tab-sna" class="mms-lang-tab" onclick="switchMmsLanguage('sna')">
-                        🇿🇼 chiShona
-                    </button>
-                    <button id="mms-tab-en" class="mms-lang-tab" onclick="switchMmsLanguage('en')">
-                        🇬🇧 English
-                    </button>
-                </div>
+            <!-- Language Tabs -->
+            <div class="mms-lang-tabs">
+                <button type="button" id="mms-tab-nde" class="mms-lang-tab active" onclick="switchMmsLanguage('nde')">
+                    🇿🇼 isiNdebele
+                </button>
+                <button type="button" id="mms-tab-sna" class="mms-lang-tab" onclick="switchMmsLanguage('sna')">
+                    🇿🇼 chiShona
+                </button>
+                <button type="button" id="mms-tab-en" class="mms-lang-tab" onclick="switchMmsLanguage('en')">
+                    🇬🇧 English
+                </button>
+            </div>
 
-                <!-- Vernacular Audio Playback Controls -->
-                <div class="mms-player-bar">
-                    <button id="mms-play-btn" class="mms-play-button" onclick="toggleMmsAudio()">
+            <!-- Vernacular Spoken Script Transcript Box -->
+            <div id="mms-spoken-transcript" class="mms-transcript-box">
+                Loading spoken advisory transcript...
+            </div>
+
+            <!-- Comprehensive Audio Playback Controls Deck -->
+            <div class="mms-player-deck">
+                <!-- Quick Transport Buttons Bar -->
+                <div class="mms-transport-bar">
+                    <button type="button" id="mms-rewind-btn" class="mms-ctrl-btn mms-btn-secondary" onclick="seekMmsAudio(-5)" title="Rewind 5 seconds">
+                        ⏪ -5s
+                    </button>
+                    <button type="button" id="mms-play-btn" class="mms-ctrl-btn mms-btn-primary" onclick="toggleMmsAudio()" title="Play or pause audio advisory">
                         <span id="mms-play-icon">▶</span>
                         <span id="mms-play-label">Lalela nge-Sindebele (Listen in Ndebele)</span>
                     </button>
-                    <audio id="mms-audio-element" preload="none" onended="onMmsAudioEnded()"></audio>
-                    <div id="mms-audio-status" class="mms-status-indicator">Ready to play</div>
+                    <button type="button" id="mms-forward-btn" class="mms-ctrl-btn mms-btn-secondary" onclick="seekMmsAudio(5)" title="Fast-forward 5 seconds">
+                        +5s ⏩
+                    </button>
+                    <button type="button" id="mms-replay-btn" class="mms-ctrl-btn mms-btn-secondary" onclick="replayMmsAudio()" title="Restart from beginning">
+                        🔄 Replay
+                    </button>
+                    <button type="button" id="mms-speed-btn" class="mms-ctrl-btn mms-btn-pill" onclick="cycleMmsPlaybackRate()" title="Change playback speed">
+                        <span id="mms-speed-label">1.0x</span>
+                    </button>
                 </div>
 
-                <!-- Thesis Reference Card -->
-                <div id="mms-citation-card" class="mms-citation-card" style="display: none;">
-                    <div class="citation-head">📚 Research Paper Reference (MMS Architecture):</div>
-                    <div class="citation-paper">"Scaling Speech Technology to 1,000+ Languages"</div>
-                    <div class="citation-meta">Vineel Pratap, Andros Tjandra, Bowen Shi, Paden Tomasello, Arun Babu, et al. (Meta AI), <em>IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI)</em> / arXiv:2305.13516 (2024).</div>
-                    <div class="citation-detail">
-                        • <strong>Models Used:</strong> <code>facebook/mms-tts-nde</code> (Ndebele) & <code>facebook/mms-tts-sna</code> (Shona).<br>
-                        • <strong>Agronomic Accessibility:</strong> Eliminates literacy bottlenecks for smallholder farmers in Umzingwane District by synthesizing localized crop guidance into spoken vernacular.
+                <!-- Custom Timeline Scrubber & Timing Indicators -->
+                <div class="mms-timeline-container">
+                    <span id="mms-time-current" class="mms-time-label">0:00</span>
+                    <div class="mms-scrubber-track" id="mms-scrubber" onclick="onMmsScrubberClick(event)">
+                        <div id="mms-scrubber-fill" class="mms-scrubber-fill"></div>
+                        <div id="mms-scrubber-thumb" class="mms-scrubber-thumb"></div>
                     </div>
+                    <span id="mms-time-total" class="mms-time-label">0:00</span>
+                </div>
+
+                <!-- Embedded Standard HTML5 Audio Controls Element -->
+                <div class="mms-native-audio-wrapper">
+                    <audio id="mms-audio-element" 
+                           controls 
+                           preload="metadata" 
+                           onended="onMmsAudioEnded()" 
+                           ontimeupdate="onMmsTimeUpdate()" 
+                           onloadedmetadata="onMmsMetadataLoaded()"
+                           onplay="onMmsAudioPlayState(true)"
+                           onpause="onMmsAudioPlayState(false)">
+                    </audio>
+                </div>
+
+                <!-- Audio Status & Track Meta -->
+                <div class="mms-meta-bar">
+                    <div id="mms-audio-status" class="mms-status-indicator">
+                        <span class="mms-status-dot"></span>
+                        <span id="mms-status-text">Ready to play</span>
+                    </div>
+                    <div id="mms-track-tag" class="mms-track-tag">SC719 &bull; Standard Season &bull; isiNdebele</div>
                 </div>
             </div>
         </div>

@@ -296,6 +296,96 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- VERNACULAR VOICE & AUDIO ADVISORY CONTROLS PREVIEW -->
+                    <div class="admin-audio-card">
+                        <div class="admin-audio-header">
+                            <div class="admin-audio-title">
+                                <span>🔊</span> Vernacular Spoken Advisory (Meta MMS)
+                            </div>
+                            <span class="admin-audio-badge">Voice Broadcast Preview</span>
+                        </div>
+
+                        <!-- Language Tabs -->
+                        <div class="mode-toggle-group" style="margin-bottom: 12px;">
+                            <button type="button" id="admin-audio-tab-nde" class="sub-tab-btn active" onclick="setAdminAudioLang('nde')">
+                                🇿🇼 isiNdebele
+                            </button>
+                            <button type="button" id="admin-audio-tab-sna" class="sub-tab-btn" onclick="setAdminAudioLang('sna')">
+                                🇿🇼 chiShona
+                            </button>
+                            <button type="button" id="admin-audio-tab-en" class="sub-tab-btn" onclick="setAdminAudioLang('en')">
+                                🇬🇧 English
+                            </button>
+                        </div>
+
+                        <!-- Advisory Cultivar & Condition Selectors -->
+                        <div class="admin-audio-selectors">
+                            <div>
+                                <label style="font-size: 11px; margin-bottom: 3px; display: block; color: var(--text-muted);">Calibrated Cultivar</label>
+                                <select id="admin-audio-cultivar" class="input-field" style="padding: 6px 10px; font-size: 12px;" onchange="updateAdminAudioScript()">
+                                    <option value="SC301">SC301 (Ultra-Early 120d)</option>
+                                    <option value="SC436">SC436 (Early 130d)</option>
+                                    <option value="SC529">SC529 (Medium 135d)</option>
+                                    <option value="SC719" selected>SC719 (Long 145d)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size: 11px; margin-bottom: 3px; display: block; color: var(--text-muted);">Seasonal Weather Context</label>
+                                <select id="admin-audio-condition" class="input-field" style="padding: 6px 10px; font-size: 12px;" onchange="updateAdminAudioScript()">
+                                    <option value="drought">⚠️ Drought Warning</option>
+                                    <option value="standard" selected>🌱 Standard Season</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Spoken Vernacular Script Preview -->
+                        <div id="admin-audio-script-box" class="admin-audio-script">
+                            Loading vernacular script...
+                        </div>
+
+                        <!-- Audio Control Deck -->
+                        <div class="admin-audio-deck">
+                            <!-- Transport Buttons -->
+                            <div class="admin-audio-transport">
+                                <button type="button" class="admin-audio-btn-sec" onclick="seekAdminAudio(-5)" title="Rewind 5s">
+                                    ⏪ -5s
+                                </button>
+                                <button type="button" id="admin-audio-play-btn" class="admin-audio-btn-primary" onclick="toggleAdminAudio()">
+                                    <span id="admin-audio-play-icon">▶</span>
+                                    <span id="admin-audio-play-label">Play Spoken Audio</span>
+                                </button>
+                                <button type="button" class="admin-audio-btn-sec" onclick="seekAdminAudio(5)" title="Fast-forward 5s">
+                                    +5s ⏩
+                                </button>
+                                <button type="button" class="admin-audio-btn-sec" onclick="replayAdminAudio()" title="Replay">
+                                    🔄
+                                </button>
+                            </div>
+
+                            <!-- Timeline Scrubber -->
+                            <div class="admin-audio-timeline">
+                                <span id="admin-audio-cur-time" class="admin-audio-time-label">0:00</span>
+                                <div class="admin-audio-scrubber-track" id="admin-audio-scrubber" onclick="onAdminScrubberClick(event)">
+                                    <div id="admin-audio-scrubber-fill" class="admin-audio-scrubber-fill"></div>
+                                </div>
+                                <span id="admin-audio-total-time" class="admin-audio-time-label">0:00</span>
+                            </div>
+
+                            <!-- Standard HTML5 Native Audio Controls Element -->
+                            <div class="admin-native-audio-wrapper">
+                                <audio id="admin-audio-element" 
+                                       controls 
+                                       preload="metadata"
+                                       ontimeupdate="onAdminAudioTimeUpdate()"
+                                       onloadedmetadata="onAdminAudioMetaLoaded()"
+                                       onended="onAdminAudioEnded()"
+                                       onplay="onAdminAudioPlayState(true)"
+                                       onpause="onAdminAudioPlayState(false)">
+                                </audio>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 

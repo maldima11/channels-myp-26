@@ -43,6 +43,7 @@ function initUsers() {
     renderUsers();
     loadSmsLogs();
     applySmsTemplate();
+    updateAdminAudioScript();
 }
 
 // 2. TAB SWITCHER
@@ -764,5 +765,212 @@ function clearSmsLogs() {
         });
 }
 
-// 5. BOOTSTRAP ON LOAD
+// 6. AGRITEX VERNACULAR AUDIO & MMS VOICE BROADCAST
+const ADMIN_MMS_CORPUS = {
+    SC301: {
+        nde: {
+            drought: "I-SC301 yinhlobo ekhula masinya kakhulu (amalanga ayi-120). Ilungele kakhulu izulu elilutshwana. Hlwanyelani masinya njalo lisebenzise izifundo zokonga amanzi.",
+            standard: "I-SC301 yinhlobo ekhula masinya (amalanga ayi-120). Isivuno silindeleke ukuthi sibe sihle kakhulu ngaphansi kwezulu elijwayelekileyo. Fakani umquba ngesikhathi."
+        },
+        sna: {
+            drought: "Mbeu ye-SC301 inokurumidza kuibva (misi zana nemakumi maviri). Yakanakira zvikuru mwaka une mvura shoma. Dyirai nekukasika uye shandisai migero yekuchengetedza unyoro.",
+            standard: "Mbeu ye-SC301 inokurumidza kuibva (misi zana nemakumi maviri). Goho rinotarisirwa kuve rakanaka chaizvo mumwaka wakanaka. Isai fetereza nenguva."
+        },
+        en: {
+            drought: "SC301 is an ultra-early maturity variety (120 days). Highly resilient under low rainfall. Plant early with tied ridges to maximize moisture conservation.",
+            standard: "SC301 is an ultra-early maturity variety (120 days). Strong yield potential under standard seasonal rainfall. Apply basal and top-dressing on schedule."
+        }
+    },
+    SC436: {
+        nde: {
+            drought: "I-SC436 yinhlobo ekhula ngokushesha (amalanga ayi-130). Ilesivuno esihle ngaphansi kokutshisa. Fulelani ngotshani ematsheni ukuze libambe umswakama.",
+            standard: "I-SC436 yinhlobo ekhula masinya (amalanga ayi-130). Isivuno silindeleke ukuthi sihlale siphezulu kakhulu. Qaphelani izilokazane ezifana le-fall armyworm masinya."
+        },
+        sna: {
+            drought: "Mbeu ye-SC436 inokurumidza kuibva (misi zana nemakumi matatu). Inopa goho rakanaka nekupisa. Fukidzai ivhu neuswa kuitira kuchengetedza mwando muminda.",
+            standard: "Mbeu ye-SC436 inokurumidza kuibva (misi zana nemakumi matatu). Goho rinotarisirwa kuve guru chose. Ongororai chipfukuto che-fall armyworm nenguva."
+        },
+        en: {
+            drought: "SC436 is an early-maturing hybrid (130 days). Excellent heat tolerance. Mulching and minimum tillage are advised to preserve topsoil moisture.",
+            standard: "SC436 is an early-maturing hybrid (130 days) with robust performance. Scout early for Fall Armyworm and maintain optimal plant spacing."
+        }
+    },
+    SC529: {
+        nde: {
+            drought: "I-SC529 yinhlobo ekhula ngokulingeneyo emalangeni ayi-135. Ludinga umswakama oweneleyo. Nxa izulu lilutshwana, fulelani ngotshani obunengi njalo lisebenzise imisele yokubamba amanzi.",
+            standard: "I-SC529 yinhlobo ekhula ngokulingeneyo emalangeni ayi-135. Ilempumela ephezulu kakhulu nxa kulezulu elizwakalayo. Fakani umquba wesibili ngesikhathi esifaneleyo."
+        },
+        sna: {
+            drought: "Mbeu ye-SC529 inotora nguva yepakati (misi zana nemakumi matatu nemashanu). Inoda unyoro hwakakwana. Kana mvura iri shoma, fukidzai ivhu uye cherai migero inobata mvura muminda.",
+            standard: "Mbeu ye-SC529 inotora nguva yepakati (misi zana nemakumi matatu nemashanu). Inopa goho repamusoro-soro kana mvura yanaya zvakanaka. Isai fetereza yepamusoro nenguva yakakodzera."
+        },
+        en: {
+            drought: "SC529 is a medium-maturing variety (135 days) with high yield capacity under adequate moisture. Drought alert: Mulch heavily and dig infiltration pits to sustain the crop.",
+            standard: "SC529 is a medium-maturing variety (135 days). Standard season advisory: Excellent yield potential. Apply top-dressing fertilizer timely for maximum cob filling."
+        }
+    },
+    SC719: {
+        nde: {
+            drought: "I-SC719 yinhlobo edinga isikhathi eside (amalanga adlula 145). Isomiso silakho ukubangela ukwehluleka kwesivuno. Kumele lilime ngezindlela zokubamba amanzi kuphela loba licabange ngokutshala ezikhula masinya.",
+            standard: "I-SC719 yinhlobo yebanga elide eletha isivuno esikhulu kakhulu (amalanga adlula 145). Isivuno silindeleke ukuthi siphezulu kakhulu. Hlwanyelani masinya ngenyanga kaLwezi."
+        },
+        sna: {
+            drought: "Mbeu ye-SC719 inononoka kuibva (misi inodarika zana nemakumi mana nemashanu). Kusanaya kwemvura kunogona kuderedza goho zvikuru. Shandisai unyanzvi hwekuchengetedza mvura chose.",
+            standard: "Mbeu ye-SC719 inopa goho guru kwazvo (misi inodarika zana nemakumi mana nemashanu). Mwaka wakanaka: Goho guru rinotarisirwa. Dyirai nenguva yekutanga kwaMbudzi."
+        },
+        en: {
+            drought: "SC719 is a long-season high-yield variety (145+ days). Severe drought warning: Crop failure risk is high under low moisture. Employ total moisture harvesting or consider early maturity.",
+            standard: "SC719 is a long-season hybrid delivering maximum genetic yield ceiling (145+ days). Standard season advisory: Outstanding harvest projected. Plant strictly in early November."
+        }
+    }
+};
+
+let adminAudioLang = 'nde';
+let isAdminAudioPlaying = false;
+
+function setAdminAudioLang(lang) {
+    adminAudioLang = lang;
+    ['nde', 'sna', 'en'].forEach(l => {
+        const tab = document.getElementById(`admin-audio-tab-${l}`);
+        if (tab) tab.classList.toggle('active', l === lang);
+    });
+    const audioEl = document.getElementById("admin-audio-element");
+    if (audioEl) {
+        audioEl.pause();
+        audioEl.currentTime = 0;
+    }
+    isAdminAudioPlaying = false;
+    updateAdminAudioScript();
+}
+
+function updateAdminAudioScript() {
+    const cultivarSelect = document.getElementById("admin-audio-cultivar");
+    const condSelect = document.getElementById("admin-audio-condition");
+    const scriptBox = document.getElementById("admin-audio-script-box");
+    const audioEl = document.getElementById("admin-audio-element");
+
+    const cultivar = cultivarSelect ? cultivarSelect.value : "SC719";
+    const cond = condSelect ? condSelect.value : "standard";
+
+    const textData = (ADMIN_MMS_CORPUS[cultivar] && ADMIN_MMS_CORPUS[cultivar][adminAudioLang])
+        ? ADMIN_MMS_CORPUS[cultivar][adminAudioLang][cond]
+        : "Advisory script not found.";
+
+    if (scriptBox) {
+        const langBadge = adminAudioLang === 'nde' 
+            ? '<strong style="color: #34d399;">[isiNdebele]:</strong> ' 
+            : (adminAudioLang === 'sna' 
+                ? '<strong style="color: #818cf8;">[chiShona]:</strong> ' 
+                : '<strong style="color: #cbd5e1;">[English]:</strong> ');
+        scriptBox.innerHTML = `${langBadge}${textData}`;
+    }
+
+    if (audioEl) {
+        const expectedSrc = `../static/audio/advisory_${cultivar}_${cond}_${adminAudioLang}.mp3`;
+        if (!audioEl.src.endsWith(`advisory_${cultivar}_${cond}_${adminAudioLang}.mp3`)) {
+            audioEl.src = expectedSrc;
+            audioEl.load();
+        }
+    }
+    updateAdminAudioPlayBtn();
+}
+
+function toggleAdminAudio() {
+    const audioEl = document.getElementById("admin-audio-element");
+    if (!audioEl) return;
+    if (!audioEl.src) updateAdminAudioScript();
+
+    if (isAdminAudioPlaying) {
+        audioEl.pause();
+    } else {
+        audioEl.play().catch(e => console.warn("Admin audio error:", e));
+    }
+}
+
+function seekAdminAudio(delta) {
+    const audioEl = document.getElementById("admin-audio-element");
+    if (!audioEl) return;
+    audioEl.currentTime = Math.max(0, Math.min((audioEl.currentTime || 0) + delta, audioEl.duration || 60));
+    onAdminAudioTimeUpdate();
+}
+
+function replayAdminAudio() {
+    const audioEl = document.getElementById("admin-audio-element");
+    if (!audioEl) return;
+    audioEl.currentTime = 0;
+    audioEl.play().catch(() => {});
+}
+
+function onAdminScrubberClick(event) {
+    const audioEl = document.getElementById("admin-audio-element");
+    const scrubber = document.getElementById("admin-audio-scrubber");
+    if (!audioEl || !scrubber || !audioEl.duration) return;
+    const rect = scrubber.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min((event.clientX - rect.left) / rect.width, 1));
+    audioEl.currentTime = ratio * audioEl.duration;
+    onAdminAudioTimeUpdate();
+}
+
+function onAdminAudioTimeUpdate() {
+    const audioEl = document.getElementById("admin-audio-element");
+    if (!audioEl) return;
+    const cur = audioEl.currentTime || 0;
+    const dur = audioEl.duration || 0;
+    const curEl = document.getElementById("admin-audio-cur-time");
+    const totalEl = document.getElementById("admin-audio-total-time");
+    const fill = document.getElementById("admin-audio-scrubber-fill");
+
+    if (curEl) curEl.innerText = formatAdminTime(cur);
+    if (totalEl && dur) totalEl.innerText = formatAdminTime(dur);
+    if (fill && dur > 0) {
+        fill.style.width = `${(cur / dur) * 100}%`;
+    }
+}
+
+function onAdminAudioMetaLoaded() {
+    const audioEl = document.getElementById("admin-audio-element");
+    if (!audioEl) return;
+    const totalEl = document.getElementById("admin-audio-total-time");
+    if (totalEl && audioEl.duration) {
+        totalEl.innerText = formatAdminTime(audioEl.duration);
+    }
+}
+
+function onAdminAudioPlayState(playing) {
+    isAdminAudioPlaying = playing;
+    updateAdminAudioPlayBtn();
+}
+
+function onAdminAudioEnded() {
+    isAdminAudioPlaying = false;
+    updateAdminAudioPlayBtn();
+    const fill = document.getElementById("admin-audio-scrubber-fill");
+    if (fill) fill.style.width = "0%";
+}
+
+function updateAdminAudioPlayBtn() {
+    const icon = document.getElementById("admin-audio-play-icon");
+    const label = document.getElementById("admin-audio-play-label");
+    const btn = document.getElementById("admin-audio-play-btn");
+
+    if (isAdminAudioPlaying) {
+        if (icon) icon.innerText = "⏸";
+        if (label) label.innerText = "Pause Audio";
+        if (btn) btn.classList.add("playing");
+    } else {
+        if (icon) icon.innerText = "▶";
+        const langText = adminAudioLang === 'nde' ? "Play in Ndebele" : (adminAudioLang === 'sna' ? "Play in Shona" : "Play in English");
+        if (label) label.innerText = langText;
+        if (btn) btn.classList.remove("playing");
+    }
+}
+
+function formatAdminTime(sec) {
+    if (isNaN(sec) || sec < 0) return "0:00";
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+}
+
+// 7. BOOTSTRAP ON LOAD
 window.onload = initUsers;

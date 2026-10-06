@@ -118,6 +118,76 @@ class AudioPlayerModule(private val reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
+    fun resume(promise: Promise) {
+        try {
+            mediaPlayer?.let {
+                if (!it.isPlaying) {
+                    it.start()
+                    sendEvent("onAudioPlaybackStarted", currentSource)
+                    promise.resolve(true)
+                    return
+                }
+            }
+            promise.resolve(false)
+        } catch (e: Exception) {
+            promise.reject("RESUME_ERROR", e.message, e)
+        }
+    }
+
+    @ReactMethod
+    fun seekTo(msec: Int, promise: Promise) {
+        try {
+            mediaPlayer?.let {
+                val target = Math.max(0, Math.min(msec, it.duration))
+                it.seekTo(target)
+                promise.resolve(it.currentPosition)
+                return
+            }
+            promise.resolve(0)
+        } catch (e: Exception) {
+            promise.reject("SEEK_ERROR", e.message, e)
+        }
+    }
+
+    @ReactMethod
+    fun seekRelative(seconds: Int, promise: Promise) {
+        try {
+            mediaPlayer?.let {
+                val newPos = Math.max(0, Math.min(it.currentPosition + (seconds * 1000), it.duration))
+                it.seekTo(newPos)
+                promise.resolve(newPos)
+                return
+            }
+            promise.resolve(0)
+        } catch (e: Exception) {
+            promise.reject("SEEK_ERROR", e.message, e)
+        }
+    }
+
+    @ReactMethod
+    fun getProgress(promise: Promise) {
+        try {
+            mediaPlayer?.let {
+                val map = Arguments.createMap().apply {
+                    putInt("currentPosition", it.currentPosition)
+                    putInt("duration", it.duration)
+                    putBoolean("isPlaying", it.isPlaying)
+                }
+                promise.resolve(map)
+                return
+            }
+            val emptyMap = Arguments.createMap().apply {
+                putInt("currentPosition", 0)
+                putInt("duration", 0)
+                putBoolean("isPlaying", false)
+            }
+            promise.resolve(emptyMap)
+        } catch (e: Exception) {
+            promise.reject("PROGRESS_ERROR", e.message, e)
+        }
+    }
+
+    @ReactMethod
     fun isPlaying(promise: Promise) {
         promise.resolve(mediaPlayer?.isPlaying == true)
     }

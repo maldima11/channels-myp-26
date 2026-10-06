@@ -141,7 +141,9 @@ export default function App() {
   // Multilingual Speech (MMS) Audio Playback States
   const [audioLang, setAudioLang] = useState('nde'); // Default to isiNdebele (Umzingwane)
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [showCitationModal, setShowCitationModal] = useState(false);
+  const [isAudioPaused, setIsAudioPaused] = useState(false);
+  const [audioPos, setAudioPos] = useState(0); // in seconds
+  const [audioDur, setAudioDur] = useState(0); // in seconds
 
   // Network & Server Connectivity (silently managed in background)
   const [serverHost, setServerHost] = useState(DEFAULT_HOST);
@@ -218,20 +220,29 @@ export default function App() {
 
   // Native Audio Event Listeners (Meta MMS Player)
   useEffect(() => {
-    let subStart, subEnd, subErr;
+    let subStart, subEnd, subErr, subPause;
     if (DeviceEventEmitter) {
       subStart = DeviceEventEmitter.addListener('onAudioPlaybackStarted', () => {
         setIsPlayingAudio(true);
+        setIsAudioPaused(false);
+      });
+      subPause = DeviceEventEmitter.addListener('onAudioPlaybackPaused', () => {
+        setIsPlayingAudio(false);
+        setIsAudioPaused(true);
       });
       subEnd = DeviceEventEmitter.addListener('onAudioPlaybackEnded', () => {
         setIsPlayingAudio(false);
+        setIsAudioPaused(false);
+        setAudioPos(0);
       });
-      subErr = DeviceEventEmitter.addListener('onAudioPlaybackError', (err) => {
+      subErr = DeviceEventEmitter.addListener('onAudioPlaybackError', () => {
         setIsPlayingAudio(false);
+        setIsAudioPaused(false);
       });
     }
     return () => {
       subStart && subStart.remove();
+      subPause && subPause.remove();
       subEnd && subEnd.remove();
       subErr && subErr.remove();
       if (AudioPlayerModule && AudioPlayerModule.stop) {
@@ -239,6 +250,27 @@ export default function App() {
       }
     };
   }, []);
+
+  // Periodic Progress Poller for Native Audio Playback
+  useEffect(() => {
+    let timer;
+    if (isPlayingAudio) {
+      timer = setInterval(async () => {
+        if (AudioPlayerModule && AudioPlayerModule.getProgress) {
+          try {
+            const prog = await AudioPlayerModule.getProgress();
+            if (prog) {
+              setAudioPos(Math.floor((prog.currentPosition || 0) / 1000));
+              setAudioDur(Math.floor((prog.duration || 0) / 1000));
+            }
+          } catch (e) {}
+        }
+      }, 500);
+    }
+    return () => {
+      timer && clearInterval(timer);
+    };
+  }, [isPlayingAudio]);
 
   // Helper to fetch current localized advisory text
   const getCurrentAdvisoryText = (lang = audioLang) => {
@@ -248,21 +280,51 @@ export default function App() {
     return langData[condition] || forecast?.advisory || "Standard agronomic advisory for Umzingwane.";
   };
 
-  // Multilingual Speech (MMS) Audio Playback Toggle
+  // Multilingual Speech (MMS) Audio Playback Toggle & Controls
   const handleToggleAudio = async (selectedLang) => {
     const targetLang = selectedLang || audioLang;
-    if (isPlayingAudio && audioLang === targetLang) {
-      if (AudioPlayerModule && AudioPlayerModule.stop) {
+    
+    // If switching language while active, switch & play new lang
+    if (audioLang !== targetLang) {
+      setAudioLang(targetLang);
+      await startAudioTrack(targetLang);
+      return;
+    }
+
+    if (isPlayingAudio) {
+      // Pause current playback
+      if (AudioPlayerModule && AudioPlayerModule.pause) {
         try {
-          await AudioPlayerModule.stop();
+          await AudioPlayerModule.pause();
+          setIsPlayingAudio(false);
+          setIsAudioPaused(true);
+          return;
         } catch (e) {}
       }
       setIsPlayingAudio(false);
       return;
     }
 
+    if (isAudioPaused) {
+      // Resume playback
+      if (AudioPlayerModule && AudioPlayerModule.resume) {
+        try {
+          await AudioPlayerModule.resume();
+          setIsPlayingAudio(true);
+          setIsAudioPaused(false);
+          return;
+        } catch (e) {}
+      }
+    }
+
+    // Otherwise start from beginning
+    await startAudioTrack(targetLang);
+  };
+
+  const startAudioTrack = async (targetLang) => {
     setAudioLang(targetLang);
     setIsPlayingAudio(true);
+    setIsAudioPaused(false);
 
     const condition = precip < 0.45 ? 'drought' : 'standard';
     const rawResName = `advisory_${variety.toLowerCase()}_${condition}_${targetLang}`;
@@ -288,14 +350,58 @@ export default function App() {
           }
           const audio = new window.Audio(streamingUrl);
           window._currentAudio = audio;
-          audio.onended = () => setIsPlayingAudio(false);
-          audio.onerror = () => setIsPlayingAudio(false);
+          audio.onended = () => {
+            setIsPlayingAudio(false);
+            setIsAudioPaused(false);
+            setAudioPos(0);
+          };
+          audio.onerror = () => {
+            setIsPlayingAudio(false);
+            setIsAudioPaused(false);
+          };
+          audio.ontimeupdate = () => {
+            setAudioPos(Math.floor(audio.currentTime || 0));
+            setAudioDur(Math.floor(audio.duration || 0));
+          };
           await audio.play();
         }
       } catch (e) {
         setIsPlayingAudio(false);
       }
     }
+  };
+
+  const handleSeekAudio = async (deltaSec) => {
+    if (AudioPlayerModule && AudioPlayerModule.seekRelative) {
+      try {
+        const newPos = await AudioPlayerModule.seekRelative(deltaSec);
+        setAudioPos(Math.floor(newPos / 1000));
+      } catch (e) {}
+    } else if (typeof window !== 'undefined' && window._currentAudio) {
+      const a = window._currentAudio;
+      a.currentTime = Math.max(0, Math.min(a.currentTime + deltaSec, a.duration || 60));
+    }
+  };
+
+  const handleStopAudio = async () => {
+    if (AudioPlayerModule && AudioPlayerModule.stop) {
+      try {
+        await AudioPlayerModule.stop();
+      } catch (e) {}
+    } else if (typeof window !== 'undefined' && window._currentAudio) {
+      window._currentAudio.pause();
+      window._currentAudio.currentTime = 0;
+    }
+    setIsPlayingAudio(false);
+    setIsAudioPaused(false);
+    setAudioPos(0);
+  };
+
+  const formatAudioTime = (sec) => {
+    if (!sec || isNaN(sec) || sec < 0) return "0:00";
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
   // Ward selector defaults loader
@@ -1344,13 +1450,6 @@ Security Signature: Authorized Agritex Officer System Log Verification
                     Massive Multilingual Speech (MMS) Synthesis
                   </Text>
                 </View>
-                <TouchableOpacity
-                  style={[styles.mmsCitationBadge, isLightTheme && styles.mmsCitationBadgeLight]}
-                  onPress={() => setShowCitationModal(prev => !prev)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.mmsCitationBadgeText}>🎓 Thesis Ref</Text>
-                </TouchableOpacity>
               </View>
 
               {/* Language Pill Selector */}
@@ -1403,55 +1502,83 @@ Security Signature: Authorized Agritex Officer System Log Verification
                 </Text>
               </View>
 
-              {/* Audio Playback Controller Button */}
-              <TouchableOpacity
-                style={[
-                  styles.mmsPlayBtn,
-                  isPlayingAudio ? styles.mmsPlayBtnActive : (audioLang === 'nde' ? styles.mmsPlayBtnNde : styles.mmsPlayBtnSna)
-                ]}
-                onPress={() => handleToggleAudio(audioLang)}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.mmsPlayIcon}>
-                  {isPlayingAudio ? '⏹️' : '🔊'}
-                </Text>
-                <View style={{ flex: 1, marginLeft: 10 }}>
-                  <Text style={styles.mmsPlayBtnTitle}>
-                    {isPlayingAudio 
-                      ? 'Misa Umsindo (Stop Audio Playback)' 
-                      : (audioLang === 'nde' 
-                          ? 'Lalela nge-Sindebele (Listen in Ndebele)' 
-                          : (audioLang === 'sna' 
-                              ? 'Teerera ne-ChiShona (Listen in Shona)' 
-                              : 'Play Spoken English Audio'))}
+              {/* Interactive Audio Controls Deck */}
+              <View style={[styles.mmsControlDeck, isLightTheme && styles.mmsControlDeckLight]}>
+                {/* Timeline Progress Bar & Time Labels */}
+                <View style={styles.mmsProgressRow}>
+                  <Text style={[styles.mmsTimeLabel, isLightTheme && styles.mmsTimeLabelLight]}>
+                    {formatAudioTime(audioPos)}
                   </Text>
-                  <Text style={styles.mmsPlayBtnSub}>
-                    {isPlayingAudio ? 'Audio active • Tap to pause' : 'Meta MMS VITS Synthesis • Tap to play'}
+                  <View style={[styles.mmsTrackBar, isLightTheme && styles.mmsTrackBarLight]}>
+                    <View 
+                      style={[
+                        styles.mmsTrackFill, 
+                        { width: `${audioDur > 0 ? Math.min(100, (audioPos / audioDur) * 100) : (isPlayingAudio ? 50 : 0)}%` }
+                      ]} 
+                    />
+                  </View>
+                  <Text style={[styles.mmsTimeLabel, isLightTheme && styles.mmsTimeLabelLight]}>
+                    {audioDur > 0 ? formatAudioTime(audioDur) : (isPlayingAudio ? "..." : "0:14")}
                   </Text>
                 </View>
-              </TouchableOpacity>
 
-              {/* Collapsible Thesis Reference Card */}
-              {showCitationModal && (
-                <View style={[styles.mmsCitationCard, isLightTheme && styles.mmsCitationCardLight]}>
-                  <Text style={[styles.mmsCitationTitle, isLightTheme && styles.mmsCitationTitleLight]}>
-                    📚 Research Paper Citation (Meta MMS)
-                  </Text>
-                  <Text style={[styles.mmsCitationPaper, isLightTheme && styles.mmsCitationPaperLight]}>
-                    "Scaling Speech Technology to 1,000+ Languages"
-                  </Text>
-                  <Text style={styles.mmsCitationMeta}>
-                    Vineel Pratap, Andros Tjandra, Bowen Shi, Paden Tomasello, Arun Babu, Sayani Kundu, et al. (Meta AI).
-                    {"\n"}IEEE Transactions on Pattern Analysis and Machine Intelligence (TPAMI) / arXiv:2305.13516 (2024).
-                  </Text>
-                  <View style={styles.mmsCitationDivider} />
-                  <Text style={[styles.mmsCitationBody, isLightTheme && styles.mmsCitationBodyLight]}>
-                    • <Text style={{ fontWeight: 'bold' }}>TTS Architecture:</Text> VITS end-to-end variational acoustic synthesis.
-                    {"\n"}• <Text style={{ fontWeight: 'bold' }}>Model Weights:</Text> facebook/mms-tts-nde (Northern Ndebele) & facebook/mms-tts-sna (Shona).
-                    {"\n"}• <Text style={{ fontWeight: 'bold' }}>Agronomic Impact:</Text> Overcomes literacy barriers for smallholder farmers in Umzingwane District by vocalizing biophysical yield recommendations.
+                {/* Transport Button Controls Row */}
+                <View style={styles.mmsTransportRow}>
+                  <TouchableOpacity
+                    style={[styles.mmsAuxBtn, isLightTheme && styles.mmsAuxBtnLight]}
+                    onPress={() => handleSeekAudio(-5)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.mmsAuxBtnText, isLightTheme && styles.mmsAuxBtnTextLight]}>⏪ -5s</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.mmsPrimaryPlayBtn,
+                      isPlayingAudio ? styles.mmsPrimaryPlayBtnActive : (audioLang === 'nde' ? styles.mmsPlayBtnNde : styles.mmsPlayBtnSna)
+                    ]}
+                    onPress={() => handleToggleAudio(audioLang)}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.mmsPrimaryPlayIcon}>
+                      {isPlayingAudio ? '⏸️' : '▶️'}
+                    </Text>
+                    <Text style={styles.mmsPrimaryPlayText}>
+                      {isPlayingAudio 
+                        ? 'Pause' 
+                        : (isAudioPaused 
+                            ? 'Resume' 
+                            : (audioLang === 'nde' ? 'Lalela' : (audioLang === 'sna' ? 'Teerera' : 'Play')))}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.mmsAuxBtn, isLightTheme && styles.mmsAuxBtnLight]}
+                    onPress={() => handleSeekAudio(5)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.mmsAuxBtnText, isLightTheme && styles.mmsAuxBtnTextLight]}>+5s ⏩</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.mmsAuxBtn, isLightTheme && styles.mmsAuxBtnLight]}
+                    onPress={handleStopAudio}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.mmsAuxBtnText, isLightTheme && styles.mmsAuxBtnTextLight]}>⏹ Stop</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Live Status Indicator Bar */}
+                <View style={styles.mmsStatusRow}>
+                  <View style={[styles.mmsStatusDot, isPlayingAudio && styles.mmsStatusDotActive]} />
+                  <Text style={[styles.mmsStatusLabel, isLightTheme && styles.mmsStatusLabelLight]}>
+                    {isPlayingAudio 
+                      ? `🔊 Playing Spoken Advisory (${audioLang === 'nde' ? 'isiNdebele' : (audioLang === 'sna' ? 'chiShona' : 'English')})`
+                      : (isAudioPaused ? '⏸ Audio paused • Tap Resume' : 'Ready to play • Meta MMS Offline')}
                   </Text>
                 </View>
-              )}
+              </View>
             </View>
 
             {/* INDICATOR GLOSSARY ACCORDION */}
@@ -2760,34 +2887,120 @@ const styles = StyleSheet.create({
   mmsTextContentLight: {
     color: '#334155',
   },
-  mmsPlayBtn: {
+  mmsControlDeck: {
+    marginTop: 12,
+    padding: 14,
+    borderRadius: 14,
+    backgroundColor: 'rgba(15, 23, 42, 0.7)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  mmsControlDeckLight: {
+    backgroundColor: '#ffffff',
+    borderColor: '#e2e8f0',
+  },
+  mmsProgressRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
+  mmsTimeLabel: {
+    fontSize: 11,
+    color: '#94a3b8',
+    fontVariant: ['tabular-nums'],
+    width: 32,
+    textAlign: 'center',
+  },
+  mmsTimeLabelLight: {
+    color: '#64748b',
+  },
+  mmsTrackBar: {
+    flex: 1,
+    height: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 3,
+    marginHorizontal: 8,
+    overflow: 'hidden',
+  },
+  mmsTrackBarLight: {
+    backgroundColor: '#e2e8f0',
+  },
+  mmsTrackFill: {
+    height: '100%',
+    backgroundColor: '#10b981',
+    borderRadius: 3,
+  },
+  mmsTransportRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  mmsPrimaryPlayBtn: {
+    flex: 2,
+    height: 44,
     borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
   },
-  mmsPlayBtnNde: {
-    backgroundColor: '#059669',
-  },
-  mmsPlayBtnSna: {
-    backgroundColor: '#4f46e5',
-  },
-  mmsPlayBtnActive: {
+  mmsPrimaryPlayBtnActive: {
     backgroundColor: '#e11d48',
   },
-  mmsPlayIcon: {
-    fontSize: 22,
+  mmsPrimaryPlayIcon: {
+    fontSize: 18,
   },
-  mmsPlayBtnTitle: {
+  mmsPrimaryPlayText: {
     color: '#ffffff',
     fontSize: 14,
     fontWeight: 'bold',
   },
-  mmsPlayBtnSub: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 10.5,
-    marginTop: 2,
+  mmsAuxBtn: {
+    height: 44,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.07)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mmsAuxBtnLight: {
+    backgroundColor: '#f1f5f9',
+    borderColor: '#cbd5e1',
+  },
+  mmsAuxBtnText: {
+    color: '#e2e8f0',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  mmsAuxBtnTextLight: {
+    color: '#1e293b',
+  },
+  mmsStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    gap: 6,
+  },
+  mmsStatusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#64748b',
+  },
+  mmsStatusDotActive: {
+    backgroundColor: '#10b981',
+  },
+  mmsStatusLabel: {
+    fontSize: 11,
+    color: '#94a3b8',
+    fontWeight: '500',
+  },
+  mmsStatusLabelLight: {
+    color: '#64748b',
   },
   mmsCitationCard: {
     marginTop: 14,
