@@ -14,6 +14,7 @@ import {
   Dimensions,
   Platform,
   Share,
+  Image,
   NativeModules,
   DeviceEventEmitter
 } from 'react-native';
@@ -827,6 +828,11 @@ Security Signature: Authorized Agritex Officer System Log Verification
           
           {/* DUAL AUTHENTICATION CARD (SIGN IN / FARMER SIGN UP) */}
           <View style={[styles.authCard, isLightTheme && styles.authCardLight]}>
+            <Image 
+              source={require('./assets/logo.png')} 
+              style={{ width: 76, height: 76, alignSelf: 'center', marginBottom: 14 }} 
+              resizeMode="contain" 
+            />
             <View style={styles.authHeaderBadge}>
               <Text style={styles.authHeaderBadgeText}>NUST MPHIL PIPELINE</Text>
             </View>
@@ -1186,6 +1192,11 @@ Security Signature: Authorized Agritex Officer System Log Verification
       
       {/* HEADER */}
       <View style={[styles.header, isLightTheme && styles.headerLight]}>
+        <Image 
+          source={require('./assets/logo.png')} 
+          style={{ width: 38, height: 38, marginRight: 10, borderRadius: 8 }} 
+          resizeMode="contain" 
+        />
         <View style={{ flex: 1 }}>
           <Text style={[styles.headerTitle, isLightTheme && styles.headerTitleLight]}>NUST Yield Portal</Text>
           <Text style={styles.headerSub}>

@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NUST Yield Portal - Admin & SMS Broadcast Center</title>
+    <!-- Brand Favicons -->
+    <link rel="icon" type="image/svg+xml" href="../static/logo.svg">
+    <link rel="alternate icon" type="image/png" href="../static/favicon.png">
+    <link rel="apple-touch-icon" href="../static/logo-192.png">
     <!-- Modern Premium Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,7 +18,10 @@
 
     <!-- MAIN HEADER -->
     <header>
-        <div class="logo-text">NUST Admin Panel</div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <img src="../static/logo.svg" alt="NUST Crest Logo" style="width: 36px; height: 36px; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(16, 185, 129, 0.3));">
+            <div class="logo-text">NUST Admin Panel</div>
+        </div>
         <div class="header-metadata">
             <div class="badge" id="gateway-badge">SMS Gateway: Active</div>
             <button class="theme-btn" onclick="toggleTheme()" title="Toggle Interface Mode">🌓 Theme Mode</button>

@@ -1,0 +1,191 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradients -->
+    <linearGradient id="shieldBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b1329"/>
+      <stop offset="50%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+
+    <!-- Outer Rim Glow Gradient -->
+    <linearGradient id="rimGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="50%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+
+    <!-- Golden Maize Kernel Gradient -->
+    <linearGradient id="maizeGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="40%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+
+    <!-- Sprout / Emerald Leaf Gradient -->
+    <linearGradient id="leafGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="50%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+
+    <!-- Neural Circuit Data Accent -->
+    <linearGradient id="dataCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#818cf8"/>
+    </linearGradient>
+
+    <!-- Subtle Drop Shadow -->
+    <filter id="academicShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- ACADEMIC SHIELD / SEAL BASE -->
+  <path d="M 256,24 
+           C 380,24 456,64 456,160 
+           C 456,310 360,430 256,488 
+           C 152,430 56,310 56,160 
+           C 56,64 132,24 256,24 Z" 
+        fill="url(#shieldBg)" 
+        stroke="url(#rimGlow)" 
+        stroke-width="10" 
+        stroke-linejoin="round"
+        filter="url(#academicShadow)"/>
+
+  <!-- INNER ACADEMIC ACCENT BORDER -->
+  <path d="M 256,42 
+           C 364,42 436,78 436,166 
+           C 436,298 348,406 256,462 
+           C 164,406 76,298 76,166 
+           C 76,78 148,42 256,42 Z" 
+        fill="none" 
+        stroke="rgba(255, 255, 255, 0.12)" 
+        stroke-width="2.5" 
+        stroke-dasharray="6,4"/>
+
+  <!-- AI / BIOPHYSICAL TELEMETRY CIRCUIT NODES (Left & Right) -->
+  <g stroke="url(#dataCyan)" stroke-width="2.5" fill="none" opacity="0.85">
+    <!-- Left Circuit Branches -->
+    <path d="M 170,220 L 130,220 L 105,250 L 105,300"/>
+    <circle cx="170" cy="220" r="4.5" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5"/>
+    <circle cx="105" cy="300" r="4" fill="#38bdf8"/>
+
+    <path d="M 190,160 L 140,160 L 120,135"/>
+    <circle cx="190" cy="160" r="4" fill="#38bdf8"/>
+    <circle cx="120" cy="135" r="3.5" fill="#818cf8"/>
+
+    <!-- Right Circuit Branches -->
+    <path d="M 342,220 L 382,220 L 407,250 L 407,300"/>
+    <circle cx="342" cy="220" r="4.5" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5"/>
+    <circle cx="407" cy="300" r="4" fill="#38bdf8"/>
+
+    <path d="M 322,160 L 372,160 L 392,135"/>
+    <circle cx="322" cy="160" r="4" fill="#38bdf8"/>
+    <circle cx="392" cy="135" r="3.5" fill="#818cf8"/>
+  </g>
+
+  <!-- LEFT MAIZE HUSK / LEAF (CURVING OUTWARD & UP) -->
+  <path d="M 256,360 
+           C 200,340 148,270 152,190 
+           C 155,145 185,105 215,85 
+           C 200,125 210,185 242,230 
+           C 250,242 254,260 256,360 Z" 
+        fill="url(#leafGreen)" 
+        stroke="#064e3b" 
+        stroke-width="2.5" 
+        opacity="0.95"/>
+
+  <!-- RIGHT MAIZE HUSK / LEAF -->
+  <path d="M 256,360 
+           C 312,340 364,270 360,190 
+           C 357,145 327,105 297,85 
+           C 312,125 302,185 270,230 
+           C 262,242 258,260 256,360 Z" 
+        fill="url(#leafGreen)" 
+        stroke="#064e3b" 
+        stroke-width="2.5" 
+        opacity="0.95"/>
+
+  <!-- CENTRAL MAIZE COB (GOLDEN KERNEL CORE) -->
+  <path d="M 256,80 
+           C 285,100 295,145 295,210 
+           C 295,280 278,335 256,360 
+           C 234,335 217,280 217,210 
+           C 217,145 227,100 256,80 Z" 
+        fill="url(#maizeGold)" 
+        stroke="#b45309" 
+        stroke-width="3"/>
+
+  <!-- STYLIZED KERNEL ROWS (GEOMETRIC FACETS) -->
+  <g fill="#fef08a" opacity="0.9">
+    <!-- Row 1 (Top) -->
+    <ellipse cx="256" cy="118" rx="8" ry="6"/>
+
+    <!-- Row 2 -->
+    <ellipse cx="244" cy="144" rx="9" ry="7"/>
+    <ellipse cx="268" cy="144" rx="9" ry="7"/>
+
+    <!-- Row 3 -->
+    <ellipse cx="236" cy="174" rx="10" ry="8"/>
+    <ellipse cx="256" cy="174" rx="10.5" ry="8"/>
+    <ellipse cx="276" cy="174" rx="10" ry="8"/>
+
+    <!-- Row 4 (Center - Fullest) -->
+    <ellipse cx="232" cy="206" rx="11" ry="8.5"/>
+    <ellipse cx="256" cy="206" rx="11.5" ry="8.5"/>
+    <ellipse cx="280" cy="206" rx="11" ry="8.5"/>
+
+    <!-- Row 5 -->
+    <ellipse cx="234" cy="238" rx="10.5" ry="8.5"/>
+    <ellipse cx="256" cy="238" rx="11" ry="8.5"/>
+    <ellipse cx="278" cy="238" rx="10.5" ry="8.5"/>
+
+    <!-- Row 6 -->
+    <ellipse cx="240" cy="270" rx="10" ry="8"/>
+    <ellipse cx="256" cy="270" rx="10.5" ry="8"/>
+    <ellipse cx="272" cy="270" rx="10" ry="8"/>
+
+    <!-- Row 7 -->
+    <ellipse cx="246" cy="300" rx="9" ry="7"/>
+    <ellipse cx="266" cy="300" rx="9" ry="7"/>
+
+    <!-- Row 8 (Base) -->
+    <ellipse cx="256" cy="326" rx="8" ry="6"/>
+  </g>
+
+  <!-- CENTRAL SPROUT BUD & SEED POINT (PULSING APEX) -->
+  <circle cx="256" cy="76" r="5" fill="#fef08a" stroke="#d97706" stroke-width="2"/>
+
+  <!-- ACADEMIC BANNER BASE ("NUST") -->
+  <path d="M 160,395 
+           L 352,395 
+           L 338,432 
+           L 256,444 
+           L 174,432 Z" 
+        fill="#0f172a" 
+        stroke="url(#rimGlow)" 
+        stroke-width="3" 
+        stroke-linejoin="round"/>
+
+  <!-- BANNER TYPOGRAPHY -->
+  <text x="256" y="423" 
+        font-family="'Space Grotesk', 'Outfit', sans-serif" 
+        font-size="22" 
+        font-weight="800" 
+        letter-spacing="5" 
+        fill="#f8fafc" 
+        text-anchor="middle">
+    NUST
+  </text>
+
+  <!-- SUBTITLE SEAL MICROTEXT -->
+  <text x="256" y="468" 
+        font-family="'Outfit', sans-serif" 
+        font-size="11" 
+        font-weight="700" 
+        letter-spacing="3" 
+        fill="#94a3b8" 
+        text-anchor="middle">
+    AGRI-YIELD AI
+  </text>
+</svg>
