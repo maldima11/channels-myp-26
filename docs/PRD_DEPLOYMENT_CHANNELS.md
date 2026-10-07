@@ -1,10 +1,9 @@
 # PRODUCT REQUIREMENTS DOCUMENT (PRD)
 ## Multi-Channel Agricultural Decision Support System (DSS) for Maize Yield Forecasting & Extension Advisory
-**Institution:** National University of Science and Technology (NUST), Bulawayo, Zimbabwe  
+**System Designation:** Maize Yield Advisory Tool  
 **Target Agro-Ecological Zone:** Umzingwane District (Natural Regions IV & V)  
-**System Designation:** NUST Agri-Yield AI DSS  
 **Version:** 2.4.0 (Production-Ready)  
-**Document Classification:** Academic & Engineering Specification  
+**Document Classification:** Engineering & Deployment Specification  
 
 ---
 
@@ -183,23 +182,22 @@ All four channels communicate with a unified, high-performance biophysical compu
 
 ## 4. Brand Identity & Visual Asset System
 
-The visual identity embodies academic prestige, technological innovation, and sustainable agro-ecological stewardship.
+The visual identity embodies modern agritech simplicity, clarity, and sustainable crop stewardship.
 
-### 4.1 Heraldic Logo Specification
-- **Shield Silhouette:** Dual-bordered heraldic shield representing academic institutional authority (NUST) and crop resilience against adverse weather shocks.
-- **Golden Maize Cob:** Stylized cob with 12 distinct kernels symbolizing agricultural abundance, harvest optimization, and hybrid seed technology.
-- **Emerald Foliage:** Dual curving leaves curling outward, signifying photosynthetic vitality, soil health, and organic sustainability.
-- **Neural Circuit Traces & Nodes:** Cyan circuit lines radiating from the shield base, denoting artificial intelligence, machine learning inference, and digital extension connectivity.
-- **Institutional Banner:** "NUST AGRI-YIELD AI" ribbon grounding the crest.
+### 4.1 Modern Logo Specification
+- **Clean Squircle Container:** Minimalist dark slate/forest gradient tile (`#091421` to `#0d231a`) providing maximum contrast and modern mobile app aesthetics.
+- **Golden Maize Ear:** Stylized, geometric golden kernels (`#fef08a` to `#f59e0b`) organized into a clean, tapered cob silhouette symbolizing grain yield and harvest quality.
+- **Dynamic Emerald Yield Leaf:** A sweeping emerald leaf (`#34d399` to `#047857`) curling gracefully from the base around the ear with an upward apex, representing upward yield trajectory and advisory growth.
+- **Subtle Growth Glow:** Ambient radial solar illumination emphasizing agricultural vitality without clutter or archaic ornamental crests.
 
 ### 4.2 Official Color Matrix
 | Tone Name | Hex Code | Usage |
 |---|---|---|
-| Academic Navy | `#0b1329` – `#1e293b` | Primary background, heraldic shield field |
-| Harvest Gold | `#f59e0b` – `#fbbf24` | Maize kernels, yield indicators, highlights |
-| Agro Emerald | `#10b981` – `#059669` | Leaves, success states, farmer portal theme |
-| AI Cyan | `#38bdf8` – `#0284c7` | Neural circuitry, model telemetry, data charts |
-| Institutional Indigo | `#6366f1` – `#818cf8` | Agritex officer console, administrative badges |
+| Deep Forest Slate | `#091421` – `#0d231a` | App icon background, dark surfaces |
+| Harvest Gold | `#f59e0b` – `#fbbf24` | Maize kernels, yield indicator highlights |
+| Agro Emerald | `#10b981` – `#34d399` | Growth leaf, success alerts, farmer portal accents |
+| Leaf Shadow | `#047857` – `#065f46` | Foliage depth, secondary balance leaf |
+| Accent Indigo | `#6366f1` – `#818cf8` | Console actions, officer role badges |
 
 ### 4.3 Asset Manifest Across Platforms
 - **Web Portal:**

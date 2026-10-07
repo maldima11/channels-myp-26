@@ -1,191 +1,150 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
-    <!-- Background Gradients -->
-    <linearGradient id="shieldBg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0b1329"/>
-      <stop offset="50%" stop-color="#0f172a"/>
-      <stop offset="100%" stop-color="#1e293b"/>
+    <!-- Modern Dark Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#091421"/>
+      <stop offset="60%" stop-color="#0d231a"/>
+      <stop offset="100%" stop-color="#081b14"/>
     </linearGradient>
 
-    <!-- Outer Rim Glow Gradient -->
-    <linearGradient id="rimGlow" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#10b981"/>
-      <stop offset="50%" stop-color="#6366f1"/>
+    <!-- Vibrant Maize Gold Gradient -->
+    <linearGradient id="maizeGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="35%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#ea580c"/>
+    </linearGradient>
+
+    <!-- Golden Kernel Highlight Gradient -->
+    <linearGradient id="kernelGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fef9c3"/>
       <stop offset="100%" stop-color="#f59e0b"/>
     </linearGradient>
 
-    <!-- Golden Maize Kernel Gradient -->
-    <linearGradient id="maizeGold" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#fef08a"/>
-      <stop offset="40%" stop-color="#f59e0b"/>
-      <stop offset="100%" stop-color="#d97706"/>
+    <!-- Sweeping Leaf Gradient (Primary Emerald) -->
+    <linearGradient id="leafPrimary" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#047857"/>
+      <stop offset="45%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#6ee7b7"/>
     </linearGradient>
 
-    <!-- Sprout / Emerald Leaf Gradient -->
-    <linearGradient id="leafGreen" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#34d399"/>
-      <stop offset="50%" stop-color="#10b981"/>
-      <stop offset="100%" stop-color="#047857"/>
+    <!-- Secondary Leaf Accent Gradient -->
+    <linearGradient id="leafSecondary" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#065f46"/>
+      <stop offset="70%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#34d399"/>
     </linearGradient>
 
-    <!-- Neural Circuit Data Accent -->
-    <linearGradient id="dataCyan" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38bdf8"/>
-      <stop offset="100%" stop-color="#818cf8"/>
-    </linearGradient>
+    <!-- Subtle Radial Glow Behind Maize -->
+    <radialGradient id="sunGlow" cx="50%" cy="45%" r="45%">
+      <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.25"/>
+      <stop offset="60%" stop-color="#10b981" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#091421" stop-opacity="0"/>
+    </radialGradient>
 
-    <!-- Subtle Drop Shadow -->
-    <filter id="academicShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.5"/>
+    <!-- Soft Ambient Drop Shadow -->
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+
+    <filter id="leafShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="-2" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.35"/>
     </filter>
   </defs>
 
-  <!-- ACADEMIC SHIELD / SEAL BASE -->
-  <path d="M 256,24 
-           C 380,24 456,64 456,160 
-           C 456,310 360,430 256,488 
-           C 152,430 56,310 56,160 
-           C 56,64 132,24 256,24 Z" 
-        fill="url(#shieldBg)" 
-        stroke="url(#rimGlow)" 
-        stroke-width="10" 
-        stroke-linejoin="round"
-        filter="url(#academicShadow)"/>
+  <!-- MODERN APP CONTAINER SQUIRCLE -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  
+  <!-- INNER SUBTLE GLASS RIM BORDER -->
+  <rect width="504" height="504" x="4" y="4" rx="108" fill="none" stroke="rgba(255, 255, 255, 0.12)" stroke-width="2"/>
 
-  <!-- INNER ACADEMIC ACCENT BORDER -->
-  <path d="M 256,42 
-           C 364,42 436,78 436,166 
-           C 436,298 348,406 256,462 
-           C 164,406 76,298 76,166 
-           C 76,78 148,42 256,42 Z" 
-        fill="none" 
-        stroke="rgba(255, 255, 255, 0.12)" 
-        stroke-width="2.5" 
-        stroke-dasharray="6,4"/>
+  <!-- AMBIENT SOLAR/GROWTH GLOW -->
+  <circle cx="256" cy="245" r="190" fill="url(#sunGlow)"/>
 
-  <!-- AI / BIOPHYSICAL TELEMETRY CIRCUIT NODES (Left & Right) -->
-  <g stroke="url(#dataCyan)" stroke-width="2.5" fill="none" opacity="0.85">
-    <!-- Left Circuit Branches -->
-    <path d="M 170,220 L 130,220 L 105,250 L 105,300"/>
-    <circle cx="170" cy="220" r="4.5" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5"/>
-    <circle cx="105" cy="300" r="4" fill="#38bdf8"/>
+  <!-- ======================================================== -->
+  <!-- CENTRAL EMBLEM: STYLIZED MODERN MAIZE EAR & YIELD SPROUT  -->
+  <!-- ======================================================== -->
+  <g filter="url(#softShadow)" transform="translate(0, -6)">
+    
+    <!-- BACK/RIGHT ACCENT LEAF (Secondary Balance) -->
+    <path d="M 270,360 
+             C 325,355 375,310 380,245 
+             C 382,215 372,185 352,165 
+             C 358,198 348,235 328,265 
+             C 310,292 288,328 270,360 Z" 
+          fill="url(#leafSecondary)" 
+          opacity="0.95"/>
 
-    <path d="M 190,160 L 140,160 L 120,135"/>
-    <circle cx="190" cy="160" r="4" fill="#38bdf8"/>
-    <circle cx="120" cy="135" r="3.5" fill="#818cf8"/>
+    <!-- MAIZE EAR BASE SILHOUETTE (Deep Rich Warm Core) -->
+    <path d="M 256,110 
+             C 275,110 294,128 300,155 
+             C 308,190 308,270 295,315 
+             C 285,348 268,365 256,365 
+             C 244,365 227,348 217,315 
+             C 204,270 204,190 212,155 
+             C 218,128 237,110 256,110 Z" 
+          fill="url(#maizeGold)"/>
 
-    <!-- Right Circuit Branches -->
-    <path d="M 342,220 L 382,220 L 407,250 L 407,300"/>
-    <circle cx="342" cy="220" r="4.5" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5"/>
-    <circle cx="407" cy="300" r="4" fill="#38bdf8"/>
+    <!-- CLEAN MODERN GEOMETRIC KERNELS (Pill/Facet Arrangement) -->
+    <g fill="url(#kernelGlow)" opacity="0.95">
+      <!-- Tip Kernel -->
+      <rect x="246" y="122" width="20" height="26" rx="10"/>
 
-    <path d="M 322,160 L 372,160 L 392,135"/>
-    <circle cx="322" cy="160" r="4" fill="#38bdf8"/>
-    <circle cx="392" cy="135" r="3.5" fill="#818cf8"/>
+      <!-- Row 1 -->
+      <rect x="227" y="154" width="18" height="25" rx="9"/>
+      <rect x="247" y="152" width="18" height="27" rx="9"/>
+      <rect x="267" y="154" width="18" height="25" rx="9"/>
+
+      <!-- Row 2 -->
+      <rect x="223" y="184" width="19" height="26" rx="9.5"/>
+      <rect x="246" y="183" width="20" height="28" rx="10"/>
+      <rect x="270" y="184" width="19" height="26" rx="9.5"/>
+
+      <!-- Row 3 -->
+      <rect x="222" y="215" width="20" height="27" rx="10"/>
+      <rect x="245" y="214" width="22" height="29" rx="10"/>
+      <rect x="270" y="215" width="20" height="27" rx="10"/>
+
+      <!-- Row 4 -->
+      <rect x="223" y="246" width="20" height="27" rx="10"/>
+      <rect x="246" y="246" width="20" height="28" rx="10"/>
+      <rect x="269" y="246" width="20" height="27" rx="10"/>
+
+      <!-- Row 5 -->
+      <rect x="228" y="277" width="19" height="26" rx="9.5"/>
+      <rect x="247" y="277" width="18" height="27" rx="9"/>
+      <rect x="265" y="277" width="19" height="26" rx="9.5"/>
+
+      <!-- Row 6 (Bottom taper) -->
+      <rect x="236" y="307" width="18" height="24" rx="9"/>
+      <rect x="258" y="307" width="18" height="24" rx="9"/>
+    </g>
+
+    <!-- MAIN SWEEPING LEAF (Iconic Modern Emerald Arc - Yield & Growth) -->
+    <path d="M 252,382 
+             C 215,380 160,345 142,282 
+             C 128,232 138,172 172,118 
+             C 174,115 178,118 177,122 
+             C 162,170 166,224 194,266 
+             C 214,296 238,328 258,352 
+             C 264,359 260,378 252,382 Z" 
+          fill="url(#leafPrimary)" 
+          filter="url(#leafShadow)"/>
+
+    <!-- ELEGANT LEAF VEIN (Modern Subtle Accent Line) -->
+    <path d="M 172,120 
+             C 166,180 184,242 228,298 
+             C 244,318 255,346 256,368" 
+          fill="none" 
+          stroke="rgba(255, 255, 255, 0.45)" 
+          stroke-width="2.5" 
+          stroke-linecap="round"/>
+
+    <!-- STALK BASE (Grounded Modern Stem) -->
+    <path d="M 248,368 
+             C 246,392 242,408 238,416 
+             C 236,419 240,422 243,421 
+             C 255,416 266,396 268,368 Z" 
+          fill="#059669"/>
   </g>
 
-  <!-- LEFT MAIZE HUSK / LEAF (CURVING OUTWARD & UP) -->
-  <path d="M 256,360 
-           C 200,340 148,270 152,190 
-           C 155,145 185,105 215,85 
-           C 200,125 210,185 242,230 
-           C 250,242 254,260 256,360 Z" 
-        fill="url(#leafGreen)" 
-        stroke="#064e3b" 
-        stroke-width="2.5" 
-        opacity="0.95"/>
-
-  <!-- RIGHT MAIZE HUSK / LEAF -->
-  <path d="M 256,360 
-           C 312,340 364,270 360,190 
-           C 357,145 327,105 297,85 
-           C 312,125 302,185 270,230 
-           C 262,242 258,260 256,360 Z" 
-        fill="url(#leafGreen)" 
-        stroke="#064e3b" 
-        stroke-width="2.5" 
-        opacity="0.95"/>
-
-  <!-- CENTRAL MAIZE COB (GOLDEN KERNEL CORE) -->
-  <path d="M 256,80 
-           C 285,100 295,145 295,210 
-           C 295,280 278,335 256,360 
-           C 234,335 217,280 217,210 
-           C 217,145 227,100 256,80 Z" 
-        fill="url(#maizeGold)" 
-        stroke="#b45309" 
-        stroke-width="3"/>
-
-  <!-- STYLIZED KERNEL ROWS (GEOMETRIC FACETS) -->
-  <g fill="#fef08a" opacity="0.9">
-    <!-- Row 1 (Top) -->
-    <ellipse cx="256" cy="118" rx="8" ry="6"/>
-
-    <!-- Row 2 -->
-    <ellipse cx="244" cy="144" rx="9" ry="7"/>
-    <ellipse cx="268" cy="144" rx="9" ry="7"/>
-
-    <!-- Row 3 -->
-    <ellipse cx="236" cy="174" rx="10" ry="8"/>
-    <ellipse cx="256" cy="174" rx="10.5" ry="8"/>
-    <ellipse cx="276" cy="174" rx="10" ry="8"/>
-
-    <!-- Row 4 (Center - Fullest) -->
-    <ellipse cx="232" cy="206" rx="11" ry="8.5"/>
-    <ellipse cx="256" cy="206" rx="11.5" ry="8.5"/>
-    <ellipse cx="280" cy="206" rx="11" ry="8.5"/>
-
-    <!-- Row 5 -->
-    <ellipse cx="234" cy="238" rx="10.5" ry="8.5"/>
-    <ellipse cx="256" cy="238" rx="11" ry="8.5"/>
-    <ellipse cx="278" cy="238" rx="10.5" ry="8.5"/>
-
-    <!-- Row 6 -->
-    <ellipse cx="240" cy="270" rx="10" ry="8"/>
-    <ellipse cx="256" cy="270" rx="10.5" ry="8"/>
-    <ellipse cx="272" cy="270" rx="10" ry="8"/>
-
-    <!-- Row 7 -->
-    <ellipse cx="246" cy="300" rx="9" ry="7"/>
-    <ellipse cx="266" cy="300" rx="9" ry="7"/>
-
-    <!-- Row 8 (Base) -->
-    <ellipse cx="256" cy="326" rx="8" ry="6"/>
-  </g>
-
-  <!-- CENTRAL SPROUT BUD & SEED POINT (PULSING APEX) -->
-  <circle cx="256" cy="76" r="5" fill="#fef08a" stroke="#d97706" stroke-width="2"/>
-
-  <!-- ACADEMIC BANNER BASE ("NUST") -->
-  <path d="M 160,395 
-           L 352,395 
-           L 338,432 
-           L 256,444 
-           L 174,432 Z" 
-        fill="#0f172a" 
-        stroke="url(#rimGlow)" 
-        stroke-width="3" 
-        stroke-linejoin="round"/>
-
-  <!-- BANNER TYPOGRAPHY -->
-  <text x="256" y="423" 
-        font-family="'Space Grotesk', 'Outfit', sans-serif" 
-        font-size="22" 
-        font-weight="800" 
-        letter-spacing="5" 
-        fill="#f8fafc" 
-        text-anchor="middle">
-    NUST
-  </text>
-
-  <!-- SUBTITLE SEAL MICROTEXT -->
-  <text x="256" y="468" 
-        font-family="'Outfit', sans-serif" 
-        font-size="11" 
-        font-weight="700" 
-        letter-spacing="3" 
-        fill="#94a3b8" 
-        text-anchor="middle">
-    AGRI-YIELD AI
-  </text>
 </svg>

@@ -834,10 +834,10 @@ Security Signature: Authorized Agritex Officer System Log Verification
               resizeMode="contain" 
             />
             <View style={styles.authHeaderBadge}>
-              <Text style={styles.authHeaderBadgeText}>NUST MPHIL PIPELINE</Text>
+              <Text style={styles.authHeaderBadgeText}>AI ADVISORY PIPELINE</Text>
             </View>
 
-            <Text style={[styles.authLogo, isLightTheme && styles.authLogoLight]}>Agritex Portal</Text>
+            <Text style={[styles.authLogo, isLightTheme && styles.authLogoLight]}>Maize Yield Advisory Tool</Text>
             <Text style={[styles.authSubtitle, isLightTheme && styles.authSubtitleLight]}>
               Umzingwane District Yield Forecasting System
             </Text>
@@ -1198,7 +1198,7 @@ Security Signature: Authorized Agritex Officer System Log Verification
           resizeMode="contain" 
         />
         <View style={{ flex: 1 }}>
-          <Text style={[styles.headerTitle, isLightTheme && styles.headerTitleLight]}>NUST Yield Portal</Text>
+          <Text style={[styles.headerTitle, isLightTheme && styles.headerTitleLight]}>Maize Yield Advisory Tool</Text>
           <Text style={styles.headerSub}>
             {userProfile ? `${userProfile.name} • ${userProfile.role}` : 'Umzingwane District'}
           </Text>
