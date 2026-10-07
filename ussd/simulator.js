@@ -36,7 +36,7 @@ function validateUssdResponse(response, testName) {
  * Automated test suite
  */
 async function runAutomatedTests() {
-  console.log("\n🧪 Running NUST USSD Automated Regression & Validation Suite...\n" + BORDER);
+  console.log("\nRunning USSD Automated Regression & Validation Suite...\n" + BORDER);
 
   let passed = 0;
   let total = 0;
@@ -48,11 +48,11 @@ async function runAutomatedTests() {
     validateUssdResponse(resp, name);
 
     if (!resp.startsWith(expectedPrefix)) {
-      console.log(`❌ FAIL\n  Expected prefix '${expectedPrefix}', got:\n  ${resp}`);
+      console.log(`FAIL\n  Expected prefix '${expectedPrefix}', got:\n  ${resp}`);
       return false;
     }
 
-    console.log(`✅ PASS (${resp.length} chars)`);
+    console.log(`PASS (${resp.length} chars)`);
     passed++;
     return true;
   }
@@ -82,7 +82,7 @@ async function runAutomatedTests() {
   await testStep("Invalid Rain Choice ('5')", "1*15*3*5", "CON ");
 
   // --- Suite 6: All 20 Wards Length Verification ---
-  console.log("\n📋 Verifying GSM 160-char ceiling for all 20 Umzingwane Wards (English & isiNdebele)...");
+  console.log("\nVerifying GSM 160-char ceiling for all 20 Umzingwane Wards (English & isiNdebele)...");
   for (let w = 1; w <= 20; w++) {
     // English drought SC301
     const respEn = await processUssdRequest("sess_w", "*384*20#", "+26377111222", `1*${w}*1*1`);
@@ -92,10 +92,10 @@ async function runAutomatedTests() {
     const respNd = await processUssdRequest("sess_w", "*384*20#", "+26377111222", `2*${w}*3*2`);
     validateUssdResponse(respNd, `Ward ${w} ND Normal`);
   }
-  console.log(`✅ Verified all 20 Wards across both languages (40 scenarios). All within <= 160 chars.`);
+  console.log(`Verified all 20 Wards across both languages (40 scenarios). All within <= 160 chars.`);
 
   console.log(BORDER);
-  console.log(`🎉 TEST SUMMARY: ${passed}/${total} test cases passed successfully! All screens 100% GSM compliant.\n`);
+  console.log(`TEST SUMMARY: ${passed}/${total} test cases passed successfully! All screens 100% GSM compliant.\n`);
 }
 
 /**
@@ -108,7 +108,7 @@ async function runInteractiveSimulator() {
   });
 
   console.log("\n========================================================");
-  console.log("📱 FEATURE PHONE USSD SIMULATOR (Umzingwane District)");
+  console.log("FEATURE PHONE USSD SIMULATOR (Umzingwane District)");
   console.log("Simulating: Nokia 105 / Itel 2160 on Econet/NetOne GSM");
   console.log("Dial code:  *384*20#");
   console.log("Type 'quit' or 'exit' at any time to leave simulator.");
@@ -133,15 +133,15 @@ async function runInteractiveSimulator() {
     console.log("+------------------------------------------------------+");
 
     if (isEnd) {
-      console.log(`📨 [SMS Delivery] Advisory dispatched to ${phone}\n`);
+      console.log(`[SMS Delivery] Advisory dispatched to ${phone}\n`);
       rl.close();
       return;
     }
 
-    rl.question("\n⌨️  Enter Keypad Input: ", (input) => {
+    rl.question("\nEnter Keypad Input: ", (input) => {
       const clean = input.trim();
       if (clean.toLowerCase() === 'quit' || clean.toLowerCase() === 'exit') {
-        console.log("👋 Simulator closed.");
+        console.log("Simulator closed.");
         rl.close();
         return;
       }

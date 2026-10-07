@@ -33,12 +33,12 @@
             
             <div style="display: grid; gap: 16px; width: 100%;">
                 <button class="welcome-portal-btn" onclick="showLoginForm('Farmer')" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05)); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; padding: 16px; border-radius: 12px; font-weight: 600; cursor: pointer; text-align: left; transition: all 0.2s;">
-                    <div style="font-size: 15px; margin-bottom: 4px; font-weight: 700;">🌾 Farmer Portal</div>
+                    <div style="font-size: 15px; margin-bottom: 4px; font-weight: 700;">Farmer Portal</div>
                     <div style="font-size: 11px; color: var(--text-muted); font-weight: 400;">Access regional predictions, moisture deficits, and crop calendars.</div>
                 </button>
                 
                 <button class="welcome-portal-btn" onclick="showLoginForm('Agritex Officer')" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.05)); border: 1px solid rgba(99, 102, 241, 0.3); color: #a5b4fc; padding: 16px; border-radius: 12px; font-weight: 600; cursor: pointer; text-align: left; transition: all 0.2s;">
-                    <div style="font-size: 15px; margin-bottom: 4px; font-weight: 700;">👔 Agritex Officer Console</div>
+                    <div style="font-size: 15px; margin-bottom: 4px; font-weight: 700;">Agritex Officer Console</div>
                     <div style="font-size: 11px; color: var(--text-muted); font-weight: 400;">Calibrate biophysical models, download reports, and register accounts.</div>
                 </button>
             </div>
@@ -75,7 +75,6 @@
         <!-- FLOATING PORTAL USAGE GUIDE WIDGET (Visible on Login Screen) -->
         <div id="usage-widget" class="usage-widget">
             <button id="usage-toggle-btn" class="usage-toggle-btn" onclick="toggleUsageGuide()" title="Toggle Portal Usage Guide">
-                <span class="widget-icon">📖</span>
                 <span class="widget-text">Usage Guide</span>
             </button>
             <div id="usage-panel" class="usage-panel glass-panel" style="display: none;">
@@ -106,7 +105,7 @@
         </div>
         <div class="header-metadata">
             <div class="badge">Model Version: Flask API Connected (Option B)</div>
-            <button class="theme-btn" onclick="toggleTheme()" title="Toggle Interface Mode">🌓 Theme Mode</button>
+            <button class="theme-btn" onclick="toggleTheme()" title="Toggle Interface Mode">Theme Mode</button>
             <button id="admin-redirect-btn" class="admin-btn" onclick="goToAdmin()" style="display:none;">Go to Admin Panel</button>
             <div class="user-welcome">Welcome, <strong id="logged-user-name" class="user-highlight">Agritex Officer</strong></div>
             <button class="logout-btn" onclick="triggerLogout()">Logout</button>
@@ -257,7 +256,6 @@
         <div class="audio-advisory-panel glass-panel">
             <div class="audio-advisory-header">
                 <div class="mms-title-group">
-                    <span class="mms-icon">🔊</span>
                     <div>
                         <div class="mms-title">Audio Advisory Playback</div>
                         <div class="mms-subtitle">Massive Multilingual Speech (MMS) Synthesis</div>
@@ -268,13 +266,13 @@
             <!-- Language Tabs -->
             <div class="mms-lang-tabs">
                 <button type="button" id="mms-tab-nde" class="mms-lang-tab active" onclick="switchMmsLanguage('nde')">
-                    🇿🇼 isiNdebele
+                    isiNdebele
                 </button>
                 <button type="button" id="mms-tab-sna" class="mms-lang-tab" onclick="switchMmsLanguage('sna')">
-                    🇿🇼 chiShona
+                    chiShona
                 </button>
                 <button type="button" id="mms-tab-en" class="mms-lang-tab" onclick="switchMmsLanguage('en')">
-                    🇬🇧 English
+                    English
                 </button>
             </div>
 
@@ -288,17 +286,17 @@
                 <!-- Quick Transport Buttons Bar -->
                 <div class="mms-transport-bar">
                     <button type="button" id="mms-rewind-btn" class="mms-ctrl-btn mms-btn-secondary" onclick="seekMmsAudio(-5)" title="Rewind 5 seconds">
-                        ⏪ -5s
+                        -5s
                     </button>
                     <button type="button" id="mms-play-btn" class="mms-ctrl-btn mms-btn-primary" onclick="toggleMmsAudio()" title="Play or pause audio advisory">
                         <span id="mms-play-icon">▶</span>
                         <span id="mms-play-label">Lalela nge-Sindebele (Listen in Ndebele)</span>
                     </button>
                     <button type="button" id="mms-forward-btn" class="mms-ctrl-btn mms-btn-secondary" onclick="seekMmsAudio(5)" title="Fast-forward 5 seconds">
-                        +5s ⏩
+                        +5s
                     </button>
                     <button type="button" id="mms-replay-btn" class="mms-ctrl-btn mms-btn-secondary" onclick="replayMmsAudio()" title="Restart from beginning">
-                        🔄 Replay
+                        Replay
                     </button>
                     <button type="button" id="mms-speed-btn" class="mms-ctrl-btn mms-btn-pill" onclick="cycleMmsPlaybackRate()" title="Change playback speed">
                         <span id="mms-speed-label">1.0x</span>
@@ -347,7 +345,7 @@
     <!-- 4. WARNING MODAL FOR CULTIVAR INVALID INPUTS -->
     <div id="warning-modal" class="warning-modal">
         <div class="warning-card">
-            <div class="warning-icon">⚠</div>
+            <div class="warning-icon">!</div>
             <div class="warning-title" id="warning-title-text">Unsupported Maize Cultivar</div>
             <div class="warning-text" id="warning-text-content">The cultivar you entered is not supported in the calibrated model.</div>
             <button class="warning-btn" onclick="dismissWarning()">Confirm & Calibrate</button>

@@ -521,11 +521,11 @@ const server = http.createServer(async (req, res) => {
 if (require.main === module) {
   server.listen(PORT, () => {
     console.log(`================================================================`);
-    console.log(`🌾 NUST USSD Telephony Gateway Server active on port ${PORT}`);
-    console.log(`📍 District: Umzingwane District (All 20 Administrative Wards)`);
-    console.log(`🗣  Languages: English (1) | isiNdebele (2)`);
-    console.log(`📡 USSD Endpoint: http://127.0.0.1:${PORT}/ussd`);
-    console.log(`💚 Health Check: http://127.0.0.1:${PORT}/health`);
+    console.log(`USSD Telephony Gateway Server active on port ${PORT}`);
+    console.log(`District: Umzingwane District (All 20 Administrative Wards)`);
+    console.log(`Languages: English (1) | isiNdebele (2)`);
+    console.log(`USSD Endpoint: http://127.0.0.1:${PORT}/ussd`);
+    console.log(`Health Check: http://127.0.0.1:${PORT}/health`);
     console.log(`================================================================`);
   });
 }

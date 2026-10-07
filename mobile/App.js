@@ -765,7 +765,7 @@ export default function App() {
     }
 
     if (p < 0.35) {
-      advisory += "\n\n⚠️ CRITICAL DROUGHT WARNING: Precipitation deficit is severe. Adopt tied ridges, micro-dosing fertilization, and organic mulching.";
+      advisory += "\n\nCRITICAL DROUGHT WARNING: Precipitation deficit is severe. Adopt tied ridges, micro-dosing fertilization, and organic mulching.";
     }
 
     return { low, med, high, advisory, source: 'Offline Biophysical Emulator' };
@@ -859,7 +859,7 @@ Security Signature: Authorized Agritex Officer System Log Verification
             style={[styles.themeBtn, isLightTheme && styles.themeBtnLight]} 
             onPress={toggleTheme}
           >
-            <Text style={[styles.themeBtnText, isLightTheme && styles.themeBtnTextLight]}>🌓 Theme</Text>
+            <Text style={[styles.themeBtnText, isLightTheme && styles.themeBtnTextLight]}>Theme</Text>
           </TouchableOpacity>
         </View>
 
@@ -896,7 +896,7 @@ Security Signature: Authorized Agritex Officer System Log Verification
                   isLightTheme && styles.authTabTextLight,
                   authMode === 'login' && (isLightTheme ? styles.authTabTextActiveLight : styles.authTabTextActive)
                 ]}>
-                  🔑 Sign In
+                  Sign In
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -912,7 +912,7 @@ Security Signature: Authorized Agritex Officer System Log Verification
                   isLightTheme && styles.authTabTextLight,
                   authMode === 'signup' && (isLightTheme ? styles.authTabTextActiveLight : styles.authTabTextActive)
                 ]}>
-                  🌾 New Farmer Sign Up
+                  New Farmer Sign Up
                 </Text>
               </TouchableOpacity>
             </View>
@@ -960,7 +960,7 @@ Security Signature: Authorized Agritex Officer System Log Verification
                   {loading ? (
                     <ActivityIndicator color="#ffffff" />
                   ) : (
-                    <Text style={styles.loginBtnText}>🔑 Sign In to Portal</Text>
+                    <Text style={styles.loginBtnText}>Sign In to Portal</Text>
                   )}
                 </TouchableOpacity>
 
@@ -1001,7 +1001,7 @@ Security Signature: Authorized Agritex Officer System Log Verification
                   activeOpacity={0.8}
                 >
                   <Text style={[styles.wardPickerBtnText, isLightTheme && styles.wardPickerBtnTextLight]} numberOfLines={1}>
-                    📍 {regWard}
+                    {regWard}
                   </Text>
                   <Text style={styles.wardPickerBtnArrow}>▼ Change</Text>
                 </TouchableOpacity>
@@ -1026,7 +1026,7 @@ Security Signature: Authorized Agritex Officer System Log Verification
                     onPress={generateMixedPassword}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.genPassBtnText}>🎲 Create 8-Char Password</Text>
+                    <Text style={styles.genPassBtnText}>Generate 8-Char Password</Text>
                   </TouchableOpacity>
                 </View>
 
@@ -1058,10 +1058,10 @@ Security Signature: Authorized Agritex Officer System Log Verification
                 {/* Real-time Password Character & Mixed Status Indicator */}
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: -8, marginBottom: 12, paddingHorizontal: 4 }}>
                   <Text style={{ fontSize: 11, color: regPassword.length === 8 ? '#10b981' : (isLightTheme ? '#64748b' : '#94a3b8') }}>
-                    Length: {regPassword.length}/8 {regPassword.length === 8 ? '✓ (Max Limit)' : ''}
+                    Length: {regPassword.length}/8 {regPassword.length === 8 ? '(Max Limit)' : ''}
                   </Text>
                   <Text style={{ fontSize: 11, color: (/[a-zA-Z]/.test(regPassword) && /[0-9]/.test(regPassword)) ? '#10b981' : '#f59e0b' }}>
-                    {(/[a-zA-Z]/.test(regPassword) && /[0-9]/.test(regPassword)) ? '✓ Mixed characters' : 'Requires letters & numbers'}
+                    {(/[a-zA-Z]/.test(regPassword) && /[0-9]/.test(regPassword)) ? 'Mixed characters valid' : 'Requires letters & numbers'}
                   </Text>
                 </View>
 
@@ -1075,7 +1075,7 @@ Security Signature: Authorized Agritex Officer System Log Verification
                   {loading ? (
                     <ActivityIndicator color="#ffffff" />
                   ) : (
-                    <Text style={styles.loginBtnText}>🌱 Complete Registration & Enter</Text>
+                    <Text style={styles.loginBtnText}>Complete Registration & Enter</Text>
                   )}
                 </TouchableOpacity>
 
@@ -1094,7 +1094,6 @@ Security Signature: Authorized Agritex Officer System Log Verification
               activeOpacity={0.7}
             >
               <View style={styles.guideHeaderLeft}>
-                <Text style={styles.guideIcon}>📖</Text>
                 <Text style={[styles.guideTitle, isLightTheme && styles.guideTitleLight]}>App Usage Guide</Text>
               </View>
               <Text style={[styles.guideArrow, isLightTheme && styles.guideArrowLight]}>
@@ -1198,7 +1197,7 @@ Security Signature: Authorized Agritex Officer System Log Verification
           <View style={styles.modalOverlay}>
             <View style={[styles.modalContent, isLightTheme && styles.modalContentLight, { maxHeight: '80%' }]}>
               <Text style={[styles.modalTitle, isLightTheme && styles.modalTitleLight]}>
-                📍 Select Your Ward
+                Select Your Ward
               </Text>
               <Text style={[styles.modalSubtitle, isLightTheme && styles.modalSubtitleLight]}>
                 Choose the Umzingwane ward where your crop is planted:
@@ -1269,7 +1268,7 @@ Security Signature: Authorized Agritex Officer System Log Verification
         </View>
         <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
           <TouchableOpacity style={[styles.themeBtn, isLightTheme && styles.themeBtnLight]} onPress={toggleTheme}>
-            <Text style={[styles.themeBtnText, isLightTheme && styles.themeBtnTextLight]}>🌓 Theme</Text>
+            <Text style={[styles.themeBtnText, isLightTheme && styles.themeBtnTextLight]}>Theme</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
             <Text style={styles.logoutBtnText}>Logout</Text>
@@ -1516,7 +1515,6 @@ Security Signature: Authorized Agritex Officer System Log Verification
               <View style={styles.mmsHeaderRow}>
                 <View style={{ flex: 1 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={{ fontSize: 18 }}>🔊</Text>
                     <Text style={[styles.mmsCardTitle, isLightTheme && styles.mmsCardTitleLight]}>
                       Audio Advisory Playback
                     </Text>
@@ -1538,7 +1536,7 @@ Security Signature: Authorized Agritex Officer System Log Verification
                   activeOpacity={0.8}
                 >
                   <Text style={[styles.mmsLangTabText, audioLang === 'nde' && styles.mmsLangTabTextActive]}>
-                    🇿🇼 isiNdebele
+                    isiNdebele
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -1550,7 +1548,7 @@ Security Signature: Authorized Agritex Officer System Log Verification
                   activeOpacity={0.8}
                 >
                   <Text style={[styles.mmsLangTabText, audioLang === 'sna' && styles.mmsLangTabTextActive]}>
-                    🇿🇼 chiShona
+                    chiShona
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -1562,7 +1560,7 @@ Security Signature: Authorized Agritex Officer System Log Verification
                   activeOpacity={0.8}
                 >
                   <Text style={[styles.mmsLangTabText, audioLang === 'en' && styles.mmsLangTabTextActive]}>
-                    🇬🇧 English
+                    English
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -1604,7 +1602,7 @@ Security Signature: Authorized Agritex Officer System Log Verification
                     onPress={() => handleSeekAudio(-5)}
                     activeOpacity={0.7}
                   >
-                    <Text style={[styles.mmsAuxBtnText, isLightTheme && styles.mmsAuxBtnTextLight]}>⏪ -5s</Text>
+                    <Text style={[styles.mmsAuxBtnText, isLightTheme && styles.mmsAuxBtnTextLight]}>-5s</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -1616,7 +1614,7 @@ Security Signature: Authorized Agritex Officer System Log Verification
                     activeOpacity={0.85}
                   >
                     <Text style={styles.mmsPrimaryPlayIcon}>
-                      {isPlayingAudio ? '⏸️' : '▶️'}
+                      {isPlayingAudio ? '||' : '▶'}
                     </Text>
                     <Text style={styles.mmsPrimaryPlayText}>
                       {isPlayingAudio 
@@ -1632,7 +1630,7 @@ Security Signature: Authorized Agritex Officer System Log Verification
                     onPress={() => handleSeekAudio(5)}
                     activeOpacity={0.7}
                   >
-                    <Text style={[styles.mmsAuxBtnText, isLightTheme && styles.mmsAuxBtnTextLight]}>+5s ⏩</Text>
+                    <Text style={[styles.mmsAuxBtnText, isLightTheme && styles.mmsAuxBtnTextLight]}>+5s</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -1640,7 +1638,7 @@ Security Signature: Authorized Agritex Officer System Log Verification
                     onPress={handleStopAudio}
                     activeOpacity={0.7}
                   >
-                    <Text style={[styles.mmsAuxBtnText, isLightTheme && styles.mmsAuxBtnTextLight]}>⏹ Stop</Text>
+                    <Text style={[styles.mmsAuxBtnText, isLightTheme && styles.mmsAuxBtnTextLight]}>Stop</Text>
                   </TouchableOpacity>
                 </View>
 
@@ -1649,8 +1647,8 @@ Security Signature: Authorized Agritex Officer System Log Verification
                   <View style={[styles.mmsStatusDot, isPlayingAudio && styles.mmsStatusDotActive]} />
                   <Text style={[styles.mmsStatusLabel, isLightTheme && styles.mmsStatusLabelLight]}>
                     {isPlayingAudio 
-                      ? `🔊 Playing Spoken Advisory (${audioLang === 'nde' ? 'isiNdebele' : (audioLang === 'sna' ? 'chiShona' : 'English')})`
-                      : (isAudioPaused ? '⏸ Audio paused • Tap Resume' : 'Ready to play • Meta MMS Offline')}
+                      ? `Playing Spoken Advisory (${audioLang === 'nde' ? 'isiNdebele' : (audioLang === 'sna' ? 'chiShona' : 'English')})`
+                      : (isAudioPaused ? 'Audio paused • Tap Resume' : 'Ready to play • MMS Offline')}
                   </Text>
                 </View>
               </View>
@@ -1664,7 +1662,7 @@ Security Signature: Authorized Agritex Officer System Log Verification
                 activeOpacity={0.7}
               >
                 <Text style={[styles.glossaryTitle, isLightTheme && styles.glossaryTitleLight]}>
-                  📘 Indicator Glossary & Interpretations
+                  Indicator Glossary & Interpretations
                 </Text>
                 <Text style={styles.glossaryToggleText}>
                   {showGlossary ? '▲ Hide' : '▼ Read'}
@@ -1703,7 +1701,6 @@ Security Signature: Authorized Agritex Officer System Log Verification
               onPress={handleDownloadReport}
               activeOpacity={0.8}
             >
-              <Text style={styles.downloadReportBtnIcon}>📥</Text>
               <Text style={styles.downloadReportBtnText}>Download & Share Report</Text>
             </TouchableOpacity>
 

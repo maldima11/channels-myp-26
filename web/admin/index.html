@@ -24,7 +24,7 @@
         </div>
         <div class="header-metadata">
             <div class="badge" id="gateway-badge">SMS Gateway: Active</div>
-            <button class="theme-btn" onclick="toggleTheme()" title="Toggle Interface Mode">🌓 Theme Mode</button>
+            <button class="theme-btn" onclick="toggleTheme()" title="Toggle Interface Mode">Theme Mode</button>
             <button class="back-btn" onclick="goBack()">Back to Yield Portal</button>
         </div>
     </header>
@@ -35,10 +35,10 @@
         <!-- NAVIGATION TABS -->
         <div class="nav-tabs">
             <button class="nav-tab active" id="tab-users-btn" onclick="switchTab('users')">
-                👥 User & Role Management
+                User & Role Management
             </button>
             <button class="nav-tab" id="tab-sms-btn" onclick="switchTab('sms')">
-                📲 SMS Advisory Broadcast Center
+                SMS Advisory Broadcast Center
             </button>
         </div>
 
@@ -137,7 +137,7 @@
                         <div class="panel-title">
                             <span class="bullet-accent">■</span> Credentials Directory
                         </div>
-                        <input type="text" id="search-users" class="search-input" placeholder="🔍 Search by name or ward..." oninput="filterUsersTable()">
+                        <input type="text" id="search-users" class="search-input" placeholder="Search by name or ward..." oninput="filterUsersTable()">
                     </div>
                     
                     <div class="table-container">
@@ -194,10 +194,10 @@
                         <label>Recipient Selection Mode</label>
                         <div class="mode-toggle-group">
                             <button type="button" id="mode-ward-btn" class="sub-tab-btn active" onclick="setRecipientMode('ward')">
-                                🏢 By Ward (Registered)
+                                By Ward (Registered)
                             </button>
                             <button type="button" id="mode-manual-btn" class="sub-tab-btn" onclick="setRecipientMode('manual')">
-                                ✍️ Enter Number(s) Manually
+                                Enter Number(s) Manually
                             </button>
                         </div>
                     </div>
@@ -245,19 +245,19 @@
                     <div class="form-group">
                         <label for="sms-template-select">Advisory Category & Preset Template</label>
                         <select id="sms-template-select" class="input-field" onchange="applySmsTemplate()">
-                            <option value="drought">⚠️ Drought Warning & Moisture Advisory</option>
-                            <option value="planting">🌱 Planting Window & Cultivar Selection</option>
-                            <option value="fertilizer">🧪 Top-Dressing & Split-Dose Application</option>
-                            <option value="pest">🐛 Fall Armyworm & Pest Surveillance</option>
-                            <option value="harvest">🌾 Pre-Harvest & Storage Safety</option>
-                            <option value="custom">✍️ Custom Advisory Message</option>
+                            <option value="drought">Drought Warning & Moisture Advisory</option>
+                            <option value="planting">Planting Window & Cultivar Selection</option>
+                            <option value="fertilizer">Top-Dressing & Split-Dose Application</option>
+                            <option value="pest">Fall Armyworm & Pest Surveillance</option>
+                            <option value="harvest">Pre-Harvest & Storage Safety</option>
+                            <option value="custom">Custom Advisory Message</option>
                         </select>
                     </div>
 
                     <div class="form-group">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                             <label for="sms-message-text" style="margin-bottom: 0;">SMS Advisory Content</label>
-                            <button type="button" class="btn-text-action" onclick="fetchLiveModelAdvisory()">⚡ Pull Live AI Model Advice</button>
+                            <button type="button" class="btn-text-action" onclick="fetchLiveModelAdvisory()">Pull Live Advisory Advice</button>
                         </div>
                         <textarea id="sms-message-text" class="input-field sms-textarea" rows="5" oninput="updateSmsPreview()"></textarea>
                         
@@ -273,7 +273,7 @@
                     </div>
 
                     <button class="action-btn sms-send-btn" id="sms-broadcast-btn" onclick="sendSmsBroadcast()">
-                        📡 Dispatch SMS Broadcast
+                        Dispatch SMS Broadcast
                     </button>
                     <div id="sms-status-msg" class="status-msg"></div>
                 </div>
@@ -293,11 +293,11 @@
                             <div class="phone-header">
                                 <span class="phone-time">12:30</span>
                                 <span class="phone-sender">Agritex Advisory</span>
-                                <span class="phone-battery">🔋 98%</span>
+                                <span class="phone-battery">98%</span>
                             </div>
                             <div class="phone-body">
                                 <div class="sms-bubble" id="phone-sms-preview">
-                                    Hello Farmer, NUST Agritex Forecast: Moderate drought expected in your ward. Practice mulching and prepare tied ridges.
+                                    Hello Farmer, Agritex Forecast: Moderate drought expected in your ward. Practice mulching and prepare tied ridges.
                                 </div>
                                 <div class="sms-time-stamp" id="phone-sms-time">Just now • SMS</div>
                             </div>
@@ -308,7 +308,7 @@
                     <div class="admin-audio-card">
                         <div class="admin-audio-header">
                             <div class="admin-audio-title">
-                                <span>🔊</span> Vernacular Spoken Advisory (Meta MMS)
+                                Vernacular Spoken Advisory (MMS TTS)
                             </div>
                             <span class="admin-audio-badge">Voice Broadcast Preview</span>
                         </div>
@@ -316,13 +316,13 @@
                         <!-- Language Tabs -->
                         <div class="mode-toggle-group" style="margin-bottom: 12px;">
                             <button type="button" id="admin-audio-tab-nde" class="sub-tab-btn active" onclick="setAdminAudioLang('nde')">
-                                🇿🇼 isiNdebele
+                                isiNdebele
                             </button>
                             <button type="button" id="admin-audio-tab-sna" class="sub-tab-btn" onclick="setAdminAudioLang('sna')">
-                                🇿🇼 chiShona
+                                chiShona
                             </button>
                             <button type="button" id="admin-audio-tab-en" class="sub-tab-btn" onclick="setAdminAudioLang('en')">
-                                🇬🇧 English
+                                English
                             </button>
                         </div>
 
@@ -340,8 +340,8 @@
                             <div>
                                 <label style="font-size: 11px; margin-bottom: 3px; display: block; color: var(--text-muted);">Seasonal Weather Context</label>
                                 <select id="admin-audio-condition" class="input-field" style="padding: 6px 10px; font-size: 12px;" onchange="updateAdminAudioScript()">
-                                    <option value="drought">⚠️ Drought Warning</option>
-                                    <option value="standard" selected>🌱 Standard Season</option>
+                                    <option value="drought">Drought Warning</option>
+                                    <option value="standard" selected>Standard Season</option>
                                 </select>
                             </div>
                         </div>
@@ -356,17 +356,17 @@
                             <!-- Transport Buttons -->
                             <div class="admin-audio-transport">
                                 <button type="button" class="admin-audio-btn-sec" onclick="seekAdminAudio(-5)" title="Rewind 5s">
-                                    ⏪ -5s
+                                    -5s
                                 </button>
                                 <button type="button" id="admin-audio-play-btn" class="admin-audio-btn-primary" onclick="toggleAdminAudio()">
                                     <span id="admin-audio-play-icon">▶</span>
                                     <span id="admin-audio-play-label">Play Spoken Audio</span>
                                 </button>
                                 <button type="button" class="admin-audio-btn-sec" onclick="seekAdminAudio(5)" title="Fast-forward 5s">
-                                    +5s ⏩
+                                    +5s
                                 </button>
                                 <button type="button" class="admin-audio-btn-sec" onclick="replayAdminAudio()" title="Replay">
-                                    🔄
+                                    Replay
                                 </button>
                             </div>
 
@@ -403,8 +403,8 @@
                         <span class="bullet-accent">■</span> Recent SMS Broadcast Logs & Audit Trail
                     </div>
                     <div style="display: flex; gap: 14px; align-items: center;">
-                        <button class="btn-text-action" onclick="loadSmsLogs()">🔄 Refresh</button>
-                        <button class="btn-text-action" onclick="clearSmsLogs()" style="color: var(--accent-rose);">🗑️ Clear History</button>
+                        <button class="btn-text-action" onclick="loadSmsLogs()">Refresh</button>
+                        <button class="btn-text-action" onclick="clearSmsLogs()" style="color: var(--accent-rose);">Clear History</button>
                     </div>
                 </div>
 

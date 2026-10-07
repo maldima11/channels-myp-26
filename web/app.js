@@ -62,7 +62,7 @@ function showLoginForm(role) {
     document.getElementById("password").value = "";
 
     // Set role specific layout labels
-    document.getElementById("login-portal-title").innerText = role === 'Farmer' ? "🌾 Farmer Login" : "👔 Officer Login";
+    document.getElementById("login-portal-title").innerText = role === 'Farmer' ? "Farmer Login" : "Officer Login";
     document.getElementById("login-portal-subtitle").innerText = role === 'Farmer' 
         ? "Access advisory forecasts & calendars" 
         : "Calibrate models and manage credentials";
@@ -965,10 +965,10 @@ function toggleUsageGuide() {
     const btn = document.getElementById("usage-toggle-btn");
     if (panel.style.display === "none") {
         panel.style.display = "flex";
-        btn.innerHTML = "<span class='widget-icon'>✕</span><span class='widget-text'>Close Guide</span>";
+        btn.innerHTML = "<span class='widget-text'>Close Guide</span>";
     } else {
         panel.style.display = "none";
-        btn.innerHTML = "<span class='widget-icon'>📖</span><span class='widget-text'>Usage Guide</span>";
+        btn.innerHTML = "<span class='widget-text'>Usage Guide</span>";
     }
 }
 
@@ -1115,7 +1115,7 @@ function updateMmsAudioSource() {
     const trackTag = document.getElementById("mms-track-tag");
     if (trackTag) {
         const langLabel = currentMmsLang === 'nde' ? 'isiNdebele' : (currentMmsLang === 'sna' ? 'chiShona' : 'English');
-        const condLabel = condition === 'drought' ? '⚠️ Drought Alert' : '🌱 Standard Season';
+        const condLabel = condition === 'drought' ? 'Drought Alert' : 'Standard Season';
         trackTag.innerText = `${cultivar} • ${condLabel} • ${langLabel}`;
     }
 }

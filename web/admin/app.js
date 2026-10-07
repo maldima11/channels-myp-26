@@ -21,11 +21,11 @@ const defaultUsers = [
 ];
 
 const SMS_TEMPLATES = {
-    drought: "⚠️ AGRITEX DROUGHT ALERT: Hello {name}, forecast for {ward} on {date} predicts dry conditions. Practice mulching, maintain tied ridges, and conserve topsoil moisture.",
-    planting: "🌱 AGRITEX PLANTING ADVISORY: Hello {name}, effective planting window for {ward} is active ({date}). Use certified Seed Co varieties (SC301/SC436/SC529/SC719) with 25cm in-row spacing.",
-    fertilizer: "🧪 AGRITEX FERTILIZER NOTICE: Hello {name}, apply split-dose nitrogen top-dressing (AN/Urea) 3-4 weeks after germination for {ward} maize stands. Avoid application during peak dry heat.",
-    pest: "🐛 AGRITEX PEST ALERT: Attention {name} in {ward}, scout maize whorls for Fall Armyworm larvae ({date}). Apply registered biopesticides or contact your local Agritex officer immediately.",
-    harvest: "🌾 AGRITEX HARVEST NOTICE: Hello {name}, check cobs for physiological black-layer maturity in {ward} ({date}). Dry grain to under 12.5% moisture before silo storage.",
+    drought: "AGRITEX DROUGHT ALERT: Hello {name}, forecast for {ward} on {date} predicts dry conditions. Practice mulching, maintain tied ridges, and conserve topsoil moisture.",
+    planting: "AGRITEX PLANTING ADVISORY: Hello {name}, effective planting window for {ward} is active ({date}). Use certified Seed Co varieties (SC301/SC436/SC529/SC719) with 25cm in-row spacing.",
+    fertilizer: "AGRITEX FERTILIZER NOTICE: Hello {name}, apply split-dose nitrogen top-dressing (AN/Urea) 3-4 weeks after germination for {ward} maize stands. Avoid application during peak dry heat.",
+    pest: "AGRITEX PEST ALERT: Attention {name} in {ward}, scout maize whorls for Fall Armyworm larvae ({date}). Apply registered biopesticides or contact your local Agritex officer immediately.",
+    harvest: "AGRITEX HARVEST NOTICE: Hello {name}, check cobs for physiological black-layer maturity in {ward} ({date}). Dry grain to under 12.5% moisture before silo storage.",
     custom: "AGRITEX ADVISORY ({date}): Hello {name}, localized maize crop advice for {ward}: "
 };
 
@@ -142,8 +142,8 @@ function drawUsersTable(users) {
         const tdRole = document.createElement("td");
         tdRole.setAttribute("data-label", "Role");
         tdRole.innerHTML = user.role === 'Farmer' 
-            ? `<span style="color: #34d399; font-weight:600;">🌾 Farmer</span>`
-            : `<span style="color: #818cf8; font-weight:600;">👔 Officer</span>`;
+            ? `<span style="color: #34d399; font-weight:600;">Farmer</span>`
+            : `<span style="color: #818cf8; font-weight:600;">Officer</span>`;
         tr.appendChild(tdRole);
 
         // Actions
@@ -335,7 +335,7 @@ async function createUser() {
             finishEditForm(succ, "User updated successfully in database!");
             renderUsers();
         } catch(errObj) {
-            err.innerText = `❌ Update Failed: ${errObj.message}. Please verify the central database is reachable.`;
+            err.innerText = `Update Failed: ${errObj.message}. Please verify the central database is reachable.`;
             err.style.display = "block";
         }
     } else {
@@ -353,7 +353,7 @@ async function createUser() {
             clearForm();
             renderUsers();
         } catch(errObj) {
-            err.innerText = `❌ Registration Failed: ${errObj.message}. Account was not created in database.`;
+            err.innerText = `Registration Failed: ${errObj.message}. Account was not created in database.`;
             err.style.display = "block";
         }
     }
@@ -606,7 +606,7 @@ function fetchLiveModelAdvisory() {
         if (data.status === "success" && data.forecast) {
             const f = data.forecast;
             const dateStr = "{date}";
-            textarea.value = `🌾 NUST AGRITEX AI ALERT (${dateStr}): Hello {name}, forecast for ${selectedWard}: Yield [${f.low}-${f.high}] kg/ha. Rainfall is restricted. Apply mulch and conservation ridges.`;
+            textarea.value = `AGRITEX ADVISORY ALERT (${dateStr}): Hello {name}, forecast for ${selectedWard}: Yield [${f.low}-${f.high}] kg/ha. Rainfall is restricted. Apply mulch and conservation ridges.`;
             updateSmsPreview();
         } else {
             throw new Error("Invalid forecast");
@@ -614,7 +614,7 @@ function fetchLiveModelAdvisory() {
     })
     .catch(() => {
         const dateStr = "{date}";
-        textarea.value = `🌾 NUST AGRITEX ADVISORY (${dateStr}): Hello {name}, biophysical models predict low moisture for ${selectedWard}. Practice water-harvesting and split nitrogen top-dressing.`;
+        textarea.value = `AGRITEX ADVISORY (${dateStr}): Hello {name}, biophysical models predict low moisture for ${selectedWard}. Practice water-harvesting and split nitrogen top-dressing.`;
         updateSmsPreview();
     });
 }
@@ -659,7 +659,7 @@ function sendSmsBroadcast() {
     }
 
     sendBtn.disabled = true;
-    sendBtn.innerText = "⏳ Dispatching SMS Broadcast...";
+    sendBtn.innerText = "Dispatching SMS Broadcast...";
     statusMsg.style.display = "none";
 
     fetch(SMS_BROADCAST_API_URL, {
@@ -670,16 +670,16 @@ function sendSmsBroadcast() {
     .then(res => res.json())
     .then(data => {
         sendBtn.disabled = false;
-        sendBtn.innerText = "📡 Dispatch SMS Broadcast";
+        sendBtn.innerText = "Dispatch SMS Broadcast";
 
         if (data.status === "success") {
             statusMsg.className = "status-msg success-msg";
-            statusMsg.innerHTML = `✅ <strong>Success!</strong> ${data.message} <br><small>Gateway: ${data.gateway}</small>`;
+            statusMsg.innerHTML = `<strong>Success:</strong> ${data.message} <br><small>Gateway: ${data.gateway}</small>`;
             statusMsg.style.display = "block";
             loadSmsLogs();
         } else if (data.status === "warning") {
             statusMsg.className = "status-msg error-msg";
-            statusMsg.innerText = `⚠️ ${data.message}`;
+            statusMsg.innerText = data.message;
             statusMsg.style.display = "block";
         } else {
             throw new Error(data.message || "Failed to dispatch SMS broadcast");
@@ -687,7 +687,7 @@ function sendSmsBroadcast() {
     })
     .catch(err => {
         sendBtn.disabled = false;
-        sendBtn.innerText = "📡 Dispatch SMS Broadcast";
+        sendBtn.innerText = "Dispatch SMS Broadcast";
 
         // Local simulation fallback
         let recipientCount = 1;
@@ -702,7 +702,7 @@ function sendSmsBroadcast() {
         }
 
         statusMsg.className = "status-msg success-msg";
-        statusMsg.innerHTML = `✅ <strong>Offline Simulation:</strong> Dispatched advisory to ${recipientCount} recipient(s). <br><small>Gateway: Local Mock Simulator</small>`;
+        statusMsg.innerHTML = `<strong>Offline Simulation:</strong> Dispatched advisory to ${recipientCount} recipient(s). <br><small>Gateway: Local Mock Simulator</small>`;
         statusMsg.style.display = "block";
     });
 }
