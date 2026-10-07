@@ -459,8 +459,8 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Universal API Proxy Endpoint: Forwards /api/* to Flask backend on port 5000
-  if (url.startsWith('/api/')) {
+  // Universal API Proxy Endpoint: Forwards /api/* and /static/audio/* to Flask backend on port 5000
+  if (url.startsWith('/api/') || url.startsWith('/static/audio/')) {
     const proxyReq = http.request({
       hostname: '127.0.0.1',
       port: 5000,
@@ -479,6 +479,36 @@ const server = http.createServer(async (req, res) => {
       res.end(JSON.stringify({ status: 'error', message: 'Backend service unreachable: ' + err.message }));
     });
     req.pipe(proxyReq, { end: true });
+    return;
+  }
+
+  // Serve Web Portal statically when accessed via /web or /
+  const fs = require('fs');
+  const path = require('path');
+  const webDir = path.join(__dirname, '..', 'web');
+  let filePath = '';
+  
+  if (url === '/portal' || url === '/portal/') {
+    filePath = path.join(webDir, 'index.html');
+  } else if (url.startsWith('/web/')) {
+    filePath = path.join(webDir, url.replace(/^\/web\//, ''));
+  }
+
+  if (filePath && fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+    const ext = path.extname(filePath).toLowerCase();
+    const mimeMap = {
+      '.html': 'text/html',
+      '.css': 'text/css',
+      '.js': 'application/javascript',
+      '.json': 'application/json',
+      '.svg': 'image/svg+xml',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.ico': 'image/x-icon'
+    };
+    const mimeType = mimeMap[ext] || 'application/octet-stream';
+    res.writeHead(200, { 'Content-Type': mimeType, 'Access-Control-Allow-Origin': '*' });
+    fs.createReadStream(filePath).pipe(res);
     return;
   }
 

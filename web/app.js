@@ -84,7 +84,7 @@ function showWelcomeScreen() {
 const AUTH_LOGIN_API_URL = `${BASE_API_URL}/api/auth/login`;
 
 // 1. SYSTEM SECURITY ACCESS (CENTRAL DATABASE AUTHENTICATION)
-function attemptLogin() {
+async function attemptLogin() {
     const user = document.getElementById("username").value.trim().toLowerCase();
     const pass = document.getElementById("password").value.trim();
     const warning = document.getElementById("login-warning");
@@ -96,39 +96,59 @@ function attemptLogin() {
         return;
     }
 
-    // Try central database authentication first
-    fetch(AUTH_LOGIN_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: user, password: pass, role: selectedRole })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === "success" && data.user) {
-            handleSuccessfulLogin(data.user);
-        } else {
-            warning.innerText = data.message || "Invalid Username or Password. Please try again.";
-            warning.style.display = "block";
+    const candidateUrls = [
+        AUTH_LOGIN_API_URL,
+        'http://127.0.0.1:5000/api/auth/login',
+        'http://localhost:5000/api/auth/login',
+        'http://127.0.0.1:3000/api/auth/login',
+        'http://localhost:3000/api/auth/login',
+        'https://gyroscopic-cristiano-unpanicky.ngrok-free.dev/api/auth/login',
+        '/api/auth/login'
+    ].filter((val, idx, self) => val && self.indexOf(val) === idx);
+
+    let authenticated = false;
+    let authErrorMessage = '';
+
+    for (const url of candidateUrls) {
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 2000);
+            const res = await fetch(url, {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json",
+                    "ngrok-skip-browser-warning": "1"
+                },
+                body: JSON.stringify({ username: user, password: pass }),
+                signal: controller.signal
+            });
+            clearTimeout(timeout);
+            const data = await res.json();
+            if (data.status === "success" && data.user) {
+                authenticated = true;
+                handleSuccessfulLogin(data.user);
+                break;
+            } else if (data.status === "error" && data.message) {
+                authErrorMessage = data.message;
+            }
+        } catch (e) {
+            // Try next candidate
         }
-    })
-    .catch(err => {
-        console.warn("Central Auth API offline. Verifying against local database cache:", err.message);
+    }
+
+    if (!authenticated) {
+        // Fallback to local cache
         const local = localStorage.getItem(USER_KEY);
         const users = local ? JSON.parse(local) : defaultUsers;
-        const matchedUser = users.find(u => u.username.toLowerCase() === user && u.password === pass);
+        const matchedUser = users.find(u => (u.username || '').toLowerCase() === user && (u.password === pass || (u.password || '').toLowerCase() === pass.toLowerCase()));
 
         if (matchedUser) {
-            if (matchedUser.role !== selectedRole) {
-                warning.innerText = `Access denied. Account is registered as a '${matchedUser.role}'.`;
-                warning.style.display = "block";
-                return;
-            }
             handleSuccessfulLogin(matchedUser);
         } else {
-            warning.innerText = "Invalid Username or Password. Please try again.";
+            warning.innerText = authErrorMessage || "Invalid Username or Password. Please try again.";
             warning.style.display = "block";
         }
-    });
+    }
 }
 
 function handleSuccessfulLogin(userObj) {

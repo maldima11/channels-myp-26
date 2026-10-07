@@ -118,5 +118,25 @@
         "phone": "+263789665809",
         "ward": "Ward 4 (Kumbudzi)",
         "created_at": "2026-10-06 23:31:46"
+    },
+    {
+        "id": 72,
+        "username": "testfarmer99",
+        "password": "password123",
+        "name": "Test Farmer",
+        "role": "Farmer",
+        "phone": "+263771999999",
+        "ward": "Ward 15 (Esigodini Centroid)",
+        "created_at": "2026-10-07 08:21:45"
+    },
+    {
+        "id": 100,
+        "username": "zim_farmer88",
+        "password": "m7#K9xP2",
+        "name": "Zim Farmer",
+        "role": "Farmer",
+        "phone": "+263771888888",
+        "ward": "Ward 15 (Esigodini Centroid)",
+        "created_at": "2026-10-07 09:13:36"
     }
 ]

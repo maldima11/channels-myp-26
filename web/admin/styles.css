@@ -449,6 +449,30 @@ select.input-field option {
 
 .table-container {
     overflow-x: auto;
+    overflow-y: auto;
+    max-height: 480px;
+    border-radius: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(99, 102, 241, 0.4) rgba(255, 255, 255, 0.02);
+}
+
+.table-container::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.table-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.35);
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(99, 102, 241, 0.6);
 }
 
 .user-table {
@@ -459,6 +483,11 @@ select.input-field option {
 }
 
 .user-table th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #0f172a;
+    backdrop-filter: blur(8px);
     padding: 16px;
     border-bottom: 2px solid var(--glass-border);
     color: var(--text-muted);
@@ -466,6 +495,10 @@ select.input-field option {
     font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+body.light-theme .user-table th {
+    background: #f8fafc;
 }
 
 .user-table td {

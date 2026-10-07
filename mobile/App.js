@@ -418,6 +418,31 @@ export default function App() {
     }
   };
 
+  // Generate a random 8-character password with mixed characters (letters + numbers + symbol)
+  const generateMixedPassword = () => {
+    const lettersUpper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const lettersLower = 'abcdefghijkmnpqrstuvwxyz';
+    const numbers = '23456789';
+    const specials = '@#$%*!';
+    
+    // Guarantee mixed characters: 2 upper, 2 lower, 2 digits, 2 symbols/digits = 8 chars
+    let chars = '';
+    chars += lettersUpper[Math.floor(Math.random() * lettersUpper.length)];
+    chars += lettersUpper[Math.floor(Math.random() * lettersUpper.length)];
+    chars += lettersLower[Math.floor(Math.random() * lettersLower.length)];
+    chars += lettersLower[Math.floor(Math.random() * lettersLower.length)];
+    chars += numbers[Math.floor(Math.random() * numbers.length)];
+    chars += numbers[Math.floor(Math.random() * numbers.length)];
+    chars += specials[Math.floor(Math.random() * specials.length)];
+    chars += numbers[Math.floor(Math.random() * numbers.length)];
+    
+    // Shuffle the 8 characters
+    const shuffled = chars.split('').sort(() => 0.5 - Math.random()).join('');
+    setRegPassword(shuffled);
+    setIsRegPasswordVisible(true);
+    setLoginError('');
+  };
+
   // In-app Farmer Registration & Instant Automatic Login
   const handleSignUp = async () => {
     const cleanName = regName.trim();
@@ -434,6 +459,16 @@ export default function App() {
       setLoginError('Please choose a username and password.');
       return;
     }
+    if (cleanPass.length > 8) {
+      setLoginError('Password is limited to 8 characters maximum.');
+      return;
+    }
+    const hasLetter = /[a-zA-Z]/.test(cleanPass);
+    const hasNumber = /[0-9]/.test(cleanPass);
+    if (!hasLetter || !hasNumber) {
+      setLoginError('Password must contain mixed characters (both letters and numbers, max 8 chars). Or tap "Create 8-Char Password".');
+      return;
+    }
 
     setLoading(true);
     setLoginError('');
@@ -443,7 +478,8 @@ export default function App() {
       NGROK_PUBLIC_HOST,
       LOCAL_LAN_HOST,
       EMULATOR_HOST,
-      'http://127.0.0.1:5000'
+      'http://127.0.0.1:5000',
+      'http://127.0.0.1:3000'
     ].filter((val, idx, self) => val && self.indexOf(val) === idx);
 
     let savedToDatabase = false;
@@ -456,7 +492,10 @@ export default function App() {
 
         const res = await fetch(`${host}/api/users`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': '1'
+          },
           body: JSON.stringify({
             username: cleanUser,
             password: cleanPass,
@@ -978,14 +1017,29 @@ Security Signature: Authorized Agritex Officer System Log Verification
                   autoCorrect={false}
                 />
 
-                <Text style={[styles.label, isLightTheme && styles.labelLight]}>Choose Password</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, marginBottom: 6 }}>
+                  <Text style={[styles.label, { marginBottom: 0 }, isLightTheme && styles.labelLight]}>
+                    Password (Max 8 Chars, Mixed)
+                  </Text>
+                  <TouchableOpacity 
+                    style={[styles.genPassBtn, isLightTheme && styles.genPassBtnLight]} 
+                    onPress={generateMixedPassword}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.genPassBtnText}>🎲 Create 8-Char Password</Text>
+                  </TouchableOpacity>
+                </View>
+
                 <View style={styles.passwordWrapper}>
                   <TextInput
                     style={[styles.authInput, { flex: 1, marginBottom: 0, paddingRight: 60 }, isLightTheme && styles.authInputLight]}
                     value={regPassword}
-                    onChangeText={setRegPassword}
+                    onChangeText={text => {
+                      if (text.length <= 8) setRegPassword(text);
+                    }}
+                    maxLength={8}
                     secureTextEntry={!isRegPasswordVisible}
-                    placeholder="Choose your password"
+                    placeholder="Max 8 chars (letters + numbers)"
                     placeholderTextColor={isLightTheme ? "#94a3b8" : "#64748b"}
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -999,6 +1053,16 @@ Security Signature: Authorized Agritex Officer System Log Verification
                       {isRegPasswordVisible ? 'Hide' : 'Show'}
                     </Text>
                   </TouchableOpacity>
+                </View>
+
+                {/* Real-time Password Character & Mixed Status Indicator */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: -8, marginBottom: 12, paddingHorizontal: 4 }}>
+                  <Text style={{ fontSize: 11, color: regPassword.length === 8 ? '#10b981' : (isLightTheme ? '#64748b' : '#94a3b8') }}>
+                    Length: {regPassword.length}/8 {regPassword.length === 8 ? '✓ (Max Limit)' : ''}
+                  </Text>
+                  <Text style={{ fontSize: 11, color: (/[a-zA-Z]/.test(regPassword) && /[0-9]/.test(regPassword)) ? '#10b981' : '#f59e0b' }}>
+                    {(/[a-zA-Z]/.test(regPassword) && /[0-9]/.test(regPassword)) ? '✓ Mixed characters' : 'Requires letters & numbers'}
+                  </Text>
                 </View>
 
                 {loginError ? <Text style={styles.errorText}>{loginError}</Text> : null}
@@ -2038,6 +2102,23 @@ const styles = StyleSheet.create({
     color: '#6366f1',
     fontWeight: '600',
     fontSize: 13,
+  },
+  genPassBtn: {
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    borderColor: 'rgba(16, 185, 129, 0.4)',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  genPassBtnLight: {
+    backgroundColor: '#ecfdf5',
+    borderColor: '#a7f3d0',
+  },
+  genPassBtnText: {
+    color: '#10b981',
+    fontSize: 11,
+    fontWeight: '700',
   },
   errorText: {
     color: '#f43f5e',
